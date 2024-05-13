@@ -1,0 +1,100 @@
+---
+
+---
+
+<header>
+	<a href="/"><img src="" alt="logo" class="logo"></a>
+	<div class="account">
+		<img src="/images/person.svg" class="account__image"></img>
+		<div class="account__menu">
+			<span>Test User</span>
+			<ul>
+				<li><a href="#">Profile</a></li>
+				<li><a href="#">Settings</a></li>
+				<li><a href="#">Logout</a></li>
+			</ul>
+		</div>
+	</div>
+</header>
+
+<style>
+	
+	header {
+		background-color: white;
+		width: 100%;
+		padding: 10px 2rem;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+
+	ul {
+		max-height: 0px;
+	}
+
+	.logo {
+		max-width: 100px;
+
+		& svg {
+			width: 100%;
+		}
+	}
+
+	.account {
+		display: flex;
+		position: relative;
+		align-items: center;
+		cursor: pointer;
+
+		& span {
+			font-weight: bold;
+
+			&:after {
+				content: "▼";
+				margin-left: 5px;
+				color: var(--primary);
+			}
+		}
+
+		& .account__image {
+			max-width: 30px;
+			border-radius: 50%;
+			margin-right: 10px;
+		}
+
+		& .account__menu {
+
+			& ul {
+				list-style: none;
+				padding: 0;
+				overflow: hidden;
+				transition: 0.5s ease;
+				position: absolute;
+				top: 100%;
+				left: 0;
+				width: 100%;
+				background-color: white;
+
+				& a {
+					width: 100%;
+					padding: 0 10px;
+					display: block;
+					text-decoration: none;
+					line-height: 2.5;
+					transition: 0.25s ease;
+
+					&:hover {
+						color: var(--primary-opaque);
+					
+					}
+				}
+			}
+		}
+
+		&:hover {
+			& ul {
+				max-height: 200px;
+			}
+		}
+	}
+</style>

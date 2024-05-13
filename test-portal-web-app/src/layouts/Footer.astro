@@ -1,0 +1,48 @@
+---
+
+---
+
+<footer>
+	Copryight Laposa &copy;2024 | <a href="#">Report an issue</a> | <a href="/service-health">Service Status: </a> <span class="status online">Online</span>
+</footer>
+
+<style>
+	
+	footer {
+		width: 100%;
+		margin-top: auto;
+		padding: 10px;
+		background-color: #e8e8e8;
+		font-size: 0.8rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+
+		& a {
+			font-size: 0.8rem;
+			text-decoration: none;
+			margin-left: 5px;
+			margin-right: 5px;
+		}
+
+		& .status {
+			font-weight: bold;
+		
+			&:before {
+				content: '';
+				display: inline-block;
+				width: 10px;
+				height: 10px;
+				border-radius: 50%;
+				margin: 0 5px;
+			}
+
+			&.online {
+				&:before {
+					background-color: green;
+				}
+			} 
+		}
+	}
+
+</style>
