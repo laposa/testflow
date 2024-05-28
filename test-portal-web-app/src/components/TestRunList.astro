@@ -1,0 +1,36 @@
+---
+import { TestResult, TestType } from "../enums";
+import { runs } from "./RunList.astro";
+
+---
+
+<table>
+  <thead>
+    <tr>
+      <th>Run ID</th>
+      <th>Timestamp</th>
+      <th>Suite</th>
+      <th>Result</th>
+      <th>Code</th>
+      <th>Error</th>
+    </tr>
+  </thead>
+  <tbody>
+    {
+			runs.map((run) => (
+				<tr>
+					{/* TODO session id? */}
+					<td><a href={"/sessions/1/test/" + run.test.id + "/run/" + run.id}>{run.id}</a></td>
+					<td>{run.timestamp}</td>
+					<td>{run.suite}</td>
+					<td>{run.result === TestResult.Passed ? <span class="pass">Passed</span> : <span class="fail">Failed</span>}</td>
+          <td>{run.code ? <a href="#">Show</a> : ''}</td>
+          <td>{run.error ? <a href="#">Show</a> : ''}</td>
+				</tr>
+			))
+		}
+  </tbody>
+</table>
+
+<style>
+</style>

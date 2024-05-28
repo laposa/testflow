@@ -1,0 +1,39 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PortalSection from '../components/PortalSection.astro';
+import TileList from '../components/TileList.astro';
+
+const tools = [
+  {
+    title: "Sessions",
+    description: "Management of testing sessions",
+    link: "/sessions",
+  },
+  {
+    title: "Tests",
+    description: "List of all tests and their results",
+    link: "/tests",
+  },
+  {
+    title: "Runs",
+    description:
+      "List of previous runs",
+    link: "/runs",
+  },
+  {
+    title: "Maintenance",
+    description:
+      "Overview online service health including status of last sync jobs execution",
+    link: "/service-health",
+  },
+];
+---
+
+<Layout title="Test Portal | Home" hide_menu={true}>
+	<PortalSection title="Available modules" width="full">
+    <TileList tiles={tools} />
+  </PortalSection>
+</Layout>
+
+<style>
+</style>

@@ -1,0 +1,127 @@
+---
+import type { Session } from "../interfaces";
+
+const sessions: Session[] = [
+  {
+    id: 1,
+    title: "Session 1",
+    timestamp: "14:24:34 21.05.2024",
+    issuer: "Issuer 1",
+  },
+  {
+    id: 2,
+    title: "Session 2",
+    timestamp: "14:24:34 21.05.2024",
+    issuer: "Issuer 2",
+  },
+  {
+    id: 3,
+    title: "Session 3",
+    timestamp: "14:24:34 21.05.2024",
+    issuer: "Issuer 3",
+  },
+];
+---
+
+<div class="sessions">
+  <div class="filter">
+    <div class="search">
+      <input type="text" placeholder="Search sessions" />
+      <img src="/images/icons/search-icon.svg" alt="search" />
+    </div>
+    <input
+      type="text"
+      class="date"
+      placeholder="Choose date"
+      onfocus="(this.type='date')"
+      onblur="(this.type='text')"
+    />
+    <select name="issuer" class="issuer">
+      <option value="">All issuers</option>
+      <option value="issuer1">Issuer 1</option>
+      <option value="issuer2">Issuer 2</option>
+      <option value="issuer3">Issuer 3</option>
+    </select>
+    <a href="/sessions/new">New session</a>
+  </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Timestamp</th>
+      <th>Issuer</th>
+      <th>Results</th>
+    </tr>
+  </thead>
+  <tbody>
+    {
+			sessions.map((session) => (
+				<tr>
+					<td>{session.title}</td>
+					<td>{session.timestamp}</td>
+					<td>{session.issuer}</td>
+          <td><a href={"sessions/" + session.id}>View</a></td>
+				</tr>
+			))
+		}
+  </tbody>
+</table>
+
+<style>
+	.sessions {
+		& .filter {
+			width: 100%;
+			display: flex;
+			gap: 10px;
+			margin: 1rem 0;
+
+			& .search {
+				width: 30%;
+				position: relative;
+
+				& input {
+					width: 100%;
+				}
+
+				& img {
+					width: 20px;
+					position: absolute;
+					right: 0.5rem;
+					top: 8px;
+					cursor: pointer;
+				}
+			}
+
+			& .date {
+				width: 15%;
+			}
+
+			& .issuer {
+				width: 20%;
+			}
+
+			& a {
+				display: flex;
+				margin-left: auto;
+				background-color: var(--primary);
+				border: none;
+				color: white;
+				text-decoration: none;
+				padding: 0 2.5rem 0 1rem;
+				align-items: center;
+				position: relative;
+
+				&:after {
+					content: "+";
+					position: absolute;
+					top: -2px;
+					line-height: normal;
+					right: 1rem;
+					font-size: 2rem;
+				}
+			}
+		}
+	}
+</style>
