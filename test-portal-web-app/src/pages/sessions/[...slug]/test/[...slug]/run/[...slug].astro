@@ -1,0 +1,31 @@
+---
+const { title, run } = Astro.props;
+import Layout from '../../../../../../layouts/Layout.astro';
+import PortalSection from '../../../../../../components/PortalSection.astro';
+import RunDetail from '../../../../../../components/RunDetail.astro';
+import { runs } from '../../../../../../components/RunList.astro';
+
+export async function getStaticPaths() {
+  const testRuns = [
+    { slug: '1', id: 1, title: "Run 0", run: runs[0]},
+    { slug: '2', id: 2, title: "Run 1", run: runs[1]},
+		{ slug: '3', id: 3, title: "Run 2", run: runs[2]}
+  ];
+
+  return testRuns.map(( { slug, title, run }) => {
+    return {
+			params: { slug },
+      props: { title, run }
+    };
+  });
+}
+---
+
+<Layout title={"Test Portal | " + title}>
+	<PortalSection title={title + " Detail"} width="full">
+		<RunDetail run={run} />
+  </PortalSection>
+</Layout>
+
+<style>
+</style>

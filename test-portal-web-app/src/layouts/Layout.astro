@@ -4,10 +4,50 @@ import Header from './Header.astro';
 
 interface Props {
 	title: string;
+	hide_menu?: boolean;
 }
 
-const { title } = Astro.props;
+const { title, hide_menu } = Astro.props;
 ---
+
+<script>
+	const expands = document.querySelectorAll('.expand');
+	const groupSelects = document.querySelectorAll('.checkbox.all input[type="checkbox"]');
+
+	expands.forEach((expand) => {
+		expand.addEventListener('click', (e) => {
+			if(e.target) {
+				const target = document.getElementById(e.target.getAttribute('data-target'));
+				const button = e.target;
+				
+				if (target.style.display === "table-row") {
+					target.style.display = "none";
+					button.innerText = "Expand";
+				} else {
+					target.style.display = "table-row";
+					button.innerText = "Collapse";
+				}
+			}
+		});
+	});
+
+	groupSelects.forEach((groupSelect) => {
+		groupSelect.addEventListener('change', (e) => {
+			const parent = e.target.closest('table');
+			const checkboxes = parent.querySelectorAll('input[type="checkbox"]');
+
+			if(e.target.checked) {
+				checkboxes.forEach((checkbox) => {
+					checkbox.checked = true;
+				});
+			} else {
+				checkboxes.forEach((checkbox) => {
+					checkbox.checked = false;
+				});
+			}
+		});
+	});
+</script>
 
 <!doctype html>
 <html lang="en">
@@ -20,7 +60,7 @@ const { title } = Astro.props;
 		<title>{title}</title>
 	</head>
 	<body>
-		<Header />
+		<Header hide_menu={hide_menu}/>
 		<main>
 			<div class="container">
 				<slot />
@@ -30,13 +70,20 @@ const { title } = Astro.props;
 	</body>
 </html>
 <style is:global>
+	@font-face {
+		font-family: 'DM Sans';
+		src: url("/fonts/DMSans-VariableFont_opsz,wght.ttf");
+	}
+
 	:root {
-		--primary: cadetblue;
+		--primary: #5f9ea0;
 		--primary-opaque: rgba(95, 158, 160, 0.5);
 	}
+	
 	* {
 		box-sizing: border-box;
-		font-family:'Trebuchet MS', Arial, sans-serif
+		font-family: 'DM Sans', 'Trebuchet MS', Arial, sans-serif;
+		font-size: 1rem;
 	}
 
 	html {
@@ -84,20 +131,24 @@ const { title } = Astro.props;
 		width: 100%;
 	}
 
-	button {
+	tr.collapsible {
+		background-color: rgba(95, 158, 160, 0.053);
+		text-align: left;
+	}
+
+	button, .button {
 		padding: 0.25rem 1rem;
 		outline: none;
 		border: none;
 		color: white;
-		background-color: black;
+		background-color: var(--primary);
 		transition: 0.25s ease;
-		border: 1px solid black;
 		cursor: pointer;
+		text-decoration: none;
 	}
 
-	button:hover {
-		color: black;
-		background-color: white;
+	button:hover, .button:hover {
+		background-color: var(--primary-opaque);
 	}
 
 	input {
@@ -115,21 +166,135 @@ const { title } = Astro.props;
 		grid-column: span 2;
 	}
 
-	.button {
-		display: inline-flex;
-		justify-content: center;
-		align-items: center;
-		height: 50px;
-		min-width: 150px;
-		color: var(--primary);
-		text-decoration: none;
-		border: 2px solid var(--primary);
-		border-radius: 50px;
-		transition: 0.25s ease;
+	table {
+		width: 100%;
+		border-collapse: collapse;
 
-		&:hover {
-			background-color: var(--primary);
-			color: white;
+		& td {
+			text-align: left;
+		}
+		
+		& thead {
+			text-align: left;
+		
+			& th {
+				padding: 0.5rem;
+				border-bottom: 1px solid hsl(0, 0%, 50%);
+
+				&:last-of-type {
+					text-align: right;
+				}
+			}
+		}
+
+		> tbody {
+			& tr {
+				border-bottom: 1px solid var(--primary-opaque);
+				
+				> td:not([colspan="*"]) {
+					padding: 0.5rem;
+	
+					&:last-of-type {
+						text-align: right;
+					}
+				}
+			}
+		}
+
+		& table {
+
+			& tr:last-of-type {
+				border-bottom: none;
+			}
+		}
+
+		&.select {
+			& tr td:first-of-type {
+				width: 20px;
+			}
+		}
+	}
+
+	input, select {
+		border: none;
+		background-color: #f7f7f7;
+		padding: 0.5rem;
+	}
+
+	.center {
+		text-align: center;
+	}
+
+	.pass {
+		color: green;
+		font-weight: 600;
+	}
+
+	.fail {
+		color: red;
+		font-weight: 600;
+	}
+
+	.fresh {
+		color: gray;
+		font-weight: 600;
+	}
+
+	.collapsible {
+		width: 100%;
+		display: none;
+	}
+
+	.expand {
+    cursor: pointer;
+    color: var(--primary);
+    text-decoration: underline;
+  }
+
+	.align-right {
+		margin-left: auto;
+	}
+
+	.checkbox {
+
+		& input[type="checkbox"] {
+			display: none;
+		}
+
+		& .checkmark {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			position: relative;
+			width: 20px;
+			height: 20px;
+			cursor: pointer;
+			transition: 0.3s ease;
+			border: 2px solid var(--primary);
+
+			&:after {
+				position: relative;
+				z-index: 2;
+				content:'✔';
+				color: white;
+				font-size: 0.9rem;
+				top: 1px;
+				transform: rotate(10deg);
+			}
+
+			&:before {
+				content: '';
+				position: absolute;
+				width: 0;
+				height: 0;
+				background-color: var(--primary);
+				transition: 0.3s ease;
+			}
+		}
+
+		& input:checked + .checkmark:before {
+			width: 20px;
+			height: 20px;
 		}
 	}
 

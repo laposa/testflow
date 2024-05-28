@@ -1,0 +1,30 @@
+---
+const { title } = Astro.props;
+import Layout from '../../layouts/Layout.astro';
+import PortalSection from '../../components/PortalSection.astro';
+import RunList from '../../components/RunList.astro';
+
+export async function getStaticPaths() {
+  const tests = [
+    { slug: '1', id: 1, title: "Test 1"},
+    { slug: '2', id: 2, title: "Test 2"},
+    { slug: '3', id: 3, title: "Test 3"},
+  ];
+
+  return tests.map(( { slug, title }) => {
+    return {
+			params: { slug },
+      props: { title }
+    };
+  });
+}
+---
+
+<Layout title={"Test Portal | " + title}>
+	<PortalSection title={"Recent runs for " + title} width="full">
+    <RunList />
+  </PortalSection>
+</Layout>
+
+<style>
+</style>

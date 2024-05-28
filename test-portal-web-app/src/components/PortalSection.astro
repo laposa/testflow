@@ -1,18 +1,16 @@
 ---
-const { title, width, more_link, more_text } = Astro.props;
-
+const { title, width, border } = Astro.props;
 ---
 
-<div class={"section " + width}>
+<div class:list={['section', {"no-border": !border}, width]}>
 	<h2>{title}</h2>
 	<slot></slot>
-	{more_link ? <a href={more_link} class="more">{more_text}<span class="chevron"></span></a> : ''}
 	<hr>
 </div>
 
 <style>
 	h2 {
-		font-size: 2.5rem;
+		font-size: 2rem;
 		margin: 0;
 		text-transform: uppercase;
 		left: 1rem;
@@ -21,9 +19,9 @@ const { title, width, more_link, more_text } = Astro.props;
 	.section {
 		position: relative;
 		background-color: white;
-		margin-top: 3rem;
 		align-self: start;
 		width: 100%;
+		margin-bottom: 2rem;
 
 		&.full {
 			grid-column: span 2;
@@ -33,61 +31,15 @@ const { title, width, more_link, more_text } = Astro.props;
 			}
 		}
 
-		& .more {
-			position: absolute;
-			display: flex;
-			bottom: 0;
-			left: 0;
-			padding-left: 1rem;
-			line-height: 2;
-			width: 100%;
-			color: white;
-			text-decoration: none;
-			background-color: rgb(120, 187, 233);
-			transition: 0.25s ease;
-			align-items: center;
-
-			& .chevron {
-				position: relative;
-				display: flex;
-
-				&:before, &:after {
-					content: "";
-					position: absolute;
-					left: 10px;
-					width: 10px;
-					height: 2px;
-					background-color: white;
-					transition: 0.25s ease;
-				}
-
-				&:before {
-					top: -3px;
-					transform: rotate(45deg);
-				}
-
-				&:after {
-					top: 3px;
-					transform: rotate(-45deg);
-				}
-			}
-
-			&:hover {
-				opacity: 0.8;
-
-				& .chevron {
-					&:before, &:after {
-						left: 15px;
-					}
-				}
-			}
-		}
-
 		hr {
 			border: 0;
 			border-top: 1px solid var(--primary-opaque);
 			margin: 0;
 			margin-top: 1rem;
+
+			.no-border & {
+				display: none;
+			}
 		}
 	}
 </style>

@@ -1,0 +1,14 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PortalSection from '../components/PortalSection.astro';
+import TestList from '../components/TestList.astro';
+---
+
+<Layout title="Test Portal | Tests">
+	<PortalSection title="List of available tests" width="full">
+		<TestList select={false} link="tests/"/>
+  </PortalSection>
+</Layout>
+
+<style>
+</style>
