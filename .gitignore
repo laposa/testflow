@@ -3,3 +3,11 @@
 .idea/test-portal.iml
 .idea/php.xml
 .idea/modules.xml
+
+# Mac OS
+.DS_Store
+
+# env files
+.env*
+!.env.example
+!.env.*.tpl
