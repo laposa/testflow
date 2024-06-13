@@ -5,16 +5,48 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fe408510-faab-4558-9391-d2661a6f23b2" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/resources/views/auth/login.blade.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/resources/views/components/layout.blade.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/app/.env.example" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/app/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/composer.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/composer.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/composer.lock" beforeDir="false" afterPath="$PROJECT_DIR$/app/composer.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/config/services.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/config/services.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/app/Enums/TestResultEnum.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/app/Enums/TestTypeEnum.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/css/components/footer.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/css/components/header.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/css/components/layout.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/css/components/portal-section.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/css/components/runs/index.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/css/components/runs/list.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/css/components/sessions/index.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/css/components/sessions/list.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/css/components/tests/index.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/css/components/tests/list.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/css/components/tile-list.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/css/pages/index.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/css/pages/maintenance.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/views/components/footer.blade.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/views/components/header.blade.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/views/components/portal-section.blade.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/views/components/runs/list.blade.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/views/components/sessions/list.blade.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/views/components/test-suites/list.blade.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/views/components/tests/list.blade.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/views/components/tile-list.blade.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/views/dashboard/index.blade.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/views/maintenance/index.blade.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/views/runs/index.blade.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/views/runs/show.blade.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/views/sessions/create.blade.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/views/sessions/index.blade.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/views/sessions/show.blade.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/views/tests/index.blade.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/views/tests/show.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/Http/Controllers/AuthController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/Http/Controllers/AuthController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/Models/User.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/Models/User.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/Providers/AppServiceProvider.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/Providers/AppServiceProvider.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/database/migrations/0001_01_01_000000_create_users_table.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/database/migrations/0001_01_01_000000_create_users_table.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/resources/css/app.css" beforeDir="false" afterPath="$PROJECT_DIR$/app/resources/css/app.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/resources/js/app.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/resources/js/app.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/resources/views/components/layout.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/resources/views/components/layout.blade.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/routes/web.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/web.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/prototype/src/pages/service-health.astro" beforeDir="false" afterPath="$PROJECT_DIR$/prototype/src/pages/service-health.astro" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -177,7 +209,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1718269002304</updated>
-      <workItem from="1718269003403" duration="699000" />
+      <workItem from="1718269003403" duration="1545000" />
     </task>
     <servers />
   </component>

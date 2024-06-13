@@ -23,6 +23,7 @@ class AuthController extends Controller
     {
         $githubUser = Socialite::driver('github')->user();
 
+//        dd(User::all(),User::where('github_id', $githubUser->id)->first());
         $user = User::updateOrCreate([
             'github_id' => $githubUser->id,
         ], [
@@ -34,6 +35,12 @@ class AuthController extends Controller
 
         Auth::login($user);
 
-        return redirect('/dashboard');
+        return redirect('/');
+    }
+
+    public function logout()
+    {
+        Auth::logout();
+        return redirect('/login');
     }
 }
