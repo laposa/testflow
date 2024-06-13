@@ -1,0 +1,14 @@
+.online {
+    color: rgb(21, 193, 21);
+}
+.offline {
+    color: red;
+}
+.alert {
+    color: orange;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+}

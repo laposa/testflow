@@ -1,0 +1,54 @@
+.runs {
+    & .filter {
+        width: 100%;
+        display: flex;
+        gap: 10px;
+        margin: 1rem 0;
+
+        & .search {
+            width: 30%;
+            position: relative;
+
+            & input {
+                width: 100%;
+            }
+
+            & img {
+                width: 20px;
+                position: absolute;
+                right: 0.5rem;
+                top: 8px;
+                cursor: pointer;
+            }
+        }
+
+        & .date {
+            width: 15%;
+        }
+
+        & .issuer {
+            width: 20%;
+        }
+
+        & a {
+            display: flex;
+            margin-left: auto;
+            background-color: var(--primary);
+            border: none;
+            color: white;
+            text-decoration: none;
+            padding: 0 2.5rem 0 1rem;
+            align-items: center;
+            position: relative;
+
+            &:after {
+                content: "+";
+                position: absolute;
+                top: -2px;
+                line-height: normal;
+                right: 1rem;
+                font-size: 2rem;
+            }
+        }
+    }
+}
