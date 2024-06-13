@@ -11,7 +11,7 @@
         </div>
     </x-portal-section>
     <x-portal-section title="Test suites" width="full">
-        <x-test-suites.list />
+        <x-test-suites.list :select="true" :suites="$suites"/>
     </x-portal-section>
 
     <a class="button" href="/sessions/1">Create</a>

@@ -75,7 +75,34 @@ class SessionsController extends Controller
     }
 
     public function create() {
-        return view('sessions.create');
+        return view('sessions.create', [
+            'suites' => [
+                (object) [
+                    'id' => 1,
+                    'title' => 'Suite 1',
+                    'passed' => 4,
+                    'failed' => 2,
+                    'tests' => [
+                        (object) [
+                            'id' => 1,
+                            'title' => 'Login screen renders',
+                            'lastResult' => TestResultEnum::notRun->value,
+                            'timestamp'=> now(),
+                            'type' => TestTypeEnum::manual->value,
+                            'error' => null
+                        ],
+                        (object) [
+                            'id' => 2,
+                            'title' => 'Login screen renders',
+                            'lastResult' => TestResultEnum::pass->value,
+                            'timestamp'=> now(),
+                            'type' => TestTypeEnum::automated->value,
+                            'error' => null
+                        ],
+                    ]
+                ]
+            ]
+        ]);
     }
 
     public function store() {
