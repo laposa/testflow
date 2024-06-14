@@ -8,9 +8,8 @@ Distributed as Github App - installed to GitHub organization with Test Portal in
 
 ## Install
 ```
-composer install
 npm install
-npm run dev
+composer install
 php artisan migrate # (or php artisan migrate:refresh)
 ```
 
@@ -21,5 +20,6 @@ op inject -i .env.local.tpl -o .env
 
 ## Run
 ```
+npm run dev
 php artisan serve
 ```
