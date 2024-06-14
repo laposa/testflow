@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Github\FetchAvailableWorkflows;
 use App\Enums\TestResultEnum;
 use App\Enums\TestTypeEnum;
+use App\Models\Installation;
 use Illuminate\Http\Request;
 
 class SessionsController extends Controller
 {
-    public function index() {
+    public function index(FetchAvailableWorkflows $fetchAvailableWorkflows) {
         $sessions = [
             (object) [
                 "id" => 1,
@@ -18,8 +20,10 @@ class SessionsController extends Controller
             ]
         ];
 
+
         return view('sessions.index', [
-            'sessions' => $sessions
+            'sessions' => $sessions,
+            'workflows' => $fetchAvailableWorkflows->handle(Installation::first())
         ]);
     }
 

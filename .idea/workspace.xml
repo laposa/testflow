@@ -4,13 +4,25 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe408510-faab-4558-9391-d2661a6f23b2" name="Changes" comment="" />
+    <list default="true" id="fe408510-faab-4558-9391-d2661a6f23b2" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/app/app/Actions/Github/ExchangeGithubInstallCode.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/app/Actions/Github/FetchAvailableWorkflows.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/app/Actions/Github/InstallGithubApp.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/app/Actions/Github/SyncRepositories.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/app/Http/Controllers/GithubAppController.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/app/Services/GithubInstallationService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/Http/Controllers/SessionsController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/Http/Controllers/SessionsController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/composer.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/composer.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/composer.lock" beforeDir="false" afterPath="$PROJECT_DIR$/app/composer.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/routes/web.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/web.php" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ComposerSettings" synchronizationState="SYNCHRONIZE">
+  <component name="ComposerSettings" doNotAsk="true" synchronizationState="SYNCHRONIZE">
     <pharConfigPath>$PROJECT_DIR$/app/composer.json</pharConfigPath>
     <execution />
   </component>
@@ -133,6 +145,7 @@
       <path value="$PROJECT_DIR$/app/vendor/laravel/tinker" />
       <path value="$PROJECT_DIR$/app/vendor/laravel/pint" />
       <path value="$PROJECT_DIR$/app/vendor/egulias/email-validator" />
+      <path value="$PROJECT_DIR$/app/vendor/lcobucci/jwt" />
     </include_path>
   </component>
   <component name="ProjectId" id="2homrITzomouqS4dxcH3cAvLFEo" />
@@ -150,6 +163,7 @@
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
+    "settings.editor.selected.configurable": "preferences.lookFeel",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -167,6 +181,10 @@
       <option name="presentableId" value="Default" />
       <updated>1718269002304</updated>
       <workItem from="1718269003403" duration="1545000" />
+      <workItem from="1718305313552" duration="231000" />
+      <workItem from="1718305635698" duration="599000" />
+      <workItem from="1718306846087" duration="4000" />
+      <workItem from="1718308003455" duration="13533000" />
     </task>
     <servers />
   </component>
