@@ -1,5 +1,5 @@
 @php
-    $hide_menu = false
+    $hide_menu = true
 @endphp
 <header>
     <div class="header">

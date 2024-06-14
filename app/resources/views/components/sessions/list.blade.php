@@ -27,16 +27,14 @@
         <th>Name</th>
         <th>Timestamp</th>
         <th>Issuer</th>
-        <th>Results</th>
     </tr>
     </thead>
     <tbody>
         @foreach($sessions as $session)
             <tr>
-                <td>{{$session->title}}</td>
+                <td><a href="/sessions/{{ $session->id }}">{{$session->title}}</a></td>
                 <td>{{$session->timestamp}}</td>
                 <td>{{$session->issuer}}</td>
-                <td><a href="/sessions/{{ $session->id }}">View</a></td>
             </tr>
         @endforeach
     </tbody>
