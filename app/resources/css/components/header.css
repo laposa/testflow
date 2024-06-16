@@ -4,7 +4,7 @@ header {
     width: 100%;
     z-index: 100;
 
-    & .header {
+    .header {
         padding: 5px 2rem;
         display: flex;
         align-items: center;
@@ -12,7 +12,7 @@ header {
         box-shadow: 0px 0px 14px rgba(95, 158, 160, 0.131);
     }
 
-    & .menu {
+    .menu {
         padding: 0 2rem 15px;
         display: flex;
         width: 100%;
@@ -35,7 +35,7 @@ header {
     font-weight: 600;
     letter-spacing: 5px;
 
-    & img {
+    img {
         width: 25px;
     }
 }
@@ -46,7 +46,7 @@ header {
     align-items: center;
     cursor: pointer;
 
-    & span {
+    span {
         font-weight: bold;
 
         &:after {
@@ -56,15 +56,15 @@ header {
         }
     }
 
-    & .account__image {
+    .account__image {
         max-width: 30px;
         border-radius: 50%;
         margin-right: 10px;
     }
 
-    & .account__menu {
+    .account__menu {
 
-        & ul {
+        ul {
             list-style: none;
             padding: 0;
             overflow: hidden;
@@ -75,7 +75,7 @@ header {
             width: 100%;
             background-color: white;
 
-            & a {
+            a {
                 width: 100%;
                 padding: 0 10px;
                 display: block;
@@ -91,12 +91,12 @@ header {
         }
     }
 
-    & ul {
+    ul {
         max-height: 0;
     }
 
     &:hover {
-        & ul {
+        ul {
             max-height: 200px;
         }
     }

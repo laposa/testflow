@@ -1,11 +1,11 @@
 .sessions {
-    & .filter {
+    .filter {
         width: 100%;
         display: flex;
         gap: 10px;
         margin: 1rem 0;
 
-        & .search {
+        .search {
             width: 30%;
             position: relative;
 
@@ -13,7 +13,7 @@
                 width: 100%;
             }
 
-            & img {
+            img {
                 width: 20px;
                 position: absolute;
                 right: 0.5rem;
@@ -22,15 +22,15 @@
             }
         }
 
-        & .date {
+        .date {
             width: 15%;
         }
 
-        & .issuer {
+        .issuer {
             width: 20%;
         }
 
-        & a {
+        a {
             display: flex;
             margin-left: auto;
             background-color: var(--primary);

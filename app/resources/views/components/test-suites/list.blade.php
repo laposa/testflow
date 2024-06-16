@@ -5,7 +5,7 @@
         @if ($select)
         <th>
             <label for="selector-all" class="checkbox all">
-            <input type="checkbox" id="selector-all"}>
+            <input type="checkbox" id="selector-all">
             <span class="checkmark"></span>
             </label>
         </th>
@@ -26,12 +26,12 @@
                 </label>
             </td>
             @endif
-            <td>{{$suite->title}}</td>
+            <td><a href="{{$suite->url}}">{{$suite->title}}</a></td>
             <td class="center"><span class="pass">{{$suite->passed}}</span>/<span class="fail">{{ $suite->failed }}</span></td>
             <td><span class="expand" data-target="selector-suite-tests-{{ $suite->id }}">Expand</span></td>
         </tr>
         <tr id="selector-suite-tests-{{ $suite->id }}" class="collapsible">
-            <td>
+            <td colspan="4">
                 <x-tests.list :tests="$suite->tests" />
             </td>
         </tr>

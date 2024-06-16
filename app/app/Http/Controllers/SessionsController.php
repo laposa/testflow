@@ -12,9 +12,21 @@ class SessionsController extends Controller
         $sessions = [
             (object) [
                 "id" => 1,
-                "title" => "Session 1",
-                "timestamp" => now(),
-                "issuer" => "Issuer 1"
+                "title" => "Real Rewards API v3.6",
+                "timestamp" => "2024-05-23 02:30:05",
+                "issuer" => "Norbert Laposa"
+            ],
+            (object) [
+                "id" => 2,
+                "title" => "SuperValu Website",
+                "timestamp" => "2024-05-21 02:00:00",
+                "issuer" => "Hugo Dvorak"
+            ],
+            (object) [
+                "id" => 3,
+                "title" => "Frank and Honest v1.3",
+                "timestamp" => "2024-04-08 00:00:01",
+                "issuer" => "Hugo Dvorak"
             ]
         ];
 
@@ -48,7 +60,8 @@ class SessionsController extends Controller
             'suites' => [
                 (object) [
                     'id' => 1,
-                    'title' => 'Suite 1',
+                    'title' => 'musgrave-supervalu/loyalty-mobile-app/01_Identity_Login',
+                    'url' => 'https://github.com/laposa/musgrave-supervalu/tree/master/tests/loyalty-mobile-app/maestro/.flows/automated/01_Identity_Login',
                     'passed' => 4,
                     'failed' => 2,
                     'tests' => [
@@ -69,7 +82,32 @@ class SessionsController extends Controller
                             'error' => null
                         ],
                     ]
-                ]
+                    ],
+                    (object) [
+                        'id' => 2,
+                        'title' => 'musgrave-supervalu/loyalty-mobile-app/02_Identity_Registration',
+                        'url' => 'https://github.com/laposa/musgrave-supervalu/tree/master/tests/loyalty-mobile-app/maestro/.flows/automated/02_Identity_Registration',
+                        'passed' => 4,
+                        'failed' => 2,
+                        'tests' => [
+                            (object) [
+                                'id' => 1,
+                                'title' => 'Login screen renders',
+                                'lastResult' => TestResultEnum::notRun->value,
+                                'timestamp'=> now(),
+                                'type' => TestTypeEnum::manual->value,
+                                'error' => null
+                            ],
+                            (object) [
+                                'id' => 2,
+                                'title' => 'Login screen renders',
+                                'lastResult' => TestResultEnum::pass->value,
+                                'timestamp'=> now(),
+                                'type' => TestTypeEnum::automated->value,
+                                'error' => null
+                            ],
+                        ]
+                    ]
             ]
         ]);
     }
