@@ -8,8 +8,6 @@
         <th>Timestamp</th>
         <th>Suite</th>
         <th>Result</th>
-        <th>Code</th>
-        <th>Error</th>
     </tr>
     </thead>
     <tbody>
@@ -26,16 +24,6 @@
                 <span class="pass">Passed</span>
             @else
                 <span class="fail">Failed</span>
-            @endif
-        </td>
-        <td>
-            @if ($run->code)
-                <a href="#">Show</a>
-            @endif
-        </td>
-        <td>
-            @if ($run->error)
-                <a href="#">Show</a>
             @endif
         </td>
     </tr>

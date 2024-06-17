@@ -10,7 +10,7 @@
         @if (!$select)
         <th class="center">Last result<br>Pass/Fail</th>
         @endif
-        <th>Tests</th>
+        <th></th>
     </tr>
     </thead>
     <tbody>

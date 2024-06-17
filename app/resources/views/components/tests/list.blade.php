@@ -16,7 +16,6 @@
         @if (!$select)
         <th>Last result</th>
         <th>Error</th>
-        <th>Last run</th>
         @endif
     </tr>
     </thead>
@@ -47,28 +46,9 @@
         </td>
         @if (!$select)
         <td>
-            @switch($test->lastResult)
-                @case(\App\Enums\TestResultEnum::pass->value)
-                    <span class="pass">Passed</span>
-                    @break
-                @case(\App\Enums\TestResultEnum::fail->value)
-                    <span class="fail">Failed</span>
-                    @break
-                @case(\App\Enums\TestResultEnum::notRun->value)
-                    <span class="fresh">Not Run</span>
-                    @break
-            @endswitch
+            <span class="pass">1</span>
         </td>
-        <td>{{$test->error}}</td>
-        <td>
-            @if ($test->timestamp)
-                <a href={"sessions/1/test/{{ $test->id }}/run/{{ $test->id }}">
-                    {{ now()->format('Y-m-d H:i:s') }}
-                </a>
-            @else
-
-            @endif
-        </td>
+        <td>1</td>
         @endif
     </tr>
   @endforeach

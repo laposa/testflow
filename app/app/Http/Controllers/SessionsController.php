@@ -24,17 +24,9 @@ class SessionsController extends Controller
                     (object) [
                         "id" => 1,
                         "timestamp" => now(),
-                        "result" => TestResultEnum::pass->value,
-                        "suite" => "Suite 1",
-                        "session" => "Session 1",
-                        "code" => "",
-                        "error" => "",
-                        'test' => (object) [
-                            'title' => 'Login screen renders',
-                        ],
-                        'results' => [
-                            'logs' => ""
-                        ]
+                        "passed" => 145,
+                        "failed" => 5,
+                        'result_log' => "json data from GitHub Actions API",
                     ]
                 ],
                 'suites' => [
@@ -46,22 +38,18 @@ class SessionsController extends Controller
                         'failed' => 2,
                         'tests' => [
                             (object) [
-                                'id' => 1,
-                                'title' => 'Login screen renders',
-                                'lastResult' => TestResultEnum::notRun->value,
-                                'timestamp'=> now(),
-                                'type' => TestTypeEnum::manual->value,
-                                'error' => null
+                                'id' => '001_User_can_login',
+                                'title' => '001_User_can_login',
+                                'type' => 'automated',
+                                'url' => 'https://github.com/laposa/musgrave-supervalu/blob/master/tests/loyalty-mobile-app/maestro/.flows/automated/01_Identity_Login/001_User_can_login.yaml',
                             ],
                             (object) [
-                                'id' => 2,
-                                'title' => 'Login screen renders',
-                                'lastResult' => TestResultEnum::pass->value,
-                                'timestamp'=> now(),
-                                'type' => TestTypeEnum::automated->value,
-                                'error' => null
-                            ]
-                        ]
+                                'id' => '002_User_cannot_login_with_invalid_credentials',
+                                'title' => '002_User_cannot_login_with_invalid_credentials',
+                                'type' => 'automated',
+                                'url' => 'https://github.com/laposa/musgrave-supervalu/blob/master/tests/loyalty-mobile-app/maestro/.flows/automated/01_Identity_Login/002_User_cannot_login_with_invalid_credentials.yaml',
+                            ],
+                        ],
                     ],
                     (object) [
                         'id' => 2,
@@ -71,22 +59,18 @@ class SessionsController extends Controller
                         'failed' => 2,
                         'tests' => [
                             (object) [
-                                'id' => 1,
-                                'title' => 'Login screen renders',
-                                'lastResult' => TestResultEnum::notRun->value,
-                                'timestamp'=> now(),
-                                'type' => TestTypeEnum::manual->value,
-                                'error' => null
+                                'id' => '010_User_can_register_a_new_account_creating_a_new_card',
+                                'title' => '010_User_can_register_a_new_account_creating_a_new_card',
+                                'type' => 'automated',
+                                'url' => 'https://github.com/laposa/musgrave-supervalu/blob/master/tests/loyalty-mobile-app/maestro/.flows/automated/02_Identity_Registration/010_User_can_register_a_new_account_creating_a_new_card.yaml',
                             ],
                             (object) [
-                                'id' => 2,
-                                'title' => 'Login screen renders',
-                                'lastResult' => TestResultEnum::pass->value,
-                                'timestamp'=> now(),
-                                'type' => TestTypeEnum::automated->value,
-                                'error' => null
-                            ]
-                        ]
+                                'id' => '219_User_has_valid_Register_screens_content_displayed',
+                                'title' => '219_User_has_valid_Register_screens_content_displayed.',
+                                'type' => 'automated',
+                                'url' => 'https://github.com/laposa/musgrave-supervalu/blob/master/tests/loyalty-mobile-app/maestro/.flows/automated/02_Identity_Registration/219_User_has_valid_Register_screens_content_displayed.yaml',
+                            ],
+                        ],
                     ]
                 ]
             ],
@@ -118,22 +102,18 @@ class SessionsController extends Controller
                         'failed' => 2,
                         'tests' => [
                             (object) [
-                                'id' => 1,
-                                'title' => 'Login screen renders',
-                                'lastResult' => TestResultEnum::notRun->value,
-                                'timestamp'=> now(),
-                                'type' => TestTypeEnum::manual->value,
-                                'error' => null
+                                'id' => '001_User_can_login',
+                                'title' => '001_User_can_login',
+                                'type' => 'automated',
+                                'url' => 'https://github.com/laposa/musgrave-supervalu/blob/master/tests/loyalty-mobile-app/maestro/.flows/automated/01_Identity_Login/001_User_can_login.yaml',
                             ],
                             (object) [
-                                'id' => 2,
-                                'title' => 'Login screen renders',
-                                'lastResult' => TestResultEnum::pass->value,
-                                'timestamp'=> now(),
-                                'type' => TestTypeEnum::automated->value,
-                                'error' => null
+                                'id' => '002_User_cannot_login_with_invalid_credentials',
+                                'title' => '002_User_cannot_login_with_invalid_credentials',
+                                'type' => 'automated',
+                                'url' => 'https://github.com/laposa/musgrave-supervalu/blob/master/tests/loyalty-mobile-app/maestro/.flows/automated/01_Identity_Login/002_User_cannot_login_with_invalid_credentials.yaml',
                             ],
-                        ]
+                        ],
                     ],
                     (object) [
                         'id' => 2,
@@ -143,22 +123,18 @@ class SessionsController extends Controller
                         'failed' => 2,
                         'tests' => [
                             (object) [
-                                'id' => 1,
-                                'title' => 'Login screen renders',
-                                'lastResult' => TestResultEnum::notRun->value,
-                                'timestamp'=> now(),
-                                'type' => TestTypeEnum::manual->value,
-                                'error' => null
+                                'id' => '010_User_can_register_a_new_account_creating_a_new_card',
+                                'title' => '010_User_can_register_a_new_account_creating_a_new_card',
+                                'type' => 'automated',
+                                'url' => 'https://github.com/laposa/musgrave-supervalu/blob/master/tests/loyalty-mobile-app/maestro/.flows/automated/02_Identity_Registration/010_User_can_register_a_new_account_creating_a_new_card.yaml',
                             ],
                             (object) [
-                                'id' => 2,
-                                'title' => 'Login screen renders',
-                                'lastResult' => TestResultEnum::pass->value,
-                                'timestamp'=> now(),
-                                'type' => TestTypeEnum::automated->value,
-                                'error' => null
+                                'id' => '219_User_has_valid_Register_screens_content_displayed',
+                                'title' => '219_User_has_valid_Register_screens_content_displayed.',
+                                'type' => 'automated',
+                                'url' => 'https://github.com/laposa/musgrave-supervalu/blob/master/tests/loyalty-mobile-app/maestro/.flows/automated/02_Identity_Registration/219_User_has_valid_Register_screens_content_displayed.yaml',
                             ],
-                        ]
+                        ],
                     ]
                 ]
             ],
@@ -190,22 +166,18 @@ class SessionsController extends Controller
                         'failed' => 2,
                         'tests' => [
                             (object) [
-                                'id' => 1,
-                                'title' => 'Login screen renders',
-                                'lastResult' => TestResultEnum::notRun->value,
-                                'timestamp'=> now(),
-                                'type' => TestTypeEnum::manual->value,
-                                'error' => null
+                                'id' => '001_User_can_login',
+                                'title' => '001_User_can_login',
+                                'type' => 'automated',
+                                'url' => 'https://github.com/laposa/musgrave-supervalu/blob/master/tests/loyalty-mobile-app/maestro/.flows/automated/01_Identity_Login/001_User_can_login.yaml',
                             ],
                             (object) [
-                                'id' => 2,
-                                'title' => 'Login screen renders',
-                                'lastResult' => TestResultEnum::pass->value,
-                                'timestamp'=> now(),
-                                'type' => TestTypeEnum::automated->value,
-                                'error' => null
+                                'id' => '002_User_cannot_login_with_invalid_credentials',
+                                'title' => '002_User_cannot_login_with_invalid_credentials',
+                                'type' => 'automated',
+                                'url' => 'https://github.com/laposa/musgrave-supervalu/blob/master/tests/loyalty-mobile-app/maestro/.flows/automated/01_Identity_Login/002_User_cannot_login_with_invalid_credentials.yaml',
                             ],
-                        ]
+                        ],
                     ],
                     (object) [
                         'id' => 2,
@@ -215,22 +187,18 @@ class SessionsController extends Controller
                         'failed' => 2,
                         'tests' => [
                             (object) [
-                                'id' => 1,
-                                'title' => 'Login screen renders',
-                                'lastResult' => TestResultEnum::notRun->value,
-                                'timestamp'=> now(),
-                                'type' => TestTypeEnum::manual->value,
-                                'error' => null
+                                'id' => '010_User_can_register_a_new_account_creating_a_new_card',
+                                'title' => '010_User_can_register_a_new_account_creating_a_new_card',
+                                'type' => 'automated',
+                                'url' => 'https://github.com/laposa/musgrave-supervalu/blob/master/tests/loyalty-mobile-app/maestro/.flows/automated/02_Identity_Registration/010_User_can_register_a_new_account_creating_a_new_card.yaml',
                             ],
                             (object) [
-                                'id' => 2,
-                                'title' => 'Login screen renders',
-                                'lastResult' => TestResultEnum::pass->value,
-                                'timestamp'=> now(),
-                                'type' => TestTypeEnum::automated->value,
-                                'error' => null
+                                'id' => '219_User_has_valid_Register_screens_content_displayed',
+                                'title' => '219_User_has_valid_Register_screens_content_displayed.',
+                                'type' => 'automated',
+                                'url' => 'https://github.com/laposa/musgrave-supervalu/blob/master/tests/loyalty-mobile-app/maestro/.flows/automated/02_Identity_Registration/219_User_has_valid_Register_screens_content_displayed.yaml',
                             ],
-                        ]
+                        ],
                     ]
                 ]
             ],
@@ -262,22 +230,18 @@ class SessionsController extends Controller
                         'failed' => 2,
                         'tests' => [
                             (object) [
-                                'id' => 1,
-                                'title' => 'Login screen renders',
-                                'lastResult' => TestResultEnum::notRun->value,
-                                'timestamp'=> now(),
-                                'type' => TestTypeEnum::manual->value,
-                                'error' => null
+                                'id' => '001_User_can_login',
+                                'title' => '001_User_can_login',
+                                'type' => 'automated',
+                                'url' => 'https://github.com/laposa/musgrave-supervalu/blob/master/tests/loyalty-mobile-app/maestro/.flows/automated/01_Identity_Login/001_User_can_login.yaml',
                             ],
                             (object) [
-                                'id' => 2,
-                                'title' => 'Login screen renders',
-                                'lastResult' => TestResultEnum::pass->value,
-                                'timestamp'=> now(),
-                                'type' => TestTypeEnum::automated->value,
-                                'error' => null
+                                'id' => '002_User_cannot_login_with_invalid_credentials',
+                                'title' => '002_User_cannot_login_with_invalid_credentials',
+                                'type' => 'automated',
+                                'url' => 'https://github.com/laposa/musgrave-supervalu/blob/master/tests/loyalty-mobile-app/maestro/.flows/automated/01_Identity_Login/002_User_cannot_login_with_invalid_credentials.yaml',
                             ],
-                        ]
+                        ],
                     ],
                     (object) [
                         'id' => 2,
@@ -287,22 +251,18 @@ class SessionsController extends Controller
                         'failed' => 2,
                         'tests' => [
                             (object) [
-                                'id' => 1,
-                                'title' => 'Login screen renders',
-                                'lastResult' => TestResultEnum::notRun->value,
-                                'timestamp'=> now(),
-                                'type' => TestTypeEnum::manual->value,
-                                'error' => null
+                                'id' => '010_User_can_register_a_new_account_creating_a_new_card',
+                                'title' => '010_User_can_register_a_new_account_creating_a_new_card',
+                                'type' => 'automated',
+                                'url' => 'https://github.com/laposa/musgrave-supervalu/blob/master/tests/loyalty-mobile-app/maestro/.flows/automated/02_Identity_Registration/010_User_can_register_a_new_account_creating_a_new_card.yaml',
                             ],
                             (object) [
-                                'id' => 2,
-                                'title' => 'Login screen renders',
-                                'lastResult' => TestResultEnum::pass->value,
-                                'timestamp'=> now(),
-                                'type' => TestTypeEnum::automated->value,
-                                'error' => null
+                                'id' => '219_User_has_valid_Register_screens_content_displayed',
+                                'title' => '219_User_has_valid_Register_screens_content_displayed.',
+                                'type' => 'automated',
+                                'url' => 'https://github.com/laposa/musgrave-supervalu/blob/master/tests/loyalty-mobile-app/maestro/.flows/automated/02_Identity_Registration/219_User_has_valid_Register_screens_content_displayed.yaml',
                             ],
-                        ]
+                        ],
                     ]
                 ]
             ]
