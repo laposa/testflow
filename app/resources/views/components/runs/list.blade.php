@@ -37,37 +37,37 @@
         <th>Timestamp</th>
         <th>Suite</th>
         <th>Session</th>
-        <th>Result</th>
+        <th>Status</th>
+        <th>Conclusion</th>
         <th>Code</th>
         <th>Error</th>
     </tr>
     </thead>
     <tbody>
-    @foreach($runs as $run)
+    @foreach($runs as $key => $run)
     <tr>
         <td>
-            <a href="/sessions/1/test/2/run/{{ $run->id }}">{{ $run->id }}</a>
+            <a href="/sessions/1/test/2/run/{{ $run['id'] }}">{{ $run['id'] }}</a>
         </td>
-        <td>{{$run->test->title }}</td>
-        <td>{{$run->timestamp}}</td>
-        <td>{{$run->suite}}</td>
-        <td>{{$run->session}}</td>
+        <td>{{$run['name'] }}</td>
+        <td>{{$run['run_started_at']}}</td>
+        <td>{{$key}}</td>
+        <td>{ TODO: SESSION }</td>
         <td>
-            @if ($run->result === "passed")
-                <span class="pass">Passed</span>
-            @else
-                <span class="fail">Failed</span>
-            @endif
+            <span class="{{ $run['status'] }}">{{ $run['status'] }}</span>
         </td>
         <td>
-            @if ($run->code)
+           <span class="{{ $run['conclusion'] }}">{{ $run['conclusion'] }}</span>
+        </td>
+        <td>
+            @if ($run['status'])
                 <a href="#">Show</a>
             @endif
         </td>
         <td>
-            @if ($run->error)
-                <a href="#">Show</a>
-            @endif
+{{--            @if ($run->error)--}}
+{{--                <a href="#">Show</a>--}}
+{{--            @endif--}}
         </td>
     </tr>
     @endforeach

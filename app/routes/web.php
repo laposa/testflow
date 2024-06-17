@@ -20,10 +20,12 @@ Route::group(['middleware' => 'auth'], function () {
      */
     Route::get('/github/callback', [\App\Http\Controllers\GithubAppController::class, 'callback']);
 
-    Route::get('/sessions', [\App\Http\Controllers\SessionsController::class, 'index'])->name('sessions.index');
-    Route::get('/sessions/create', [\App\Http\Controllers\SessionsController::class, 'create'])->name('sessions.create');
-    Route::get('/sessions/{session}', [\App\Http\Controllers\SessionsController::class, 'show'])->name('sessions.show');
-    Route::post('/sessions', [\App\Http\Controllers\SessionsController::class, 'store'])->name('sessions.store');
+    Route::get('/sessions', [\App\Http\Controllers\SessionController::class, 'index'])->name('sessions.index');
+    Route::get('/sessions/create', [\App\Http\Controllers\SessionController::class, 'create'])->name('sessions.create');
+    Route::get('/sessions/{session}', [\App\Http\Controllers\SessionController::class, 'show'])->name('sessions.show');
+    Route::post('/sessions', [\App\Http\Controllers\SessionController::class, 'store'])->name('sessions.store');
+
+    Route::post("/sessions/{session}/runs", [\App\Http\Controllers\SessionRunController::class, 'store'])->name('session.runs.store');
 
     Route::get('/sessions/{session}/test/{test}/run/{run}', [\App\Http\Controllers\RunsController::class, 'show'])->name('session.test.runs.show');
 

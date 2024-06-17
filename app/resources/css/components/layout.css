@@ -6,6 +6,7 @@
 :root {
     --primary: #5f9ea0;
     --primary-opaque: rgba(95, 158, 160, 0.5);
+    --danger: #ff0000;
 }
 
 * {

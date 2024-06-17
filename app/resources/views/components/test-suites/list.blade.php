@@ -1,4 +1,4 @@
-@props(['select' => false, 'suites' => []])
+@props(['select' => true, 'suites' => []])
 <table @class([])>
     <thead>
     <tr>
@@ -10,7 +10,8 @@
             </label>
         </th>
         @endif
-        <th>Test suite</th>
+            <th>Test suite</th>
+            <th>Workflow</th>
         <th class="center">Last result<br>Pass/Fail</th>
         <th>Tests</th>
     </tr>
@@ -20,23 +21,44 @@
         <tr>
             @if ($select)
             <td>
-                <label for="selector-suite-{{ $suite->id }}" class="checkbox suite">
-                    <input type="checkbox" id="selector-suite-{{ $suite->id }}">
-                    <span class="checkmark"></span>
-                </label>
+                <div class="suite-selector" data-value="{{ json_encode($suite) }}">
+                    <label for="selector-suite-{{ $suite['path'] }}" class="checkbox suite">
+                        <input type="checkbox" id="selector-suite-{{ $suite['path'] }}">
+                        <span class="checkmark"></span>
+                    </label>
+                </div>
             </td>
             @endif
-            <td>{{$suite->title}}</td>
-            <td class="center"><span class="pass">{{$suite->passed}}</span>/<span class="fail">{{ $suite->failed }}</span></td>
-            <td><span class="expand" data-target="selector-suite-tests-{{ $suite->id }}">Expand</span></td>
+                <td>{{$suite['path']}}</td>
+                <td>{{$suite['workflow']['name']}}</td>
+            <td class="center"><span class="pass">1</span>/<span class="fail">1</span></td>
+            <td><span class="expand" data-target="selector-suite-tests-{{ $suite['repository_id'] }}">Expand</span></td>
         </tr>
-        <tr id="selector-suite-tests-{{ $suite->id }}" class="collapsible">
+        <tr id="selector-suite-tests-{{ $suite['repository_id'] }}" class="collapsible">
             <td>
-                <x-tests.list :tests="$suite->tests" />
             </td>
         </tr>
         @endforeach
     </tbody>
 </table>
 
+
+<script>
+    document.querySelectorAll(".suite-selector").forEach((selector) => {
+        var checkbox = selector.querySelector('input[type="checkbox"]');
+        console.log(checkbox);
+        checkbox.addEventListener("change", (e) => {
+            if (checkbox.checked) {
+                const el = document.createElement('input');
+                const value = JSON.parse(selector.dataset.value);
+                el.type = 'hidden';
+                el.value = JSON.stringify(value);
+                el.name = `data[${value.path}]`;
+                selector.appendChild(el);
+            } else {
+                selector.querySelector('input[type="hidden"]').remove();
+            }
+        })
+    });
+</script>
 

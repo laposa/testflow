@@ -15,20 +15,12 @@ class InstallGithubApp
     {
         $data = GithubInstallationService::getAccessToken($installationId, GithubInstallationService::generateJWTWebToken());
 
-        $installation = Installation::updateOrCreate([
+        return Installation::updateOrCreate([
             'installation_id' => $installationId
         ], [
             'access_token' => $data['token'],
             'expires_at' => $data['expires_at'],
             'repository_selection' => $data['repository_selection']
         ]);
-
-        app(SyncRepositories::class)->handle($installation);
-
-        return $installation;
     }
-
-
-
-
 }
