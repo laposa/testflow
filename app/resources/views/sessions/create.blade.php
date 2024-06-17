@@ -1,12 +1,12 @@
 <x-layout>
     <x-portal-section title="Create new session" width="full">
         <div class="information">
-            <input type="text" id="sessionName" name="sessionName" required placeholder="Session name">
+            <input style="width: 400px;" required type="text" id="sessionName" name="sessionName" required placeholder="Session name">
             <select name="assignees" id="">
                 <option value="" disabled selected>Assign to</option>
-                <option value="1">User 1</option>
-                <option value="2">User 2</option>
-                <option value="3">User 3</option>
+                <option value="1">Norbert Laposa</option>
+                <option value="2">Hugo Dvorak</option>
+                <option value="3">Martin Miksovsky</option>
             </select>
         </div>
     </x-portal-section>

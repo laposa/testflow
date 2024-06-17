@@ -5,7 +5,7 @@
     </x-portal-section>
 
     <x-portal-section title="Test suites" width="full">
-        <x-test-suites.list :suites="$suites"/>
+        <x-test-suites.list :suites="$session->suites"/>
     </x-portal-section>
 
     <a href="#" class="button">Run selected tests</a>

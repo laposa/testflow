@@ -4,14 +4,12 @@
     <tr>
         @if ($select)
         <th>
-            <label for="selector-all" class="checkbox all">
-            <input type="checkbox" id="selector-all">
-            <span class="checkmark"></span>
-            </label>
         </th>
         @endif
         <th>Test suite</th>
+        @if (!$select)
         <th class="center">Last result<br>Pass/Fail</th>
+        @endif
         <th>Tests</th>
     </tr>
     </thead>
@@ -27,12 +25,18 @@
             </td>
             @endif
             <td><a href="{{$suite->url}}">{{$suite->title}}</a></td>
+            @if (!$select)
             <td class="center"><span class="pass">{{$suite->passed}}</span>/<span class="fail">{{ $suite->failed }}</span></td>
+            @endif
             <td><span class="expand" data-target="selector-suite-tests-{{ $suite->id }}">Expand</span></td>
         </tr>
         <tr id="selector-suite-tests-{{ $suite->id }}" class="collapsible">
+            @if ($select)
             <td colspan="4">
-                <x-tests.list :tests="$suite->tests" />
+            @else
+            <td colspan="3">
+            @endif
+                <x-tests.list :tests="$suite->tests" :select="$select" />
             </td>
         </tr>
         @endforeach

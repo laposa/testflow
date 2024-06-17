@@ -8,17 +8,16 @@
     <tr>
        @if ($select)
         <th>
-            <label for="selector-all" class="checkbox all">
-            <input type="checkbox" id="selector-all">
-            <span class="checkmark"></span>
-            </label>
+            
         </th>
         @endif
         <th>Test</th>
         <th>Type</th>
+        @if (!$select)
         <th>Last result</th>
         <th>Error</th>
         <th>Last run</th>
+        @endif
     </tr>
     </thead>
     <tbody>
@@ -34,7 +33,7 @@
         @endif
         <td>
             @if ($link)
-                <a href="/tests/{{ $test->id }}">{{ $test->title }}</a>
+                <a href="{{ $test->url }}">{{ $test->title }}</a>
             @else
                 <span>{{$test->title}}</span>
             @endif
@@ -46,6 +45,7 @@
                 <span>Manual</span>
             @endif
         </td>
+        @if (!$select)
         <td>
             @switch($test->lastResult)
                 @case(\App\Enums\TestResultEnum::pass->value)
@@ -69,6 +69,7 @@
 
             @endif
         </td>
+        @endif
     </tr>
   @endforeach
     </tbody>

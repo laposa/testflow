@@ -13,9 +13,9 @@
         />
         <select name="issuer" class="issuer">
             <option value="">All issuers</option>
-            <option value="issuer1">Issuer 1</option>
-            <option value="issuer2">Issuer 2</option>
-            <option value="issuer3">Issuer 3</option>
+            <option value="issuer1">Martin Miksovsky</option>
+            <option value="issuer2">Norbert Laposa</option>
+            <option value="issuer3">Hugo Dvorak</option>
         </select>
         <a href="/sessions/create">New session</a>
     </div>
