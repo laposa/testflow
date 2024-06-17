@@ -13,9 +13,9 @@
         />
         <select name="issuer" class="issuer">
             <option value="">All issuers</option>
-            <option value="issuer1">Issuer 1</option>
-            <option value="issuer2">Issuer 2</option>
-            <option value="issuer3">Issuer 3</option>
+            <option value="issuer1">Martin Miksovsky</option>
+            <option value="issuer2">Norbert Laposa</option>
+            <option value="issuer3">Hugo Dvorak</option>
         </select>
         <a href="/sessions/create">New session</a>
     </div>
@@ -27,16 +27,14 @@
         <th>Name</th>
         <th>Timestamp</th>
         <th>Issuer</th>
-        <th>Results</th>
     </tr>
     </thead>
     <tbody>
         @foreach($sessions as $session)
             <tr>
-                <td>{{$session->name}}</td>
+                <td><a href="/sessions/{{ $session->id }}">{{$session->name}}</a></td>
                 <td>{{$session->created_at->format('d M, Y') }}</td>
                 <td>{{$session->issuer}}</td>
-                <td><a href="/sessions/{{ $session->id }}">View</a></td>
             </tr>
         @endforeach
     </tbody>

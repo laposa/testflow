@@ -1,3 +1,3 @@
 <footer>
-    Copryight Laposa &copy;2024 | <a href="#">Report an issue</a> | <a href="/service-health">Service Status: </a> <span class="status online">Online</span>
+    &copy;{{ now()->format('Y') }} Laposa Limited | <a href="mailto:{{ env('SUPPORT_EMAIL') }}">Report an issue</a> | <a href="/maintenance">Service Status: </a> <span class="status online">Online</span>
 </footer>

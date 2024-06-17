@@ -4,16 +4,14 @@
     <tr>
         @if ($select)
         <th>
-            <label for="selector-all" class="checkbox all">
-            <input type="checkbox" id="selector-all"}>
-            <span class="checkmark"></span>
-            </label>
         </th>
         @endif
+
             <th>Test suite</th>
             <th>Workflow</th>
         <th class="center">Last result<br>Pass/Fail</th>
-        <th>Tests</th>
+        @endif
+        <th></th>
     </tr>
     </thead>
     <tbody>

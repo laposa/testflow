@@ -6,7 +6,7 @@
     background-color: white;
     padding: 20px 0;
 
-    & .tiles__item {
+    .tiles__item {
         padding: 1rem;
         min-height: 150px;
         transition: 0.5s ease;
@@ -27,19 +27,19 @@
             }
         }
 
-        & p {
+        p {
             font-size: 1rem;
             color: black;
             transition: 0.5s ease;
             margin-top: 0;
         }
 
-        & strong {
+        strong {
             font-size: 2rem;
             margin-bottom: 0;
         }
 
-        &:hover {
+        :hover {
             background-color: var(--primary);
             color: white;
 
@@ -49,7 +49,7 @@
         }
     }
 
-    &.full {
+    .full {
         grid-column: span 2;
     }
 }

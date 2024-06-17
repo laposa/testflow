@@ -8,14 +8,14 @@ footer {
     align-items: center;
     justify-content: center;
 
-    & a {
+    a {
         font-size: 0.8rem;
         text-decoration: none;
         margin-left: 5px;
         margin-right: 5px;
     }
 
-    & .status {
+    .status {
         font-weight: bold;
 
         &:before {
