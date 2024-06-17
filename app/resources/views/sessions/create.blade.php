@@ -1,18 +1,36 @@
 <x-layout>
-    <x-portal-section title="Create new session" width="full">
-        <div class="information">
-            <input style="width: 400px;" required type="text" id="sessionName" name="sessionName" required placeholder="Session name">
-            <select name="assignees" id="">
-                <option value="" disabled selected>Assign to</option>
-                <option value="1">Norbert Laposa</option>
-                <option value="2">Hugo Dvorak</option>
-                <option value="3">Martin Miksovsky</option>
-            </select>
-        </div>
-    </x-portal-section>
-    <x-portal-section title="Test suites" width="full">
-        <x-test-suites.list :select="true" :suites="$suites"/>
-    </x-portal-section>
+    <form action="/sessions" method="POST">
+        @if ($errors->any())
+            <div class="error-list">
+                <ul>
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+        @csrf
+        <x-portal-section title="Create new session" width="full">
+            <div class="information">
+                <input type="text"
+                       id="name"
+                       name="name"
+                       required
+                       placeholder="Session name"
+                       value="{{ old('name') }}"
+                >
+                <select name="assignees" id="">
+                    <option value="" disabled selected>Assign to</option>
+                    <option value="1">Norbert Laposa</option>
+                    <option value="2">Hugo Dvorak</option>
+                    <option value="3">Martin Miksovsky</option>
+                </select>
+            </div>
+        </x-portal-section>
+        <x-portal-section title="Test suites" width="full">
+            <x-test-suites.list :select="true" :suites="$suites"/>
+        </x-portal-section>
 
-    <a class="button" href="/sessions/1">Create</a>
+        <button type="submit" class="button" >Create</button>
+    </form>
 </x-layout>

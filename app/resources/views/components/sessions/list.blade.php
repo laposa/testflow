@@ -32,8 +32,8 @@
     <tbody>
         @foreach($sessions as $session)
             <tr>
-                <td><a href="/sessions/{{ $session->id }}">{{$session->title}}</a></td>
-                <td>{{$session->timestamp}}</td>
+                <td><a href="/sessions/{{ $session->id }}">{{$session->name}}</a></td>
+                <td>{{$session->created_at->format('d M, Y') }}</td>
                 <td>{{$session->issuer}}</td>
             </tr>
         @endforeach

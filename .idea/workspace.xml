@@ -4,13 +4,42 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="fe408510-faab-4558-9391-d2661a6f23b2" name="Changes" comment="" />
+    <list default="true" id="fe408510-faab-4558-9391-d2661a6f23b2" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/app/app/Actions/Github/DispatchSessionRun.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/app/Actions/Github/FetchSessionWorkflowRuns.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/app/Actions/Github/FetchTestSuites.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/app/Actions/Run/CreateRun.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/app/Actions/Session/CreateSession.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/app/Http/Controllers/SessionController.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/resources/css/components/error-list.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/.env.local.tpl" beforeDir="false" afterPath="$PROJECT_DIR$/app/.env.local.tpl" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/Actions/Github/FetchAvailableWorkflows.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/Actions/Github/InstallGithubApp.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/Actions/Github/InstallGithubApp.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/Actions/Github/SyncRepositories.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/Http/Controllers/GithubAppController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/Http/Controllers/GithubAppController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/Http/Controllers/SessionsController.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/Models/Installation.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/Models/Installation.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/Models/Repository.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/app/Services/GithubInstallationService.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/Services/GithubInstallationService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/composer.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/composer.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/composer.lock" beforeDir="false" afterPath="$PROJECT_DIR$/app/composer.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/database/migrations/2024_06_14_141144_create_repositories_table.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/resources/css/app.css" beforeDir="false" afterPath="$PROJECT_DIR$/app/resources/css/app.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/resources/css/components/layout.css" beforeDir="false" afterPath="$PROJECT_DIR$/app/resources/css/components/layout.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/resources/views/components/runs/list.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/resources/views/components/runs/list.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/resources/views/components/sessions/list.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/resources/views/components/sessions/list.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/resources/views/components/test-suites/list.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/resources/views/components/test-suites/list.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/resources/views/sessions/create.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/resources/views/sessions/create.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/resources/views/sessions/show.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/resources/views/sessions/show.blade.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/routes/web.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/web.php" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ComposerSettings" synchronizationState="SYNCHRONIZE">
+  <component name="ComposerSettings" doNotAsk="true" synchronizationState="SYNCHRONIZE">
     <pharConfigPath>$PROJECT_DIR$/app/composer.json</pharConfigPath>
     <execution />
   </component>
@@ -133,6 +162,19 @@
       <path value="$PROJECT_DIR$/app/vendor/laravel/tinker" />
       <path value="$PROJECT_DIR$/app/vendor/laravel/pint" />
       <path value="$PROJECT_DIR$/app/vendor/egulias/email-validator" />
+      <path value="$PROJECT_DIR$/app/vendor/lcobucci/jwt" />
+      <path value="$PROJECT_DIR$/app/vendor/symfony/polyfill-iconv" />
+      <path value="$PROJECT_DIR$/app/vendor/symfony/stopwatch" />
+      <path value="$PROJECT_DIR$/app/vendor/zbateson/mail-mime-parser" />
+      <path value="$PROJECT_DIR$/app/vendor/zbateson/stream-decorators" />
+      <path value="$PROJECT_DIR$/app/vendor/zbateson/mb-wrapper" />
+      <path value="$PROJECT_DIR$/app/vendor/phpstan/phpstan" />
+      <path value="$PROJECT_DIR$/app/vendor/pimple/pimple" />
+      <path value="$PROJECT_DIR$/app/vendor/spatie/backtrace" />
+      <path value="$PROJECT_DIR$/app/vendor/spatie/laravel-ray" />
+      <path value="$PROJECT_DIR$/app/vendor/spatie/macroable" />
+      <path value="$PROJECT_DIR$/app/vendor/spatie/ray" />
+      <path value="$PROJECT_DIR$/app/vendor/rector/rector" />
     </include_path>
   </component>
   <component name="ProjectId" id="2homrITzomouqS4dxcH3cAvLFEo" />
@@ -150,6 +192,8 @@
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "yarn",
+    "settings.editor.selected.configurable": "preferences.lookFeel",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -167,6 +211,10 @@
       <option name="presentableId" value="Default" />
       <updated>1718269002304</updated>
       <workItem from="1718269003403" duration="1545000" />
+      <workItem from="1718305313552" duration="231000" />
+      <workItem from="1718305635698" duration="599000" />
+      <workItem from="1718306846087" duration="4000" />
+      <workItem from="1718308003455" duration="18479000" />
     </task>
     <servers />
   </component>

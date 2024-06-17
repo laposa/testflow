@@ -18,13 +18,16 @@ Route::group(['middleware' => 'auth'], function () {
         return view('dashboard.index');
     });
 
+    // Github App Routes
+    Route::get('/github/callback', [\App\Http\Controllers\GithubAppController::class, 'callback']);
+
     // list of previous sessions, allow create new session
-    Route::get('/sessions', [\App\Http\Controllers\SessionsController::class, 'index'])->name('sessions.index');
+    Route::get('/sessions', [\App\Http\Controllers\SessionController::class, 'index'])->name('sessions.index');
     // show list of all available tests loaded from GitHub - automated and manual and allow to select any of them
-    Route::get('/sessions/create', [\App\Http\Controllers\SessionsController::class, 'create'])->name('sessions.create');
-    Route::post('/sessions/create', [\App\Http\Controllers\SessionsController::class, 'store'])->name('sessions.store');
+    Route::get('/sessions/create', [\App\Http\Controllers\SessionController::class, 'create'])->name('sessions.create');
+    Route::post('/sessions/create', [\App\Http\Controllers\SessionController::class, 'store'])->name('sessions.store');
     // show selected tests and their previous runs history and allow to execute all or subselection
-    Route::get('/sessions/{session}', [\App\Http\Controllers\SessionsController::class, 'show'])->name('sessions.show');
+    Route::get('/sessions/{session}', [\App\Http\Controllers\SessionController::class, 'show'])->name('sessions.show');
     // list of previous runs for this test and button “new run”
     Route::get('/sessions/{session}/test/{test}', [\App\Http\Controllers\RunsController::class, 'show'])->name('session.test.show');
     /**
