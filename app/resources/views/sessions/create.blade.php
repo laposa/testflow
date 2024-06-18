@@ -12,19 +12,13 @@
         @csrf
         <x-portal-section title="Create new session" width="full">
             <div class="information">
-                <input type="text"
+                <input style="width:100%" type="text"
                        id="name"
                        name="name"
                        required
                        placeholder="Session name"
                        value="{{ old('name') }}"
                 >
-                <select name="assignees" id="">
-                    <option value="" disabled selected>Assign to</option>
-                    <option value="1">Norbert Laposa</option>
-                    <option value="2">Hugo Dvorak</option>
-                    <option value="3">Martin Miksovsky</option>
-                </select>
             </div>
         </x-portal-section>
         <x-portal-section title="Test suites" width="full">

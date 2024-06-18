@@ -8,8 +8,6 @@
         @endif
 
             <th>Test suite</th>
-            <th>Workflow</th>
-        <th class="center">Last result<br>Pass/Fail</th>
         <th></th>
     </tr>
     </thead>
@@ -27,8 +25,6 @@
             </td>
             @endif
                 <td>{{$suite['path']}}</td>
-                <td>{{$suite['workflow']['name']}}</td>
-            <td class="center"><span class="pass">1</span>/<span class="fail">1</span></td>
             <td><span class="expand" data-target="selector-suite-tests-{{ $suite['repository_id'] }}">Expand</span></td>
         </tr>
         <tr id="selector-suite-tests-{{ $suite['repository_id'] }}" class="collapsible">
