@@ -23,7 +23,7 @@
         </td>
         <td>
            <!--<span class="{{ $run['conclusion'] }}">{{ $run['conclusion'] }}</span>-->
-           <span class="pass">29 passed</span> / <span class="fail">2 failed</span>
+           <span class="pass">29 passed</span> and <span class="fail">2 failed</span>
         </td>
     </tr>
     @endforeach
