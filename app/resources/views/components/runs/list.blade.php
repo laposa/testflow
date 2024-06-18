@@ -7,15 +7,11 @@
         <th>Test Name</th>
         <th>Timestamp</th>
         <th>Suite</th>
-<<<<<<< HEAD
-        <th>Result</th>
-=======
         <th>Session</th>
         <th>Status</th>
         <th>Conclusion</th>
         <th>Code</th>
         <th>Error</th>
->>>>>>> master
     </tr>
     </thead>
     <tbody>
