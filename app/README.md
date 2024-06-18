@@ -28,6 +28,5 @@ php artisan serve
 - login via GitHub
 - temp: link GitHub installation id in installations table:
 ```
-sqlite3 database/database.sqlite
-sqlite> insert into installations(id,installation_id,access_token,expires_at,repository_selection,created_at,updated_at) values (1,"51847197","ghs_SHEuPff5DjYqZiKxsjaqDt4mzMocr01blJXw","2024-06-17T16:51:08Z","selected", "2024-06-17 13:47:17","2024-06-17 15:51:08");
+sqlite3 database/database.sqlite 'insert into installations(id,installation_id,access_token,expires_at,repository_selection,created_at,updated_at) values (1,"51847197","ghs_SHEuPff5DjYqZiKxsjaqDt4mzMocr01blJXw","2024-06-17T16:51:08Z","selected", "2024-06-17 13:47:17","2024-06-17 15:51:08");' '.exit'
 ```
