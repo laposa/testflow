@@ -27,17 +27,13 @@ Route::group(['middleware' => 'auth'], function () {
     Route::get('/sessions/create', [\App\Http\Controllers\SessionController::class, 'create'])->name('sessions.create');
     Route::post('/sessions', [\App\Http\Controllers\SessionController::class, 'store'])->name('sessions.store');
     Route::post('/sessions/create', [\App\Http\Controllers\SessionController::class, 'store'])->name('sessions.store');
-    // show selected tests and their previous runs history and allow to execute all or subselection
+    // show selected tests and their previous runs history and allow to execute another run
     Route::get('/sessions/{session}', [\App\Http\Controllers\SessionController::class, 'show'])->name('sessions.show');
     // runs for the session    
     Route::post("/sessions/{session}/runs", [\App\Http\Controllers\SessionRunController::class, 'store'])->name('session.runs.store');
-
-    // list of previous runs for this test and button “new run”
-    
-    Route::get('/sessions/{session}/test/{test}', [\App\Http\Controllers\RunsController::class, 'show'])->name('session.test.show');
     /**
      * for manual, checkboxes with option to add comments
      * for automated, show button to execute
      */
-     Route::get('/sessions/{session}/test/{test}/run/{run}', [\App\Http\Controllers\RunsController::class, 'show'])->name('session.test.runs.show');
+     Route::get('/sessions/{session}/run/{run}', [\App\Http\Controllers\SessionRunController::class, 'show'])->name('session.runs.show');
 });
