@@ -9,7 +9,6 @@ Route::get('/auth/callback', [AuthController::class, 'callback']);
 Route::get('/auth/logout', [AuthController::class, 'logout']);
 
 Route::get('/login', [AuthController::class, 'login'])->name('login');
-Route::get('/maintenance', [\App\Http\Controllers\MaintenanceController::class, 'index']);
 
 Route::group(['middleware' => 'auth'], function () {
 

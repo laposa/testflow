@@ -1,5 +1,5 @@
 <x-layout>
-    <h1>{{ $session->title }}</h1>
+    <h1>{{ $session->name }}</h1>
     @foreach($session->workflow_runs as $suite => $runs)
         <x-portal-section title="{{ $suite }}" width="full">
             <x-runs.list :runs="$runs" />
@@ -16,6 +16,4 @@
         <x-test-suites.list :suites="$session->data"/>
     </x-portal-section>
 
-    
-    
 </x-layout>

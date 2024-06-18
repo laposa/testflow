@@ -1,6 +1,3 @@
-@php
-    $hide_menu = true
-@endphp
 <header>
     <div class="header">
         <a href="/" class="logo">LTP<img src="/images/icons/logo_check.svg"></a>
@@ -19,13 +16,4 @@
         </div>
         @endif
     </div>
-    @if (!$hide_menu)
-        <ul class="menu">
-            <li><a href="/sessions">Sessions</a></li>
-            <li><a href="/tests">Tests</a></li>
-            <li><a href="/runs">Runs</a></li>
-            <li><a href="/maintenance">Maintenance</a></li>
-
-        </ul>
-    @endif
 </header>

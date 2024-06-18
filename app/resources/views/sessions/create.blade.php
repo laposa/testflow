@@ -21,7 +21,7 @@
                 >
             </div>
         </x-portal-section>
-        <x-portal-section title="Test suites" width="full">
+        <x-portal-section width="full">
             <x-test-suites.select :select="true" :suites="$suites"/>
         </x-portal-section>
 
