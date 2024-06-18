@@ -14,4 +14,12 @@ class SessionRunController extends Controller
 
         return redirect()->route('sessions.show', $session);
     }
+
+    public function show(Session $session) {
+        $session = $session->append('workflow_runs');
+        ray($session->workflow_runs);
+        return view('sessions.run', [
+            'session' => $session
+        ]);
+    }
 }
