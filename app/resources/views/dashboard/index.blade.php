@@ -1,12 +1,4 @@
 <x-layout>
-        <x-portal-section title="Service status">
-            <ul>
-                <li>Authorised github ID: <a href="https://github.com/norbertlaposa">@norbertlaposa</a></li>
-                <li>Installed under organization: <a href="https://github.com/laposa">@laposa</a></li>
-                <li>Available repositories linked to portal: <strong class="online">23 repositories</strong></li>
-            </ul>
-            <a href="/settings" class="button">Update settings</a>
-        </x-portal-section>
         <x-portal-section title="Recent sessions" width="full">
             <ul>
                 <li><a href="/sessions/1">Real Rewards API v3.6</a>: <strong class="online">157 passed</strong> and <strong class="alert">3 failed.</strong></i></li>
@@ -15,5 +7,13 @@
             </ul>
             <a href="/sessions" class="button">View all sessions</a>
             <a href="/sessions/create" class="button">Create new session</a>
+        </x-portal-section>
+        <x-portal-section title="Service status">
+            <ul>
+                <li>Authorised github ID: <a href="https://github.com/norbertlaposa">@norbertlaposa</a></li>
+                <li>Installed under organization: <a href="https://github.com/laposa">@laposa</a></li>
+                <li>Available repositories linked to portal: <strong class="online">23 repositories</strong></li>
+            </ul>
+            <a href="/settings" class="button">Update settings</a>
         </x-portal-section>
 </x-layout>

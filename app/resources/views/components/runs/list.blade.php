@@ -6,10 +6,8 @@
         <th>Run ID</th>
         <th>Test Name</th>
         <th>Timestamp</th>
-        <th>Suite</th>
-        <th>Session</th>
         <th>Status</th>
-        <th>Conclusion</th>
+        <th>Results</th>
     </tr>
     </thead>
     <tbody>
@@ -20,14 +18,12 @@
         </td>
         <td>{{$run['name'] }}</td>
         <td>{{$run['run_started_at']}}</td>
-        <td>{{$key}}</td>
-        <td>{ TODO: SESSION }</td>
         <td>
             <span class="{{ $run['status'] }}">{{ $run['status'] }}</span>
         </td>
-
         <td>
-           <span class="{{ $run['conclusion'] }}">{{ $run['conclusion'] }}</span>
+           <!--<span class="{{ $run['conclusion'] }}">{{ $run['conclusion'] }}</span>-->
+           <span class="pass">29 passed</span> / <span class="fail">2 failed</span>
         </td>
     </tr>
     @endforeach

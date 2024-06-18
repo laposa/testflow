@@ -2,12 +2,7 @@
 <table @class([])>
     <thead>
     <tr>
-        @if ($select)
-        <th>
-        </th>
-        @endif
-
-            <th>Test suite</th>
+        <th colspan="2">Select tests</th>
         <th></th>
     </tr>
     </thead>
@@ -28,7 +23,7 @@
             <td><span class="expand" data-target="selector-suite-tests-{{ $suite['repository_id'] }}">Expand</span></td>
         </tr>
         <tr id="selector-suite-tests-{{ $suite['repository_id'] }}" class="collapsible">
-            <td>
+            <td colspan="3">
             </td>
         </tr>
         @endforeach
