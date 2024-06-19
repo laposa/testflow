@@ -20,7 +20,7 @@
                 </div>
             </td>
             @endif
-            <td>{{$suite['full_path']}}</td>
+            <td>{{str_replace(['laposa/', 'tests/'], '', $suite['full_path'])}}</td>
             <td><span class="expand" data-target="selector-suite-tests-{{ $suite['full_path'] }}">Expand</span></td>
         </tr>
         <tr id="selector-suite-tests-{{ $suite['full_path'] }}" class="collapsible">

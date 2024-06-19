@@ -18,6 +18,7 @@ return new class extends Migration
                 table: 'users'
             );
             $table->string('name');
+            $table->json('data');
             $table->timestamps();
         });
     }

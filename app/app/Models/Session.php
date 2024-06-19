@@ -11,10 +11,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Session extends Model
 {
     protected $fillable = [
+        'issuer_id',
         'name',
+        'data',
     ];
 
     protected $table = 'test_sessions';
+
+    protected function casts(): array
+    {
+        return [
+            'data' => 'array'
+        ];
+    }
 
     public function installation(): BelongsTo
     {
