@@ -12,13 +12,19 @@
         @csrf
         <x-portal-section title="Create new session" width="full">
             <div class="information">
-                <input style="width:100%" type="text"
+                <input style="width:60%" type="text"
                        id="name"
                        name="name"
                        required
                        placeholder="Session name"
                        value="{{ old('name') }}"
                 >
+                <select>
+                    <option>Prod environment</option>
+                    <option>Beta environment</option>
+                    <option>PreProd environment</option>
+                    <option>Dev environment</option>
+                </select>
             </div>
         </x-portal-section>
         <x-portal-section width="full">

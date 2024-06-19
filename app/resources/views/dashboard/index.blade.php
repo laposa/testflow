@@ -1,9 +1,9 @@
 <x-layout>
         <x-portal-section title="Recent sessions" width="full">
             <ul>
-                <li><a href="/sessions/1">Real Rewards API v3.6</a>: <strong class="online">157 passed</strong> and <strong class="alert">3 failed.</strong></i></li>
-                <li><a href="/sessions/2">SuperValu Website 05</a>: <strong class="online">130 passed</strong> and <strong class="alert">32 failed.</strong></i></li>
-                <li><a href="/sessions/3">Frank and Honest v1.3</a>: <strong class="online">28 passed</strong> and <strong class="alert">3 failed.</strong></i></li>
+                <li><a href="/sessions/4">Real Rewards API v3.6 build 10 Laposa internal</a>: <strong class="online">157 passed</strong> and <strong class="alert">3 failed.</strong></i></li>
+                <li><a href="/sessions/3">SuperValu Website 05</a>: <strong class="online">130 passed</strong> and <strong class="alert">32 failed.</strong></i></li>
+                <li><a href="/sessions/2">Frank and Honest v1.3 build 24 Musgrave UAT</a>: <strong class="online">28 passed</strong> and <strong class="alert">3 failed.</strong></i></li>
             </ul>
             <a href="/sessions" class="button">View all sessions</a>
             <a href="/sessions/create" class="button">Create new session</a>

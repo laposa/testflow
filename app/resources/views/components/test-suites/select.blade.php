@@ -1,5 +1,5 @@
 @props(['select' => true, 'tests' => []])
-<table @class([])>
+<table class="select">
     <thead>
         <tr>
             <th colspan="2">Select tests</th>
