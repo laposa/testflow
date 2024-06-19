@@ -11,11 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('runs', function (Blueprint $table) {
+        Schema::create('test_session_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('session_id')->constrained()->cascadeOnDelete();
-            $table->string('github_run_id');
-            $table->enum('status', ['passed', 'failed', 'in_progress', 'queued'])->default('queued');
+            $table->foreignId('session_id')->constrained();
+            $table->string('service_name');
+            $table->string('suite_name');
+            $table->string('test_name');
+            $table->string('service_url');
             $table->timestamps();
         });
     }
@@ -25,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('runs');
+        Schema::dropIfExists('test_session_items');
     }
 };

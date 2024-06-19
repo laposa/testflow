@@ -23,8 +23,7 @@ class FetchTestSuites
 
         collect(Arr::get($repositories, 'repositories', []))
             ->each(function ($repository) use (&$suites) {
-                $contents = $this->fetchContents($repository);
-
+                $contents = $this->fetchTests($repository);
                 if ($contents) {
                     $workflows = $this->fetchWorkflows($repository);
                     array_push(
@@ -48,6 +47,8 @@ class FetchTestSuites
                 "repository_id" => $repository['id'],
                 "repository_name" => $repository['full_name'],
                 "path" => "{$repository['full_name']}/{$directory['path']}",
+                "url" => $directory['url'],
+                "children" => $directory['children'],
                 "workflow" => collect(Arr::get($workflows, 'workflows', []))
                     // TODO: Filter by workflow name?
                     ->filter(fn ($workflow) => $workflow['name'] === "Run integration tests")
@@ -57,15 +58,56 @@ class FetchTestSuites
             ->toArray();
     }
 
-    protected function fetchContents($repository) {
+    protected function fetchTests($repository) {
         try {
-            return $this->client->fetchRepositoryContents(
-                fullName: $repository['full_name'],
-                path: 'tests'
-            );
+            $latestCommit = $this->client->fetchLatestCommit($repository['full_name']);
+            return $this->fetchDirectoryRecursive($repository, [
+                'path' => 'tests',
+                'url' => "{$repository['html_url']}/tree/{$latestCommit['sha']}/tests",
+            ]);
         } catch (\Exception $e) {
             return null;
         }
+    }
+
+    protected function fetchDirectoryRecursive($repository, $parent, $level = 1) {
+        if ($level > 3) {
+            return [];
+        }
+
+        // the folder structure is tests/{service}/tests/{suite}/{test}
+        $path = $parent['path'];
+        if ($level == 2) {
+            $path = "{$path}/tests";
+        }
+
+        $dirs = $this->client->fetchRepositoryContents(
+            fullName: $repository['full_name'],
+            path: $path,
+        );
+
+        if (isset($dirs['status'])) {
+            return [];
+        }
+
+        // if the directory is a file, return an empty array
+        if (isset($dirs['name'])) {
+            return [];
+        }
+
+        $dirs = collect($dirs)
+            ->map(fn ($dir) => [
+                'full_path' => "{$repository['full_name']}/{$dir['path']}",
+                'path' => $dir['path'],
+                'name' => $dir['name'],
+                'url' => "{$parent['url']}/{$dir['name']}",
+                'children' => $this->fetchDirectoryRecursive($repository, $dir, $level + 1),
+            ])
+            // filter out everything that starts with an underscore
+            // eg. _utils
+            ->filter(fn ($dir) => $dir['name'][0] !== '_');
+
+        return $dirs->toArray();
     }
 
     protected function fetchWorkflows($repository) {

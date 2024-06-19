@@ -22,7 +22,7 @@
             </div>
         </x-portal-section>
         <x-portal-section width="full">
-            <x-test-suites.select :select="true" :suites="$suites"/>
+            <x-test-suites.select :select="true" :tests="$tests"/>
         </x-portal-section>
 
         <button type="submit" class="button" >Create</button>
