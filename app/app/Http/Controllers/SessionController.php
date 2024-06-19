@@ -12,9 +12,6 @@ use Illuminate\Support\Facades\Cache;
 class SessionController extends Controller
 {
     public function index() {
-
-
-
         return view('sessions.index', [
             'sessions' => Session::all(),
         ]);
@@ -29,10 +26,9 @@ class SessionController extends Controller
     }
 
     public function create(FetchTestSuites $fetchTestSuites) {
-        $suites = Cache::remember('suites', now()->addHour(), fn () => $fetchTestSuites->handle());
-
+        $tests = Cache::remember('suites', now()->addHour(), fn () => $fetchTestSuites->handle());
         return view('sessions.create', [
-            'suites' => $suites,
+            'tests' => $tests,
         ]);
     }
 

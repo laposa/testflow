@@ -4,7 +4,6 @@ namespace App\Actions\Session;
 
 
 use App\Models\Installation;
-use App\Models\Session;
 use Illuminate\Support\Facades\Validator;
 
 class CreateSession
@@ -22,6 +21,7 @@ class CreateSession
 
         $session = $installation->sessions()->create([
             'name' => $validated['name'],
+            'issuer_id' => auth()->id(),
             'data' => collect($validated["data"])->map(fn($item) => json_decode($item, true)),
         ]);
         $session->save();

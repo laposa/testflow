@@ -123,4 +123,11 @@ class GithubInstallationService
         return $response->json();
     }
 
+    public function fetchLatestCommit(string $repository, string $branch = 'master')
+    {
+        $response = $this->withHeaders()->get("/repos/{$repository}/commits/{$branch}", [
+            'per_page' => 1,
+        ]);
+        return $response->json();
+    }
 }
