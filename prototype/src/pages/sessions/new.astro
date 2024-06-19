@@ -1,7 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import PortalSection from '../../components/PortalSection.astro';
-import TestSuiteList from '../../components/TestSuiteList.astro';
+import TestSuiteList from '../../components/TestSuiteSelectList.astro';
 import TestList from '../../components/TestList.astro';
 ---
 
@@ -9,12 +9,6 @@ import TestList from '../../components/TestList.astro';
 	<PortalSection title="Create new session" width="full">
 		<div class="information">
 			<input type="text" id="sessionName" name="sessionName" required placeholder="Session name">
-			<select name="assignees" id="">
-				<option value="" disabled selected>Assign to</option>
-				<option value="1">User 1</option>
-				<option value="2">User 2</option>
-				<option value="3">User 3</option>
-			</select>
 		</div>
   </PortalSection>
 

@@ -7,9 +7,9 @@ import TestSuiteList from '../../components/TestSuiteList.astro';
 
 export async function getStaticPaths() {
   const sessions = [
-    { slug: '1', id: 1, title: "Session 1"},
-    { slug: '2', id: 2, title: "Session 2"},
-    { slug: '3', id: 3, title: "Session 3"}
+    { slug: '1', id: 1, title: "SuperValu Loyalty v3.6"},
+    { slug: '2', id: 2, title: "Security updates 06"},
+    { slug: '3', id: 3, title: "Security updated 05"}
   ];
 
   return sessions.map(( { slug, id, title }) => {
@@ -22,13 +22,13 @@ export async function getStaticPaths() {
 ---
 
 <Layout title="Test Portal | Session 1">
-  <h1>Session 1</h1>
+  <h1>SuperValu Loyalty v3.6</h1>
 
   <PortalSection title="Test suites" width="full">
     <TestSuiteList selector="suite" select={true} tests={freshTests} fresh={true}/>
   </PortalSection>
 
-  <a href="/sessions/2" class="button">Run selected tests</a>
+  <div></div>
   <a href="/sessions/2" class="button align-right">Run all tests</a>
 </Layout>
 
