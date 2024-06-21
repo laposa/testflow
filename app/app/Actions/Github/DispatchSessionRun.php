@@ -4,41 +4,38 @@ namespace App\Actions\Github;
 
 use App\Models\Session;
 use App\Services\GithubInstallationService;
-use Illuminate\Support\Arr;
 
 class DispatchSessionRun
 {
-    public function handle(Session $session, array $data = []): array
+    public function handle(Session $session)
     {
         $client = new GithubInstallationService($session->installation);
 
-        $workflows = collect($session->data)
-            ->map(fn($suite) => $this->dispatchWorkflow(
-                client: $client,
-                suite: $suite,
-                data: $data
-            ))
+        collect($session->items)
+            ->groupBy('workflow_id')
+            ->map(fn($tests) => $this->dispatchWorkflow($client, $session, $tests->toArray()))
             ->toArray();
-
-        // TODO: Save runs to the DB
-        // Dispatching a workflow doesn't return the run ID
-
-        /**
-         collect($workflows)->each(fn ($workflow) => $session->runs()->create([
-            'github_run_id' => Arr::get($workflow, 'id'),
-            ...
-         ]));
-         */
-
-        return $workflows;
     }
 
-    protected function dispatchWorkflow(GithubInstallationService $client, array $suite, array $data)
+    protected function dispatchWorkflow(GithubInstallationService $client, Session $session, array $tests)
     {
-        return $client->dispatchWorkflow(
-            repository: Arr::get($suite, 'repository_name'),
-            workflowId: Arr::get($suite, 'workflow.id'),
-            inputs: Arr::get($data, 'inputs', [])
+        $testFilter = collect($tests)->map((fn ($test) => explode('.', $test['test_name'])[0] ))->join('|');
+
+        $client->dispatchWorkflow(
+            repository: $tests[0]['repository_name'],
+            workflowId: $tests[0]['workflow_id'],
+            inputs: [
+                'environment' => $session->environment,
+                'test_filter' => $testFilter,
+            ]
         );
+
+        // create run in the DB
+        // it will be matched with the run ID later (based on timestamp)
+        $run = $session->runs()->create([
+            'status' => 'unknown',
+        ]);
+
+        $run->items()->attach(collect($tests)->pluck('id'));
     }
 }

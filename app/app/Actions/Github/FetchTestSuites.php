@@ -26,36 +26,45 @@ class FetchTestSuites
                 $contents = $this->fetchTests($repository);
                 if ($contents) {
                     $workflows = $this->fetchWorkflows($repository);
-                    array_push(
-                        $suites,
-                        ...$this->formatSuites(
-                            contents: $contents,
-                            repository: $repository,
-                            workflows: $workflows
-                        )
-                    );
+                    $suites = array_merge($suites, $this->formatTests($contents, $repository, $workflows));
                 }
             });
 
         return $suites;
     }
 
-    protected function formatSuites($contents, $repository, $workflows)
+    protected function formatTests($contents, $repository, $workflows)
     {
-        return collect($contents)
-            ->map(fn ($directory) => [
-                "repository_id" => $repository['id'],
-                "repository_name" => $repository['full_name'],
-                "path" => "{$repository['full_name']}/{$directory['path']}",
-                "url" => $directory['url'],
-                "children" => $directory['children'],
-                "workflow" => collect(Arr::get($workflows, 'workflows', []))
-                    // TODO: Filter by workflow name?
-                    ->filter(fn ($workflow) => $workflow['name'] === "Run integration tests")
-                    ->first()
-            ]
-            )
-            ->toArray();
+        $tests = [];
+        // imitate DB structure for consistency
+        foreach ($contents as $service) {
+            foreach ($service['children'] as $suite) {
+                foreach ($suite['children'] as $test) {
+                    $workflow = collect(Arr::get($workflows, 'workflows', []))
+                        ->filter(fn ($workflow) => str_ends_with($workflow['path'], getWorkflowFilename($service['name'])))
+                        ->first();
+
+                    $item = [
+                        "repository_id" => $repository['id'],
+                        "repository_name" => $repository['full_name'],
+                        "service_name" => $service['name'],
+                        "service_url" => $service['url'],
+                        "suite_name" => $suite['name'],
+                        "test_name" => $test['name'],
+                    ];
+
+                    if ($workflow) {
+                        $item['workflow_id'] = $workflow['id'];
+                    }
+
+
+                    $tests[] = $item;
+                }
+            }
+        }
+
+        // group by repository_name/service_name/suite_name for easier access
+        return collect($tests)->groupBy(fn ($test) => "{$test['repository_name']}/{$test['service_name']}/{$test['suite_name']}")->toArray();
     }
 
     protected function fetchTests($repository) {

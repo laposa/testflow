@@ -130,4 +130,10 @@ class GithubInstallationService
         ]);
         return $response->json();
     }
+
+    public function fetchWorkflowRunLog(string $repository, string $runId)
+    {
+        $response = $this->withHeaders()->get("/repos/{$repository}/actions/runs/{$runId}/logs");
+        return $response->body();
+    }
 }

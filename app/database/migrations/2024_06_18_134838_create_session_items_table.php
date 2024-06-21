@@ -13,7 +13,13 @@ return new class extends Migration
     {
         Schema::create('test_session_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('session_id')->constrained();
+            $table->foreignId('session_id')
+                ->constrained('test_sessions')
+                ->onDelete('cascade')
+                ->onUpdate('cascade');
+            $table->unsignedInteger('repository_id');
+            $table->unsignedInteger('workflow_id');
+            $table->string('repository_name');
             $table->string('service_name');
             $table->string('suite_name');
             $table->string('test_name');

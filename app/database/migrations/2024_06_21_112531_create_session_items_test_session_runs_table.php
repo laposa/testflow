@@ -11,14 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('test_sessions', function (Blueprint $table) {
+        Schema::create('test_session_items_test_session_runs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('installation_id')->constrained()
+            $table->foreignId('session_item_id')
+                ->constrained('test_session_items')
                 ->onDelete('cascade')
                 ->onUpdate('cascade');
-            $table->foreignId('issuer_id')->constrained('users');
-            $table->string('name');
-            $table->string('environment');
+            $table->foreignId('session_run_id')
+                ->constrained('test_session_runs')
+                ->onDelete('cascade')
+                ->onUpdate('cascade');
             $table->timestamps();
         });
     }
@@ -28,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('test_sessions');
+        Schema::dropIfExists('test_session_items_test_session_runs');
     }
 };
