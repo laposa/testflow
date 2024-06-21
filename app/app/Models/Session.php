@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Actions\Github\FetchSessionWorkflowRuns;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,18 +11,11 @@ class Session extends Model
 {
     protected $fillable = [
         'issuer_id',
+        'environment',
         'name',
-        'data',
     ];
 
     protected $table = 'test_sessions';
-
-    protected function casts(): array
-    {
-        return [
-            'data' => 'array'
-        ];
-    }
 
     public function installation(): BelongsTo
     {
@@ -40,15 +32,15 @@ class Session extends Model
         return $this->hasMany(SessionItem::class);
     }
 
+    public function itemsGrouped(): Attribute
+    {
+        return new Attribute(
+            get: fn () => $this->items->groupBy(fn ($item) => $item->repository_name . $item->service_name . $item->suite_name)
+        );
+    }
+
     public function runs(): HasMany
     {
         return $this->hasMany(SessionRun::class);
-    }
-
-    protected function workflowRuns(): Attribute
-    {
-        return new Attribute(
-            get: fn () => app(FetchSessionWorkflowRuns::class)->handle($this)
-        );
     }
 }

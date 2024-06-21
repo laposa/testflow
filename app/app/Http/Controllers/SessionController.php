@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\Github\FetchSessionWorkflowRuns;
 use App\Actions\Github\FetchTestSuites;
 use App\Actions\Session\CreateSession;
 use App\Models\Installation;
@@ -17,18 +18,25 @@ class SessionController extends Controller
         ]);
     }
 
-    public function show(Session $session) {
-        $session = $session->append('workflow_runs');
-        ray($session->workflow_runs);
+    public function show(Session $session, FetchSessionWorkflowRuns $fetchSessionWorkflowRuns) {
+        $session = $session->load('items.runs');
+        $fetchSessionWorkflowRuns->handle($session);
+        $session = $session->load('items.runs');
+
         return view('sessions.show', [
             'session' => $session
         ]);
     }
 
     public function create(FetchTestSuites $fetchTestSuites) {
-        $tests = Cache::remember('suites', now()->addHour(), fn () => $fetchTestSuites->handle());
+        $suites = Cache::remember('suites', now()->addHour(), fn () => $fetchTestSuites->handle());
+
+        $suitesWithoutWorkflow = collect($suites)->filter(fn ($suite) => !isset($suite[0]['workflow_id']))->toArray();
+        $suites = collect($suites)->filter(fn ($suite) => isset($suite[0]['workflow_id']))->toArray();
+
         return view('sessions.create', [
-            'tests' => $tests,
+            'suites' => $suites,
+            'suitesWithoutWorkflow' => $suitesWithoutWorkflow,
         ]);
     }
 

@@ -12,19 +12,34 @@ class CreateSession
     {
         $validated = Validator::make($data, [
             'name' => ['required', 'string'],
-            'data' => ['required', 'array', 'min:1'],
-            'data.*' => ['required', 'json'],
+            'environment' => ['required', 'string'],
+            'tests' => ['required', 'array', 'min:1'],
+            'tests.*' => ['required', 'json'],
         ], [
-            'data' => 'Please select at least one test suite.',
+            'tests' => 'Please select at least one test suite.',
 
         ])->validate();
 
         $session = $installation->sessions()->create([
             'name' => $validated['name'],
+            'environment' => $validated['environment'],
             'issuer_id' => auth()->id(),
-            'data' => collect($validated["data"])->map(fn($item) => json_decode($item, true)),
         ]);
         $session->save();
+
+        foreach ($validated['tests'] as $testJson) {
+            $test = json_decode($testJson, true);
+
+            $session->items()->create([
+                'repository_id' => $test['repository_id'],
+                'workflow_id' => $test['workflow_id'],
+                'repository_name' => $test['repository_name'],
+                'service_name' => $test['service_name'],
+                'suite_name' => $test['suite_name'],
+                'test_name' => $test['test_name'],
+                'service_url' => $test['service_url'],
+            ]);
+        }
 
         return $session;
     }

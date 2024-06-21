@@ -1,8 +1,8 @@
 <x-layout>
     <h1>{{ $session->name }}</h1>
-    @foreach($session->workflow_runs as $suite => $runs)
-    <x-portal-section title="{{ str_replace(['laposa/', 'tests/'], '', $suite) }}" width="full">
-        <x-runs.list :runs="$runs" />
+    @foreach($session->itemsGrouped as $path => $tests)
+    <x-portal-section title="{{ getTestSuiteName($tests[0]) }}" width="full">
+        <x-runs.list :runs="$tests[0]->runs" />
     </x-portal-section>
     @endforeach
 
@@ -13,7 +13,7 @@
     </form>
 
     <x-portal-section title="Selected suites" width="full">
-        <x-test-suites.list :suites="$session->data" />
+        <x-test-suites.select :select=false title="" :suites="$session->itemsGrouped" />
     </x-portal-section>
 
 </x-layout>

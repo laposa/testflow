@@ -11,13 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('session_runs', function (Blueprint $table) {
+        Schema::create('test_session_runs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('session_id')->constrained();
-            $table->string('service_name');
-            $table->unsignedInteger('passed');
-            $table->unsignedInteger('failed');
-            $table->text('result_log');
+            $table->foreignId('session_id')
+                ->constrained('test_sessions')
+                ->onDelete('cascade')
+                ->onUpdate('cascade');
+            $table->string('status');
+            $table->unsignedInteger('passed')->nullable();
+            $table->unsignedInteger('failed')->nullable();
+            $table->text('result_log')->nullable();
             $table->timestamps();
         });
     }
@@ -27,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('session_runs');
+        Schema::dropIfExists('test_session_runs');
     }
 };
