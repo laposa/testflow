@@ -1,10 +1,6 @@
 <x-layout>
     <h1>{{ $session->name }}</h1>
-    @foreach($session->itemsGrouped as $path => $tests)
-    <x-portal-section title="{{ getTestSuiteName($tests[0]) }}" width="full">
-        <x-runs.list :runs="$tests[0]->runs" />
-    </x-portal-section>
-    @endforeach
+    <livewire:runs.list-runs :session="$session" />
 
     <div></div>
     <form action="{{ route('session.runs.store', ['session' => $session]) }}" method="POST">

@@ -18,11 +18,7 @@ class SessionController extends Controller
         ]);
     }
 
-    public function show(Session $session, FetchSessionWorkflowRuns $fetchSessionWorkflowRuns) {
-        $session = $session->load('items.runs');
-        $fetchSessionWorkflowRuns->handle($session);
-        $session = $session->load('items.runs');
-
+    public function show(Session $session) {
         return view('sessions.show', [
             'session' => $session
         ]);
