@@ -5,34 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="fe408510-faab-4558-9391-d2661a6f23b2" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/app/app/Actions/Github/DispatchSessionRun.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/app/Actions/Github/FetchSessionWorkflowRuns.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/app/Actions/Github/FetchTestSuites.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/app/Actions/Run/CreateRun.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/app/Actions/Session/CreateSession.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/app/Http/Controllers/SessionController.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/resources/css/components/error-list.css" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/blade.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/laravel-idea.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/phpunit.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/.env.local.tpl" beforeDir="false" afterPath="$PROJECT_DIR$/app/.env.local.tpl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/Actions/Github/FetchAvailableWorkflows.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/Actions/Github/InstallGithubApp.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/Actions/Github/InstallGithubApp.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/Actions/Github/SyncRepositories.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/Http/Controllers/GithubAppController.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/Http/Controllers/GithubAppController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/Http/Controllers/SessionsController.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/Models/Installation.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/Models/Installation.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/Models/Repository.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/app/Services/GithubInstallationService.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/app/Services/GithubInstallationService.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/composer.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/composer.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/composer.lock" beforeDir="false" afterPath="$PROJECT_DIR$/app/composer.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/database/migrations/2024_06_14_141144_create_repositories_table.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/resources/css/app.css" beforeDir="false" afterPath="$PROJECT_DIR$/app/resources/css/app.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/resources/css/components/layout.css" beforeDir="false" afterPath="$PROJECT_DIR$/app/resources/css/components/layout.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/resources/views/components/runs/list.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/resources/views/components/runs/list.blade.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/resources/views/components/sessions/list.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/resources/views/components/sessions/list.blade.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/resources/views/components/test-suites/list.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/resources/views/components/test-suites/list.blade.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/resources/views/sessions/create.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/resources/views/sessions/create.blade.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/resources/views/sessions/show.blade.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/resources/views/sessions/show.blade.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/routes/web.php" beforeDir="false" afterPath="$PROJECT_DIR$/app/routes/web.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -43,10 +19,29 @@
     <pharConfigPath>$PROJECT_DIR$/app/composer.json</pharConfigPath>
     <execution />
   </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;norbertlaposa&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;git@github.com:laposa/test-portal.git&quot;,
+    &quot;accountId&quot;: &quot;d37ce07d-f10f-4bc2-aee4-c6de23606468&quot;
+  }
+}</component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
-  <component name="PhpWorkspaceProjectConfiguration">
+  <component name="PhpWorkspaceProjectConfiguration" interpreter_name="/opt/homebrew/Cellar/php/8.3.7/bin/php">
     <include_path>
       <path value="$PROJECT_DIR$/app/vendor/phpunit/php-code-coverage" />
       <path value="$PROJECT_DIR$/app/vendor/phpunit/php-text-template" />
@@ -177,6 +172,9 @@
       <path value="$PROJECT_DIR$/app/vendor/rector/rector" />
     </include_path>
   </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 8
+}</component>
   <component name="ProjectId" id="2homrITzomouqS4dxcH3cAvLFEo" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
@@ -186,14 +184,17 @@
   "keyToString": {
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.laravel-idea.search-composer-json": "true",
+    "RunOnceActivity.laravel-idea.update-module-directories": "true",
     "WebServerToolWindowFactoryState": "false",
-    "last_opened_file_path": "/Users/andrewmcclay/Projects/test-portal/app",
+    "git-widget-placeholder": "master",
+    "last_opened_file_path": "/Users/norbert/Workspace/laposa/test-portal",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "yarn",
-    "settings.editor.selected.configurable": "preferences.lookFeel",
+    "settings.editor.selected.configurable": "settings.php.quality.tools.laravel.pint",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -201,6 +202,20 @@
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/app" />
     </key>
+  </component>
+  <component name="RunManager">
+    <configuration name="Main" type="PHPUnitRunConfigurationType" factoryName="PHPUnit">
+      <TestRunner configuration_file="$PROJECT_DIR$/app/phpunit.xml" scope="XML" use_alternative_configuration_file="true" />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-1d06a55b98c1-0b3e54e931b4-JavaScript-PS-241.18034.69" />
+        <option value="bundled-php-predefined-ba97393d7c68-48a1a656d44e-com.jetbrains.php.sharedIndexes-PS-241.18034.69" />
+      </set>
+    </attachedChunks>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -215,10 +230,17 @@
       <workItem from="1718305635698" duration="599000" />
       <workItem from="1718306846087" duration="4000" />
       <workItem from="1718308003455" duration="18479000" />
+      <workItem from="1719227378981" duration="42000" />
+      <workItem from="1719227425486" duration="451000" />
+      <workItem from="1719230060275" duration="9000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
 </project>
