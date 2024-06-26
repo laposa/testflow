@@ -1,3 +1,7 @@
+@php
+    /* @var \App\Models\SessionRun $session */
+@endphp
+
 <div @if ($pollingEnabled) wire:poll.2.5s @endif>
     @foreach($session->itemsGrouped as $path => $tests)
     <x-portal-section title="{{ getTestSuiteName($tests[0]) }}" width="full">

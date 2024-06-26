@@ -4,6 +4,8 @@ namespace App\Actions\Session;
 
 
 use App\Models\Installation;
+use App\Models\Session;
+use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 
 class CreateSession
