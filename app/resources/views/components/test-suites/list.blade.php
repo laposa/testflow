@@ -1,4 +1,4 @@
-@props(['select' => true, 'title' => 'Select Tests', 'suites' => []])
+@props(['select' => false, 'title' => 'Select Tests', 'suites' => []])
 <table class="select">
     <thead>
         <tr>
