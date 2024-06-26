@@ -10,7 +10,8 @@
         "laravel/framework": "^11.9",
         "laravel/socialite": "^5.14",
         "laravel/tinker": "^2.9",
-        "lcobucci/jwt": "^5.3"
+        "lcobucci/jwt": "^5.3",
+        "livewire/livewire": "^3.5"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

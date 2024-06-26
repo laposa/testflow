@@ -6,20 +6,28 @@ use App\Models\Session;
 use App\Models\SessionItem;
 use App\Services\GithubInstallationService;
 use Illuminate\Support\Facades\Storage;
-use tidy;
+
 
 class FetchSessionWorkflowRuns
 {
+    protected $workflowsUpdated = false;
 
     public function handle(Session $session)
     {
+        $this->workflowsUpdated = false;
         collect($session->items)
                 ->groupBy('workflow_id')
                 ->map(fn ($items) => $this->fetchRunsForItem(
                     $session,
                     $items[0],
-                ))
-                ->toArray();
+                ));
+
+        if ($this->workflowsUpdated) {
+            $session->load('items.runs');
+        }
+
+        // if all runs have logs in the DB, return true
+        return $session->items->every(fn ($item) => $item->runs->every(fn ($run) => $run->result_log));
     }
 
     protected function fetchRunsForItem(Session $session, SessionItem $item)
@@ -41,6 +49,8 @@ class FetchSessionWorkflowRuns
                 ->first(fn ($workflowRun) => $workflowRun['created_at'] >= $run->created_at->subSeconds(30)->toIso8601String() && $workflowRun['created_at'] <= $run->created_at->addSeconds(30)->toIso8601String());
 
             if ($runData) {
+                $this->workflowsUpdated = true;
+
                 $run->update([
                     'status' => $runData['conclusion'] ? $runData['conclusion'] : $runData['status'],
                 ]);

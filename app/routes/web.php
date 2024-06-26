@@ -28,8 +28,6 @@ Route::group(['middleware' => 'auth'], function () {
     Route::post('/sessions/create', [\App\Http\Controllers\SessionController::class, 'store'])->name('sessions.store');
     // show selected tests and their previous runs history and allow to execute another run
     Route::get('/sessions/{session}', [\App\Http\Controllers\SessionController::class, 'show'])->name('sessions.show');
-    // runs for the session    
-    Route::post("/sessions/{session}/runs", [\App\Http\Controllers\SessionRunController::class, 'store'])->name('session.runs.store');
     /**
      * for manual, checkboxes with option to add comments
      * for automated, show button to execute

@@ -80,6 +80,11 @@ button:hover, .button:hover {
     background-color: var(--primary-opaque);
 }
 
+button:disabled, .button:disabled {
+    background-color: var(--primary-opaque);
+    cursor: default;
+}
+
 input {
     padding: 0.25rem;
     border: 1px solid hsl(0, 0%, 50%);
@@ -230,6 +235,19 @@ input, select {
     grid-gap: 20px;
     justify-items: start;
     align-items: start;
+}
+
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
 @media all and (max-width: 768px) {
