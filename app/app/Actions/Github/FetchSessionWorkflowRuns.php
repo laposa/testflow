@@ -42,11 +42,11 @@ class FetchSessionWorkflowRuns
         // Github Status: queued, in_progress, completed
         // Github Conclusion: success, failure, neutral, cancelled, skipped, timed_out, action_required
 
-        // update item's runs with the latest data from github (based on the crated_at timestamp +- 30 seconds)
+        // update item's runs with the latest data from github (based on the crated_at timestamp +- 5 seconds)
         $workflowRuns = $client->fetchWorkflowRuns($item->repository_name, $item->workflow_id)['workflow_runs'];
         foreach ($item->runs as $run) {
             $runData = collect($workflowRuns)
-                ->first(fn ($workflowRun) => $workflowRun['created_at'] >= $run->created_at->subSeconds(30)->toIso8601String() && $workflowRun['created_at'] <= $run->created_at->addSeconds(30)->toIso8601String());
+                ->first(fn ($workflowRun) => $workflowRun['created_at'] >= $run->created_at->subSeconds(5)->toIso8601String() && $workflowRun['created_at'] <= $run->created_at->addSeconds(5)->toIso8601String());
 
             if ($runData) {
                 $this->workflowsUpdated = true;
