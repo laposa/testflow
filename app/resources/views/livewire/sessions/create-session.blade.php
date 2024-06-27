@@ -15,7 +15,7 @@
         </x-portal-section>
 
         <x-portal-section width="full">
-            <x-test-suites.list :select="true" :suites="$suites" />
+            <x-test-suites.list-interactive :suites="$suites" />
         </x-portal-section>
 
         <x-portal-section width="full">
