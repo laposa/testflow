@@ -21,14 +21,18 @@ class FetchTestSuites
         $repositories = $this->client->fetchRepositories();
         $suites = [];
 
-        collect(Arr::get($repositories, 'repositories', []))
-            ->each(function ($repository) use (&$suites) {
-                $contents = $this->fetchTests($repository);
-                if ($contents) {
-                    $workflows = $this->fetchWorkflows($repository);
-                    $suites = array_merge($suites, $this->formatTests($contents, $repository, $workflows));
-                }
-            });
+        collect(Arr::get($repositories, 'repositories', []))->each(function ($repository) use (
+            &$suites,
+        ) {
+            $contents = $this->fetchTests($repository);
+            if ($contents) {
+                $workflows = $this->fetchWorkflows($repository);
+                $suites = array_merge(
+                    $suites,
+                    $this->formatTests($contents, $repository, $workflows),
+                );
+            }
+        });
 
         return $suites;
     }
@@ -41,22 +45,26 @@ class FetchTestSuites
             foreach ($service['children'] as $suite) {
                 foreach ($suite['children'] as $test) {
                     $workflow = collect(Arr::get($workflows, 'workflows', []))
-                        ->filter(fn ($workflow) => str_ends_with($workflow['path'], getWorkflowFilename($service['name'])))
+                        ->filter(
+                            fn($workflow) => str_ends_with(
+                                $workflow['path'],
+                                getWorkflowFilename($service['name']),
+                            ),
+                        )
                         ->first();
 
                     $item = [
-                        "repository_id" => $repository['id'],
-                        "repository_name" => $repository['full_name'],
-                        "service_name" => $service['name'],
-                        "service_url" => $service['url'],
-                        "suite_name" => $suite['name'],
-                        "test_name" => $test['name'],
+                        'repository_id' => $repository['id'],
+                        'repository_name' => $repository['full_name'],
+                        'service_name' => $service['name'],
+                        'service_url' => $service['url'],
+                        'suite_name' => $suite['name'],
+                        'test_name' => $test['name'],
                     ];
 
                     if ($workflow) {
                         $item['workflow_id'] = $workflow['id'];
                     }
-
 
                     $tests[] = $item;
                 }
@@ -64,12 +72,20 @@ class FetchTestSuites
         }
 
         // group by repository_name/service_name/suite_name for easier access
-        return collect($tests)->groupBy(fn ($test) => "{$test['repository_name']}/{$test['service_name']}/{$test['suite_name']}")->toArray();
+        return collect($tests)
+            ->groupBy(
+                fn(
+                    $test,
+                ) => "{$test['repository_name']}/{$test['service_name']}/{$test['suite_name']}",
+            )
+            ->toArray();
     }
 
-    protected function fetchTests($repository) {
+    protected function fetchTests($repository)
+    {
         try {
             $latestCommit = $this->client->fetchLatestCommit($repository['full_name']);
+
             return $this->fetchDirectoryRecursive($repository, [
                 'path' => 'tests',
                 'url' => "{$repository['html_url']}/tree/{$latestCommit['sha']}/tests",
@@ -79,7 +95,8 @@ class FetchTestSuites
         }
     }
 
-    protected function fetchDirectoryRecursive($repository, $parent, $level = 1) {
+    protected function fetchDirectoryRecursive($repository, $parent, $level = 1)
+    {
         if ($level > 3) {
             return [];
         }
@@ -105,21 +122,24 @@ class FetchTestSuites
         }
 
         $dirs = collect($dirs)
-            ->map(fn ($dir) => [
-                'full_path' => "{$repository['full_name']}/{$dir['path']}",
-                'path' => $dir['path'],
-                'name' => $dir['name'],
-                'url' => "{$parent['url']}/{$dir['name']}",
-                'children' => $this->fetchDirectoryRecursive($repository, $dir, $level + 1),
-            ])
+            ->map(
+                fn($dir) => [
+                    'full_path' => "{$repository['full_name']}/{$dir['path']}",
+                    'path' => $dir['path'],
+                    'name' => $dir['name'],
+                    'url' => "{$parent['url']}/{$dir['name']}",
+                    'children' => $this->fetchDirectoryRecursive($repository, $dir, $level + 1),
+                ],
+            )
             // filter out everything that starts with an underscore
             // eg. _utils
-            ->filter(fn ($dir) => $dir['name'][0] !== '_');
+            ->filter(fn($dir) => $dir['name'][0] !== '_');
 
         return $dirs->toArray();
     }
 
-    protected function fetchWorkflows($repository) {
+    protected function fetchWorkflows($repository)
+    {
         try {
             return $this->client->fetchWorkflows($repository['full_name']);
         } catch (\Exception $e) {

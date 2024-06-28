@@ -10,12 +10,7 @@ class Installation extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'installation_id',
-        'access_token',
-        'repository_selection',
-        'expires_at'
-    ];
+    protected $fillable = ['installation_id', 'access_token', 'repository_selection', 'expires_at'];
 
     public function sessions(): HasMany
     {

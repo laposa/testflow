@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\Http;
 
 class GithubInstallationService
 {
-
     protected Installation $installation;
+
     protected string $baseUrl = 'https://api.github.com';
 
     public function __construct(Installation $installation)
@@ -22,22 +22,19 @@ class GithubInstallationService
         }
     }
 
-
     public function withHeaders(): PendingRequest
     {
         return Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->installation->access_token,
-            'Accept' => 'application/vnd.github.v3+json'
+            'Accept' => 'application/vnd.github.v3+json',
         ])->baseUrl($this->baseUrl);
     }
-
-
 
     public static function getAccessToken(string $installationId, $JWTWebToken)
     {
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $JWTWebToken,
-            'Accept' => 'application/vnd.github.v3+json'
+            'Accept' => 'application/vnd.github.v3+json',
         ])->post("https://api.github.com/app/installations/{$installationId}/access_tokens");
 
         return $response->json();
@@ -52,22 +49,24 @@ class GithubInstallationService
     {
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->generateJWTWebToken(),
-            'Accept' => 'application/vnd.github.v3+json'
-        ])->post("https://api.github.com/app/installations/{$this->installation->installation_id}/access_tokens");
+            'Accept' => 'application/vnd.github.v3+json',
+        ])->post(
+            "https://api.github.com/app/installations/{$this->installation->installation_id}/access_tokens",
+        );
 
         $data = $response->json();
 
         $this->installation->update([
             'access_token' => $data['token'],
             'expires_at' => $data['expires_at'],
-            'repository_selection' => $data['repository_selection']
+            'repository_selection' => $data['repository_selection'],
         ]);
     }
 
     public static function generateJWTWebToken()
     {
         $clientId = env('GITHUB_CLIENT_ID');
-        $privateKey = env("GITHUB_PRIVATE_KEY");
+        $privateKey = env('GITHUB_PRIVATE_KEY');
         $algorithm = 'RS256';
 
         $time = time();
@@ -75,7 +74,7 @@ class GithubInstallationService
         $payload = [
             'iat' => $time,
             'exp' => $time + 60,
-            'iss' => $clientId
+            'iss' => $clientId,
         ];
 
         return JWT::encode($payload, $privateKey, $algorithm);
@@ -83,7 +82,7 @@ class GithubInstallationService
 
     public function fetchRepositories()
     {
-        $response = $this->withHeaders()->get("/installation/repositories");
+        $response = $this->withHeaders()->get('/installation/repositories');
 
         return $response->json();
     }
@@ -104,22 +103,26 @@ class GithubInstallationService
 
     public function fetchWorkflowRuns(string $repository, string $workflowId)
     {
-        $response = $this->withHeaders()->get("/repos/{$repository}/actions/workflows/{$workflowId}/runs");
+        $response = $this->withHeaders()->get(
+            "/repos/{$repository}/actions/workflows/{$workflowId}/runs",
+        );
 
         return $response->json();
     }
 
     public function dispatchWorkflow(string $repository, string $workflowId, array $inputs)
     {
-        $response = $this->withHeaders()->post("/repos/{$repository}/actions/workflows/{$workflowId}/dispatches", [
-            'ref' => 'master',
-            'inputs' => [
-                'environment' => "preprod"
-            ]
-        ])->throw();
+        $response = $this->withHeaders()
+            ->post("/repos/{$repository}/actions/workflows/{$workflowId}/dispatches", [
+                'ref' => 'master',
+                'inputs' => [
+                    'environment' => 'preprod',
+                ],
+            ])
+            ->throw();
 
+        ray('RESPONSE', $response->json());
 
-        ray("RESPONSE", $response->json());
         return $response->json();
     }
 
@@ -128,12 +131,14 @@ class GithubInstallationService
         $response = $this->withHeaders()->get("/repos/{$repository}/commits/{$branch}", [
             'per_page' => 1,
         ]);
+
         return $response->json();
     }
 
     public function fetchWorkflowRunLog(string $repository, string $runId)
     {
         $response = $this->withHeaders()->get("/repos/{$repository}/actions/runs/{$runId}/logs");
+
         return $response->body();
     }
 }

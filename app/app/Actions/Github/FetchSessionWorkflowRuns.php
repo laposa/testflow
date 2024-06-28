@@ -7,7 +7,6 @@ use App\Models\SessionItem;
 use App\Services\GithubInstallationService;
 use Illuminate\Support\Facades\Storage;
 
-
 class FetchSessionWorkflowRuns
 {
     protected $workflowsUpdated = false;
@@ -16,18 +15,17 @@ class FetchSessionWorkflowRuns
     {
         $this->workflowsUpdated = false;
         collect($session->items)
-                ->groupBy('workflow_id')
-                ->map(fn ($items) => $this->fetchRunsForItem(
-                    $session,
-                    $items[0],
-                ));
+            ->groupBy('workflow_id')
+            ->map(fn($items) => $this->fetchRunsForItem($session, $items[0]));
 
         if ($this->workflowsUpdated) {
             $session->load('items.runs');
         }
 
         // if all runs have logs in the DB, return true
-        return $session->items->every(fn ($item) => $item->runs->every(fn ($run) => $run->result_log));
+        return $session->items->every(
+            fn($item) => $item->runs->every(fn($run) => $run->result_log),
+        );
     }
 
     protected function fetchRunsForItem(Session $session, SessionItem $item)
@@ -35,7 +33,7 @@ class FetchSessionWorkflowRuns
         $client = new GithubInstallationService($session->installation);
 
         // if all runs have logs in the DB, skip fetching from github
-        if ($item->runs->every(fn ($run) => $run->result_log)) {
+        if ($item->runs->every(fn($run) => $run->result_log)) {
             return $item->runs;
         }
 
@@ -43,16 +41,24 @@ class FetchSessionWorkflowRuns
         // Github Conclusion: success, failure, neutral, cancelled, skipped, timed_out, action_required
 
         // update item's runs with the latest data from github (based on the crated_at timestamp +- 5 seconds)
-        $workflowRuns = $client->fetchWorkflowRuns($item->repository_name, $item->workflow_id)['workflow_runs'];
+        $workflowRuns = $client->fetchWorkflowRuns($item->repository_name, $item->workflow_id)[
+            'workflow_runs'
+        ];
         foreach ($item->runs as $run) {
-            $runData = collect($workflowRuns)
-                ->first(fn ($workflowRun) => $workflowRun['created_at'] >= $run->created_at->subSeconds(5)->toIso8601String() && $workflowRun['created_at'] <= $run->created_at->addSeconds(5)->toIso8601String());
+            $runData = collect($workflowRuns)->first(
+                fn($workflowRun) => $workflowRun['created_at'] >=
+                    $run->created_at->subSeconds(5)->toIso8601String() &&
+                    $workflowRun['created_at'] <=
+                        $run->created_at->addSeconds(5)->toIso8601String(),
+            );
 
             if ($runData) {
                 $this->workflowsUpdated = true;
 
                 $run->update([
-                    'status' => $runData['conclusion'] ? $runData['conclusion'] : $runData['status'],
+                    'status' => $runData['conclusion']
+                        ? $runData['conclusion']
+                        : $runData['status'],
                 ]);
 
                 if (!$run->result_log && $runData['status'] === 'completed') {
@@ -64,18 +70,21 @@ class FetchSessionWorkflowRuns
         }
     }
 
-    protected function fetchWorkflowRunLog(GithubInstallationService $client, SessionItem $item, $runId)
-    {
+    protected function fetchWorkflowRunLog(
+        GithubInstallationService $client,
+        SessionItem $item,
+        $runId,
+    ) {
         $zipFile = $client->fetchWorkflowRunLog($item->repository_name, $runId);
 
-        $tmpFileName = 'github_run_logs_' . $runId . '_' .  time() . '.zip';
+        $tmpFileName = 'github_run_logs_' . $runId . '_' . time() . '.zip';
         Storage::put($tmpFileName, $zipFile);
 
         // unzip the zipFile and find the largest file in the zip
         // ie the log file combining all the logs from the workflow run
         $zip = new \ZipArchive();
         $zip->open(storage_path('app/' . $tmpFileName));
-        
+
         $log = '';
         $size = 0;
 
@@ -92,5 +101,4 @@ class FetchSessionWorkflowRuns
 
         return $log;
     }
-
 }

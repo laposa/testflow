@@ -4,7 +4,8 @@
 
         <x-portal-section title="Create new session" width="full">
             <div class="information">
-                <input style="width:60%" type="text" id="name" name="name" required placeholder="Session name" value="{{ old('name') }}">
+                <input style="width:60%" type="text" id="name" name="name" required
+                    placeholder="Session name" value="{{ old('name') }}">
                 <select name="environment">
                     <option value="prod">Prod environment</option>
                     <option value="beta">Beta environment</option>

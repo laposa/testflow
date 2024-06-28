@@ -10,9 +10,11 @@ use Livewire\Component;
 class ListRuns extends Component
 {
     public Session $session;
+
     public bool $isLoading = false;
 
-    public function mounted(Session $session)  {
+    public function mounted(Session $session)
+    {
         $this->session = $session;
     }
 

@@ -6,7 +6,7 @@
     </x-portal-section>
 
     <x-portal-section title="Logs" width="full">
-        <pre>{{$run->result_log}}</pre>
+        <pre>{{ $run->result_log }}</pre>
     </x-portal-section>
 
 </x-layout>

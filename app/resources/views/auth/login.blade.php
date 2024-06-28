@@ -1,6 +1,8 @@
 <x-layout>
     <style>
-        div.login {margin: auto;}
+        div.login {
+            margin: auto;
+        }
     </style>
     <div class="login">
         <p>You need to login via your GitHub account.</p>
