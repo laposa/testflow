@@ -5,15 +5,16 @@ namespace App\Actions\Run;
 use App\Models\Session;
 use Illuminate\Support\Facades\Validator;
 
-class CreateRun {
+class CreateRun
+{
     public function handle(Session $session, array $data)
     {
         $validated = Validator::make($data, [
-            'run_id' => ['required', 'string']
+            'run_id' => ['required', 'string'],
         ])->validate();
 
         $session->runs()->create([
-            'github_run_id' => $validated['run_id']
+            'github_run_id' => $validated['run_id'],
         ]);
     }
 }

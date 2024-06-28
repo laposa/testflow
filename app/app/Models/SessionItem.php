@@ -5,11 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SessionItem extends Model
 {
-
     protected $fillable = [
         'repository_id',
         'workflow_id',
@@ -29,7 +27,9 @@ class SessionItem extends Model
 
     public function runs(): BelongsToMany
     {
-        return $this->belongsToMany(SessionRun::class, 'test_session_items_test_session_runs')
-            ->withTimestamps();
+        return $this->belongsToMany(
+            SessionRun::class,
+            'test_session_items_test_session_runs',
+        )->withTimestamps();
     }
 }

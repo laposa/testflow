@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Enums\TestResultEnum;
 use App\Enums\TestTypeEnum;
-use Illuminate\Http\Request;
 
 class TestsController extends Controller
 {
@@ -16,41 +15,42 @@ class TestsController extends Controller
                     'id' => 1,
                     'title' => 'Login screen renders',
                     'lastResult' => TestResultEnum::notRun->value,
-                    'timestamp'=> now(),
+                    'timestamp' => now(),
                     'type' => TestTypeEnum::manual->value,
-                    'error' => null
+                    'error' => null,
                 ],
                 (object) [
                     'id' => 2,
                     'title' => 'Login screen renders',
                     'lastResult' => TestResultEnum::pass->value,
-                    'timestamp'=> now(),
+                    'timestamp' => now(),
                     'type' => TestTypeEnum::automated->value,
-                    'error' => null
+                    'error' => null,
                 ],
-                 (object) [
-                     'id' => 3,
-                     'title' => 'Login screen renders',
-                     'lastResult' => TestResultEnum::fail->value,
-                     'timestamp'=> now(),
-                     'type' => TestTypeEnum::automated->value,
-                     'error' => null
-                 ]
-            ]
+                (object) [
+                    'id' => 3,
+                    'title' => 'Login screen renders',
+                    'lastResult' => TestResultEnum::fail->value,
+                    'timestamp' => now(),
+                    'type' => TestTypeEnum::automated->value,
+                    'error' => null,
+                ],
+            ],
         ]);
     }
 
-    public function show() {
+    public function show()
+    {
         return view('tests.show', [
             'test' => (object) [
                 'id' => 3,
                 'title' => 'Login screen renders',
                 'lastResult' => TestResultEnum::fail->value,
-                'timestamp'=> now(),
+                'timestamp' => now(),
                 'type' => TestTypeEnum::automated->value,
-                'error' => null
+                'error' => null,
             ],
-            'runs' => []
+            'runs' => [],
         ]);
     }
 }

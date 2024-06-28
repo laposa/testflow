@@ -22,7 +22,7 @@ class User extends Authenticatable
         'password',
         'github_id',
         'github_token',
-        'github_refresh_token'
+        'github_refresh_token',
     ];
 
     /**
@@ -30,10 +30,7 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    protected $hidden = ['password', 'remember_token'];
 
     /**
      * Get the attributes that should be cast.

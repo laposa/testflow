@@ -50,7 +50,7 @@ header {
         font-weight: bold;
 
         &:after {
-            content: "▼";
+            content: '▼';
             margin-left: 5px;
             color: var(--primary);
         }
@@ -63,7 +63,6 @@ header {
     }
 
     .account__menu {
-
         ul {
             list-style: none;
             padding: 0;
@@ -85,7 +84,6 @@ header {
 
                 &:hover {
                     color: var(--primary-opaque);
-
                 }
             }
         }

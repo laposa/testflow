@@ -1,0 +1,12 @@
+{
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
+  },
+  "[php]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+  },
+  "prettier.documentSelectors": [
+      "**/*.{js,jsx,ts,tsx,vue,html,css,scss,less,json,md,mdx,graphql,yaml,yml,php}"
+  ]
+}

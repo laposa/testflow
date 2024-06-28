@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -23,15 +22,18 @@ class AuthController extends Controller
     {
         $githubUser = Socialite::driver('github')->user();
 
-//        dd(User::all(),User::where('github_id', $githubUser->id)->first());
-        $user = User::updateOrCreate([
-            'github_id' => $githubUser->id,
-        ], [
-            'name' => $githubUser->name,
-            'email' => $githubUser->email,
-            'github_token' => $githubUser->token,
-            'github_refresh_token' => $githubUser->refreshToken,
-        ]);
+        //        dd(User::all(),User::where('github_id', $githubUser->id)->first());
+        $user = User::updateOrCreate(
+            [
+                'github_id' => $githubUser->id,
+            ],
+            [
+                'name' => $githubUser->name,
+                'email' => $githubUser->email,
+                'github_token' => $githubUser->token,
+                'github_refresh_token' => $githubUser->refreshToken,
+            ],
+        );
 
         Auth::login($user);
 
@@ -41,6 +43,7 @@ class AuthController extends Controller
     public function logout()
     {
         Auth::logout();
+
         return redirect('/login');
     }
 }

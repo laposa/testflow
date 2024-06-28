@@ -8,10 +8,8 @@ class GithubAppController extends Controller
 {
     public function callback(InstallGithubApp $installGithubApp)
     {
-
-        $installGithubApp->handle( request('installation_id'), request('setup_action'));
+        $installGithubApp->handle(request('installation_id'), request('setup_action'));
 
         return redirect()->route('dashboard');
     }
-
 }
