@@ -27,6 +27,28 @@ npm run dev
 php artisan serve
 ```
 
+## Generating Type hints
+
+```bash
+php artisan ide-helper:generate
+php artisan ide-helper:models -N
+```
+
+## Linting & Formatting
+
+Implemented using [Laravel Pint](https://laravel.com/docs/11.x/pint) and [Prettier](https://prettier.io/).
+
+```bash
+# lint only
+./vendor/bin/pint  --test
+
+# fix lint issues
+./vendor/bin/pint
+
+# format
+npm run format
+```
+
 ## Usage
 
 - login via GitHub

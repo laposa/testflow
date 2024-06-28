@@ -17,9 +17,14 @@ class DispatchSessionRun
             ->toArray();
     }
 
-    protected function dispatchWorkflow(GithubInstallationService $client, Session $session, array $tests)
-    {
-        $testFilter = collect($tests)->map((fn ($test) => explode('.', $test['test_name'])[0] ))->join('|');
+    protected function dispatchWorkflow(
+        GithubInstallationService $client,
+        Session $session,
+        array $tests,
+    ) {
+        $testFilter = collect($tests)
+            ->map((fn($test) => explode('.', $test['test_name'])[0]))
+            ->join('|');
 
         $client->dispatchWorkflow(
             repository: $tests[0]['repository_name'],
@@ -27,7 +32,7 @@ class DispatchSessionRun
             inputs: [
                 'environment' => $session->environment,
                 'test_filter' => $testFilter,
-            ]
+            ],
         );
 
         // create run in the DB

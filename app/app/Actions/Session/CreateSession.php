@@ -2,25 +2,25 @@
 
 namespace App\Actions\Session;
 
-
 use App\Models\Installation;
-use App\Models\Session;
-use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 
 class CreateSession
 {
     public function handle(Installation $installation, array $data)
     {
-        $validated = Validator::make($data, [
-            'name' => ['required', 'string'],
-            'environment' => ['required', 'string'],
-            'tests' => ['required', 'array', 'min:1'],
-            'tests.*' => ['required', 'json'],
-        ], [
-            'tests' => 'Please select at least one test suite.',
-
-        ])->validate();
+        $validated = Validator::make(
+            $data,
+            [
+                'name' => ['required', 'string'],
+                'environment' => ['required', 'string'],
+                'tests' => ['required', 'array', 'min:1'],
+                'tests.*' => ['required', 'json'],
+            ],
+            [
+                'tests' => 'Please select at least one test suite.',
+            ],
+        )->validate();
 
         $session = $installation->sessions()->create([
             'name' => $validated['name'],

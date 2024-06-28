@@ -1,6 +1,6 @@
 @font-face {
     font-family: 'DM Sans';
-    src: url("/fonts/DMSans-VariableFont_opsz,wght.ttf");
+    src: url('/fonts/DMSans-VariableFont_opsz,wght.ttf');
 }
 
 :root {
@@ -65,7 +65,8 @@ tr.collapsible {
     text-align: left;
 }
 
-button, .button {
+button,
+.button {
     padding: 0.25rem 1rem;
     outline: none;
     border: none;
@@ -76,11 +77,13 @@ button, .button {
     text-decoration: none;
 }
 
-button:hover, .button:hover {
+button:hover,
+.button:hover {
     background-color: var(--primary-opaque);
 }
 
-button:disabled, .button:disabled {
+button:disabled,
+.button:disabled {
     background-color: var(--primary-opaque);
     cursor: default;
 }
@@ -121,14 +124,13 @@ table {
         & tr {
             border-bottom: 1px solid var(--primary-opaque);
 
-            > td:not([colspan="*"]) {
+            > td:not([colspan='*']) {
                 padding: 0.5rem;
             }
         }
     }
 
     & table {
-
         & tr:last-of-type {
             border-bottom: none;
         }
@@ -141,7 +143,8 @@ table {
     }
 }
 
-input, select {
+input,
+select {
     border: none;
     background-color: #f7f7f7;
     padding: 0.5rem;
@@ -182,8 +185,7 @@ input, select {
 }
 
 .checkbox {
-
-    & input[type="checkbox"] {
+    & input[type='checkbox'] {
         display: none;
     }
 
@@ -201,7 +203,7 @@ input, select {
         &:after {
             position: relative;
             z-index: 2;
-            content:'✔';
+            content: '✔';
             color: white;
             font-size: 0.9rem;
             top: 1px;

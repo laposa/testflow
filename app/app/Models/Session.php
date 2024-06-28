@@ -9,11 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Session extends Model
 {
-    protected $fillable = [
-        'issuer_id',
-        'environment',
-        'name',
-    ];
+    protected $fillable = ['issuer_id', 'environment', 'name'];
 
     protected $table = 'test_sessions';
 
@@ -35,7 +31,9 @@ class Session extends Model
     public function itemsGrouped(): Attribute
     {
         return new Attribute(
-            get: fn () => $this->items->groupBy(fn ($item) => $item->repository_name . $item->service_name . $item->suite_name)
+            get: fn() => $this->items->groupBy(
+                fn($item) => $item->repository_name . $item->service_name . $item->suite_name,
+            ),
         );
     }
 
