@@ -1,6 +1,6 @@
 @font-face {
     font-family: 'DM Sans';
-    src: url('/fonts/DMSans-VariableFont_opsz,wght.ttf');
+    src: url('/public/fonts/DMSans-VariableFont_opsz,wght.ttf');
 }
 
 :root {
@@ -199,6 +199,7 @@ select {
         cursor: pointer;
         transition: 0.3s ease;
         border: 2px solid var(--primary);
+        z-index: 2;
 
         &:after {
             position: relative;
@@ -206,8 +207,10 @@ select {
             content: '✔';
             color: white;
             font-size: 0.9rem;
-            top: 1px;
+            top: 0;
+            opacity: 0;
             transform: rotate(10deg);
+            font-weight: normal!important;
         }
 
         &:before {
@@ -217,12 +220,20 @@ select {
             height: 0;
             background-color: var(--primary);
             transition: 0.3s ease;
+            z-index: 1;
         }
     }
 
-    & input:checked + .checkmark:before {
-        width: 20px;
-        height: 20px;
+    & input:checked {
+
+        + .checkmark:before {
+            width: 100%;
+            height: 100%;
+        }
+
+        + .checkmark:after {
+            opacity: 1;
+        }
     }
 }
 
@@ -232,11 +243,9 @@ select {
     max-width: 1200px;
     font-size: 16px;
     line-height: 1.6;
-    display: grid;
-    grid-template-columns: 1fr;
-    grid-gap: 20px;
     justify-items: start;
     align-items: start;
+    margin: 0 auto;
 }
 
 .loading-overlay {
@@ -252,14 +261,24 @@ select {
     z-index: 1000;
 }
 
-@media all and (max-width: 768px) {
-    .container {
-        grid-template-columns: 1fr;
+.alert-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: rgb(255, 200, 0);
 
-        h1,
-        h2,
-        h3 {
-            grid-column: span 1;
-        }
+    &.error {
+        background-color: red;
+    }
+
+    &:before {
+        content: '!';
+        color: white;
+        font-size: 1rem;
+        position: relative;
+        top: 1px;
     }
 }

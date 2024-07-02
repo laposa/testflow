@@ -22,9 +22,5 @@
         <x-portal-section width="full">
             <button type="submit" class="button">Create</button>
         </x-portal-section>
-
-        <x-portal-section width="full">
-            <x-test-suites.list title="Suites Without Workflow" :suites="$suitesWithoutWorkflow" />
-        </x-portal-section>
     </form>
 </div>

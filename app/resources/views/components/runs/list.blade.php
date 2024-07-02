@@ -1,5 +1,5 @@
 @props(['runs' => []])
-<table>
+<table class="runs-list">
     <thead>
         <tr>
             <th>Run ID</th>

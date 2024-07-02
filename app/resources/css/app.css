@@ -3,8 +3,11 @@
 @import 'components/footer.css';
 @import 'components/portal-section.css';
 @import 'components/error-list.css';
+@import 'components/test-suites/index.css';
 @import 'components/sessions/index.css';
 @import 'components/tests/index.css';
+@import 'components/runs/index.css';
+
 
 .online {
     color: rgb(21, 193, 21);

@@ -1,44 +1,61 @@
 @props(['title' => 'Select Tests', 'suites' => []])
-<table class="select">
-    <thead>
-        <tr>
-            <th colspan="2">{{$title}}</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach($suites as $path => $suite)
-        <tr>
-            <td>
-                <div>
-                    <label for="selector-suite-{{ $path }}" class="checkbox suite">
-                        <input class="suite-selector" type="checkbox" id="selector-suite-{{ $path }}" value="{{$path}}">
-                        <span class="checkmark"></span>
-                    </label>
-                </div>
-            </td>
-            <td>{{getTestSuiteName($suite[0])}}</td>
-            <td><span class="expand" data-target="selector-suite-tests-{{ $path }}">Expand</span></td>
-        </tr>
-        <tr id="selector-suite-tests-{{ $path }}" class="collapsible">
-            <td colspan="3">
-                <table>
-                    @foreach ($suite as $test)
-                    <tr>
-                        <td>
-                            <div>
-                                <label for="selector-test-{{ $path.$test['test_name'] }}" class="checkbox suite">
-                                    <input class="test-selector" type="checkbox" data-parent="{{ $path }}" id="selector-test-{{ $path.$test['test_name'] }}" name="tests[]" value="{{ json_encode($test) }}">
+
+<div class="list-interactive">
+    @foreach($suites as $repositoryTitle => $repository) 
+        <div class="list-repository list">
+            <div class="title"> 
+                <label for="selector-repository-{{ $repositoryTitle }}" class="checkbox">
+                    <input class="repository-selector" type="checkbox" id="selector-repository-{{ $repositoryTitle }}" value="{{$repositoryTitle}}">
+                    <span class="checkmark"></span>
+                </label>
+                {{ $repositoryTitle }}
+                <span class="expand"></span>
+            </div>
+
+            @foreach($repository as $serviceTitle => $service)
+                <div class="list-service list">
+                    <div class="title"> 
+                        <label for="selector-service-{{ $repositoryTitle }}-{{ $serviceTitle }}" class="checkbox">
+                            <input class="service-selector" type="checkbox" id="selector-service-{{ $repositoryTitle }}-{{ $serviceTitle }}" value="{{$serviceTitle}}">
+                            <span class="checkmark"></span>
+                        </label>
+                        {{ $serviceTitle }}
+                        <span class="expand"></span>
+                    </div>
+
+                    @foreach($service as $suiteTitle => $suite)
+                        <div class="list-suite list">
+                            <div class="title"> 
+                                <label for="selector-suite-{{ $suiteTitle }}" class="checkbox">
+                                    <input class="suite-selector" type="checkbox" id="selector-suite-{{ $suiteTitle }}" value="{{$suiteTitle}}">
                                     <span class="checkmark"></span>
                                 </label>
+                                {{ $suiteTitle }}
+                                <span class="expand"></span>
                             </div>
-                        </td>
-                        <td>{{$test['test_name']}}</td>
-                    </tr>
+                            <div class="list-test list">
+                                @foreach($suite as $test)
+                                    <div class="test">
+                                        @if($test['workflow_id'])
+                                            <label for="selector-test-{{ $test['test_name'] }}" class="checkbox">
+                                                <input class="test-selector" type="checkbox" id="selector-test-{{ $test['test_name'] }}" name="tests[]" value="{{ json_encode($test) }}">
+                                                <span class="checkmark"></span>
+                                            </label>
+                                        @else
+                                            <span class="alert-icon error" title="This test has no workflow ID and cannot be selected."></span>
+                                        @endif
+                                        {{ $test['test_name'] }}
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
                     @endforeach
-                </table>
-            </td>
-        </tr>
-        @endforeach
-    </tbody>
-</table>
+                
+                </div>
+            @endforeach
+        
+        </div>
+    @endforeach
+</div>
+
+

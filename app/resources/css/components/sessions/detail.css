@@ -1,0 +1,12 @@
+.session-selected-suites {
+	
+	ul {
+		padding-left: 20px;
+		list-style: disc;
+		margin-bottom: 20px;
+		
+		li::marker {
+			color: var(--primary);
+		}
+	}
+}
