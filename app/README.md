@@ -57,3 +57,12 @@ npm run format
 ```bash
 sqlite3 database/database.sqlite 'insert into installations(id,installation_id,access_token,expires_at,repository_selection,created_at,updated_at) values (1,"51847197","ghs_SHEuPff5DjYqZiKxsjaqDt4mzMocr01blJXw","2024-06-17T16:51:08Z","selected", "2024-06-17 13:47:17","2024-06-17 15:51:08");' '.exit'
 ```
+
+### Azure Container Registry
+
+````bash
+DATE=`date '+%y%m%d'`
+BRANCH=`git rev-parse --abbrev-ref HEAD`
+docker build --no-cache --pull --platform linux/amd64 -t musgrave.azurecr.io/laposa/test-portal/app:$BRANCH-$DATE .
+docker push musgrave.azurecr.io/laposa/test-portal/app:$BRANCH-$DATE
+````
