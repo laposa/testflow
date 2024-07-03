@@ -1,8 +1,18 @@
 <x-layout>
-    <h1>{{ $session->name }}</h1>
-    <livewire:runs.list-runs :session="$session" />
+    <x-portal-section title="{{ $session->name }}" width="full">
+        <livewire:runs.list-runs :session="$session" />
+    </x-portal-section>
 
-    <x-portal-section title="Selected suites" width="full">
-        <x-test-suites.list title="" :suites="$session->itemsGrouped" />
+    <x-portal-section title="Selected Tests" width="full">
+        <ul class="session-selected-suites">
+            @foreach ($session->itemsGrouped as $path => $tests)
+                <li><b>{{ getTestSuiteName($tests[0]) }}</b></li>
+                <ul>
+                    @foreach ($tests as $test)
+                        <li>{{ $test['test_name'] }}</li>
+                    @endforeach
+                </ul>
+            @endforeach
+        </ul>
     </x-portal-section>
 </x-layout>

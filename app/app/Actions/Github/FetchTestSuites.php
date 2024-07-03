@@ -55,7 +55,7 @@ class FetchTestSuites
 
                     $item = [
                         'repository_id' => $repository['id'],
-                        'repository_name' => $repository['full_name'],
+                        'repository_name' => $repository['name'],
                         'service_name' => $service['name'],
                         'service_url' => $service['url'],
                         'suite_name' => $suite['name'],
@@ -71,14 +71,7 @@ class FetchTestSuites
             }
         }
 
-        // group by repository_name/service_name/suite_name for easier access
-        return collect($tests)
-            ->groupBy(
-                fn(
-                    $test,
-                ) => "{$test['repository_name']}/{$test['service_name']}/{$test['suite_name']}",
-            )
-            ->toArray();
+        return collect($tests)->groupBy(['repository_name', 'service_name', 'suite_name'])->toArray();
     }
 
     protected function fetchTests($repository)

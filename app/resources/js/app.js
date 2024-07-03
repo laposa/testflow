@@ -1,36 +1,41 @@
 import './bootstrap';
 
 document.body.addEventListener('click', function (e) {
-    if (e.target.classList.contains('expand')) {
-        const target = document.getElementById(e.target.getAttribute('data-target'));
-        const button = e.target;
+    if (e.target.classList.contains('expand') && !e.target.classList.contains('collapse')) {
 
-        if (target.style.display === 'table-row') {
-            target.style.display = 'none';
-            button.innerText = 'Expand';
-        } else {
-            target.style.display = 'table-row';
-            button.innerText = 'Collapse';
-        }
+        e.target.closest('.list').classList.add('expanded');
+        e.target.closest('.list').querySelectorAll(':scope > .list').forEach((child) => {
+            child.style.display = 'block';
+        });
+        e.target.classList.add('collapse');
+
+    } else if (e.target.classList.contains('collapse')) {
+
+        e.target.closest('.list').classList.remove('expanded');
+        e.target.classList.remove('collapse');
+        e.target.closest('.list').querySelectorAll(':scope > .list').forEach((child) => {
+            child.style.display = 'none';
+        });
     }
 });
 
-// Select all tests in a suite
-// When a test checkbox is checked, the suite checkbox should be checked if all tests in the suite are checked
 document.body.addEventListener('change', function (e) {
-    if (e.target.classList.contains('suite-selector')) {
-        const suite = e.target.closest('tr').nextElementSibling;
-        suite.querySelectorAll('input').forEach((test) => {
-            test.checked = e.target.checked;
-        });
-    }
 
-    if (e.target.classList.contains('test-selector')) {
-        const suiteCheckbox = document.getElementById('selector-suite-' + e.target.dataset.parent);
-        const allTests = document
-            .getElementById('selector-suite-tests-' + e.target.dataset.parent)
-            .querySelectorAll('input');
-        const checkedTests = Array.from(allTests).filter((test) => test.checked);
-        suiteCheckbox.checked = checkedTests.length === allTests.length;
+    if(e.target.closest('.list-interactive')) {
+        //group select
+        if(!e.target.classList.contains('test-selector')) {
+            const parent = e.target.closest('.list');
+            parent.querySelectorAll('input').forEach((test) => {
+                test.checked = e.target.checked;
+            });
+        }
+
+        //TODO update parent(s) group select
+        if(!e.target.classList.contains('repository-selector')) {
+            // const parentGroup = e.target.closest('.list').parentNode;
+            // const parentCheckbox = parentGroup.querySelectorAll(':scope > .title input');
+            // parentGroup.querySelectorAll(':scope > .list').forEach((sibling) => {
+            // });
+        }
     }
 });
