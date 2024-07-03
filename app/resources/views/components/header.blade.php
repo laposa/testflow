@@ -5,14 +5,8 @@
         @if ($currentUser)
             <div class="account">
                 <img src="/images/icons/person.svg" class="account__image"></img>
-                <div class="account__menu">
-                    <span>{{ $currentUser->name }}</span>
-                    <ul>
-                        <li><a href="#">Profile</a></li>
-                        <li><a href="#">Settings</a></li>
-                        <li><a href="/auth/logout">Logout</a></li>
-                    </ul>
-                </div>
+                <span>{{ $currentUser->name }}</span>
+                <a href="/auth/logout" title="Logout"><img src="{{ url('/images/icons/logout.png') }}"></a>
             </div>
         @endif
     </div>

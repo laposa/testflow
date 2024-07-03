@@ -9,7 +9,7 @@
         <form method="POST" action="/auth/redirect">
             @csrf
 
-            <button type="submit">Login with github</button>
+            <button type="submit" class="filled">Login with github</button>
         </form>
     </div>
 </x-layout>

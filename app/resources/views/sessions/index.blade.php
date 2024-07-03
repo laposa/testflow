@@ -1,5 +1,5 @@
 <x-layout>
-    <x-portal-section width="full">
+    <x-portal-section>
         <x-sessions.list :sessions="$sessions" />
     </x-portal-section>
 </x-layout>
