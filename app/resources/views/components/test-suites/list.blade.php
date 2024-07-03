@@ -3,23 +3,20 @@
 <div class="list-interactive">
     @foreach($suites as $repositoryTitle => $repository) 
         <div class="list-repository list">
-            <div class="title"> 
+            <div class="title expand"> 
                 {{ $repositoryTitle }}
-                <span class="expand"></span>
             </div>
 
             @foreach($repository as $serviceTitle => $service)
                 <div class="list-service list">
-                    <div class="title"> 
+                    <div class="title expand"> 
                         {{ $serviceTitle }}
-                        <span class="expand"></span>
                     </div>
 
                     @foreach($service as $suiteTitle => $suite)
                         <div class="list-suite list">
-                            <div class="title"> 
+                            <div class="title expand"> 
                                 {{ $suiteTitle }}
-                                <span class="expand"></span>
                             </div>
                             <div class="list-test list">
                                 @foreach($suite as $test)

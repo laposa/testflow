@@ -11,9 +11,9 @@ Route::get('/login', [AuthController::class, 'login'])->name('login');
 
 Route::group(['middleware' => 'auth'], function () {
     // landing page showing who is logged in to the portal - authorised with GitHub
-    Route::get('/', function () {
-        return view('dashboard.index');
-    });
+    Route::get('/', [\App\Http\Controllers\DashboardController::class, 'index'])->name(
+        'dashboard.index',
+    );
 
     // Github App Routes
     Route::get('/github/callback', [\App\Http\Controllers\GithubAppController::class, 'callback']);
