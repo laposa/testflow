@@ -10,8 +10,6 @@ if (!function_exists('getWorkflowFilename')) {
 if (!function_exists('getTestSuiteName')) {
     function getTestSuiteName($test)
     {
-        $repoName = explode('/', $test['repository_name'])[1];
-
-        return "{$repoName}/{$test['service_name']}/{$test['suite_name']}";
+        return "{$test['repository_name']}/{$test['service_name']}/{$test['suite_name']}";
     }
 }
