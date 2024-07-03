@@ -21,7 +21,7 @@ class CreateSession extends Component
     {
         return <<<'HTML'
         <div>
-            <x-portal-section title="Create new session" width="full">
+            <x-portal-section title="Create new session">
             </x-portal-section>
             <x-loading-overlay></x-loading-overlay>
         </div>

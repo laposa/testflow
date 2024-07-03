@@ -1,5 +1,5 @@
 <x-layout>
-    <x-portal-section title="Recent sessions" width="full">
+    <x-portal-section title="Recent sessions">
         <ul>
             <li><a href="/sessions/4">Real Rewards API v3.6 build 10 Laposa internal</a>: <strong
                     class="online">157 passed</strong> and <strong class="alert">3
@@ -10,8 +10,8 @@
                     class="online">28 passed</strong> and <strong class="alert">3
                     failed.</strong></i></li>
         </ul>
-        <a href="/sessions" class="button">View all sessions</a>
-        <a href="/sessions/create" class="button">Create new session</a>
+        <a href="/sessions" class="button filled">View all sessions</a>
+        <a href="/sessions/create" class="button filled">Create new session</a>
     </x-portal-section>
     <x-portal-section title="Service status">
         <ul>
@@ -21,6 +21,6 @@
             <li>Available repositories linked to portal: <strong class="online">23
                     repositories</strong></li>
         </ul>
-        <a href="/settings" class="button">Update settings</a>
+        <a href="/settings" class="button filled">Update settings</a>
     </x-portal-section>
 </x-layout>

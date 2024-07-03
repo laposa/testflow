@@ -51,6 +51,7 @@ h1,
 h2,
 h3 {
     color: var(--primary);
+    width: 100%;
 }
 
 body {
@@ -69,38 +70,40 @@ button,
 .button {
     padding: 0.25rem 1rem;
     outline: none;
-    border: none;
-    color: white;
-    background-color: var(--primary);
     transition: 0.25s ease;
     cursor: pointer;
     text-decoration: none;
-}
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    text-decoration: none;
+    align-items: center;
+    position: relative;
 
-button:hover,
-.button:hover {
-    background-color: var(--primary-opaque);
-}
+    &:hover {
+        background-color: var(--primary);
+        color: white;
+    }
+    
+    &.filled {
+        background-color: var(--primary);
+        color: white;
 
-button:disabled,
-.button:disabled {
-    background-color: var(--primary-opaque);
-    cursor: default;
+        &:hover {
+            background-color: white;
+            color: var(--primary);
+        }
+    }
+
+    &:disabled {
+        background-color: #dadada;
+        border-color: #dadada;
+        cursor: default;
+    }
 }
 
 input {
     padding: 0.25rem;
     border: 1px solid hsl(0, 0%, 50%);
-}
-
-main {
-    width: 100%;
-}
-
-h1,
-h2,
-h3 {
-    grid-column: span 2;
 }
 
 table {
@@ -150,6 +153,19 @@ select {
     padding: 0.5rem;
 }
 
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+.online {
+    color: rgb(21, 193, 21);
+}
+
+.alert {
+    color: orange;
+}
+
 .center {
     text-align: center;
 }
@@ -159,7 +175,7 @@ select {
     font-weight: 600;
 }
 
-.fail {
+.fail, .offline {
     color: red;
     font-weight: 600;
 }

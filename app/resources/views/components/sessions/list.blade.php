@@ -16,7 +16,7 @@
             <option value="issuer2">Norbert Laposa</option>
             <option value="issuer3">Hugo Dvorak</option>
         </select>
-        <a href="/sessions/create">New session</a>
+        <a href="/sessions/create" class="button filled">New session</a>
     </div>
 </div>
 

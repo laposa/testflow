@@ -33,18 +33,12 @@
         a {
             display: flex;
             margin-left: auto;
-            background-color: var(--primary);
-            border: none;
-            color: white;
-            text-decoration: none;
             padding: 0 2.5rem 0 1rem;
-            align-items: center;
-            position: relative;
 
             &:after {
                 content: '+';
                 position: absolute;
-                top: -2px;
+                top: -5px;
                 line-height: normal;
                 right: 1rem;
                 font-size: 2rem;
