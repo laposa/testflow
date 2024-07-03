@@ -55,7 +55,7 @@ class FetchTestSuites
 
                     $item = [
                         'repository_id' => $repository['id'],
-                        'repository_name' => $repository['name'],
+                        'repository_name' => $repository['full_name'],
                         'service_name' => $service['name'],
                         'service_url' => $service['url'],
                         'suite_name' => $suite['name'],

@@ -10,6 +10,7 @@ if (!function_exists('getWorkflowFilename')) {
 if (!function_exists('getTestSuiteName')) {
     function getTestSuiteName($test)
     {
-        return "{$test['repository_name']}/{$test['service_name']}/{$test['suite_name']}";
+        $repo = str_replace('laposa/', '', $test['repository_name']);
+        return "{$repo}/{$test['service_name']}/{$test['suite_name']}";
     }
 }
