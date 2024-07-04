@@ -8,8 +8,7 @@
                     <input class="repository-selector" type="checkbox" id="selector-repository-{{ $repositoryTitle }}" value="{{$repositoryTitle}}">
                     <span class="checkmark"></span>
                 </label>
-                {{ $repositoryTitle }}
-                <span class="expand"></span>
+                <span class="expand">{{ $repositoryTitle }}</span>
             </div>
 
             @foreach($repository as $serviceTitle => $service)
@@ -19,8 +18,7 @@
                             <input class="service-selector" type="checkbox" id="selector-service-{{ $repositoryTitle }}-{{ $serviceTitle }}" value="{{$serviceTitle}}">
                             <span class="checkmark"></span>
                         </label>
-                        {{ $serviceTitle }}
-                        <span class="expand"></span>
+                        <span class="expand">{{ $serviceTitle }}</span>
                     </div>
 
                     @foreach($service as $suiteTitle => $suite)
@@ -30,8 +28,7 @@
                                     <input class="suite-selector" type="checkbox" id="selector-suite-{{ $suiteTitle }}" value="{{$suiteTitle}}">
                                     <span class="checkmark"></span>
                                 </label>
-                                {{ $suiteTitle }}
-                                <span class="expand"></span>
+                                <span class="expand">{{ $suiteTitle }}</span>
                             </div>
                             <div class="list-test list">
                                 @foreach($suite as $test)

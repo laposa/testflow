@@ -74,10 +74,20 @@
 	}
 
 	.expand {
-		margin-left: auto;
+		text-decoration: none;
+		color: black;
 
 		&:after {
-			content: "Expand";
+			opacity: 0;
+			margin-left: 10px;
+			content: "▼";
+			transition: 0.3s ease;
+		}
+
+		&:hover {
+			&:after {
+				opacity: 1;
+			}
 		}
 	}
 
@@ -100,7 +110,7 @@
 			font-weight: 600;
 
 			.expand:after {
-				content: "Collapse";
+				content: "▲";
 			}
 		}
 	}

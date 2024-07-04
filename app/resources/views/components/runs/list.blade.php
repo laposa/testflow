@@ -1,4 +1,4 @@
-@props(['runs' => []])
+@props(['runs' => [], 'sessionId' => null])
 <table class="runs-list">
     <thead>
         <tr>
@@ -13,7 +13,7 @@
             <tr>
                 <td>
                     @if ($run->result_log)
-                        <a href="/sessions/1/run/{{ $run['id'] }}"
+                        <a href="/sessions/{{ $sessionId }}/run/{{ $run['id'] }}"
                             title="Show logs">{{ $run['id'] }}</a>
                     @else
                         {{ $run['id'] }}

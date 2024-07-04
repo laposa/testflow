@@ -1,14 +1,12 @@
 <x-layout>
     <x-portal-section title="Recent sessions">
         <ul>
-            <li><a href="/sessions/4">Real Rewards API v3.6 build 10 Laposa internal</a>: <strong
-                    class="online">157 passed</strong> and <strong class="alert">3
-                    failed.</strong></i></li>
-            <li><a href="/sessions/3">SuperValu Website 05</a>: <strong class="online">130
-                    passed</strong> and <strong class="alert">32 failed.</strong></i></li>
-            <li><a href="/sessions/2">Frank and Honest v1.3 build 24 Musgrave UAT</a>: <strong
-                    class="online">28 passed</strong> and <strong class="alert">3
-                    failed.</strong></i></li>
+            @foreach ($sessions as $session)
+                <li>
+                    <a href="/sessions/{{ $session->id }}">{{ $session->name }}</a>: 
+                    <strong class="online">48 passed</strong> and <strong class="alert">3 failed.</strong></i>
+                </li>
+            @endforeach
         </ul>
         <a href="/sessions" class="button filled">View all sessions</a>
         <a href="/sessions/create" class="button filled">Create new session</a>
