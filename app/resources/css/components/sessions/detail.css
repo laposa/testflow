@@ -9,4 +9,25 @@
 			color: var(--primary);
 		}
 	}
+
+	.run-time {
+		font-size: 0.9rem;
+		color: var(--primary);
+	}
+
+	.run-time::before {
+		content: '\1F551';
+	}
+
+	.pass::before {
+		content: '\2714';
+	}
+
+	.fail::before {
+		content: '\2716';
+	}
+
+	.not-found::before {
+		content: '\1F6AB';
+	}
 }

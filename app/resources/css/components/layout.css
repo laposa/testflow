@@ -175,7 +175,7 @@ ul {
     font-weight: 600;
 }
 
-.fail, .offline {
+.fail, .offline, .not-found {
     color: red;
     font-weight: 600;
 }
