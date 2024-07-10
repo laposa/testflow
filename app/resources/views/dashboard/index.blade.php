@@ -3,8 +3,20 @@
         <ul>
             @foreach ($sessions as $session)
                 <li>
-                    <a href="/sessions/{{ $session->id }}">{{ $session->name }}</a>: 
-                    <strong class="online">48 passed</strong> and <strong class="alert">3 failed.</strong></i>
+                    <a href="/sessions/{{ $session->id }}">{{ $session->name }}</a>:
+                    @if ($session->runs && isset($session->runs[0]))
+                        @if ($session->runs[0]->result_log)
+                            <span
+                                class="pass">{{ $session->runs[0]->parsedResults->getTotalPassed() }}
+                                passed</span> and <span
+                                class="fail">{{ $session->runs[0]->parsedResults->getTotalFailures() }}
+                                failed</span>
+                        @else
+                            <span>Running</span>
+                        @endif
+                    @else
+                        <span>No runs yet</span>
+                    @endif
                 </li>
             @endforeach
         </ul>
