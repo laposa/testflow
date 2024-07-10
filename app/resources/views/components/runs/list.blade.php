@@ -12,7 +12,7 @@
         @foreach ($runs as $key => $run)
             <tr>
                 <td>
-                    @if ($run->result_log)
+                    @if ($run->run_log)
                         <a href="/sessions/{{ $sessionId }}/run/{{ $run['id'] }}"
                             title="Show logs">{{ $run['id'] }}</a>
                     @else
@@ -24,8 +24,12 @@
                     <span class="{{ $run['status'] }}">{{ $run['status'] }}</span>
                 </td>
                 <td>
-                    <!--<span class="{{ $run['conclusion'] }}">{{ $run['conclusion'] }}</span>-->
-                    <span class="pass">29 passed</span> and <span class="fail">2 failed</span>
+                    @if ($run->result_log)
+                        <span class="pass">{{ $run->parsedResults->getTotalPassed() }}
+                            passed</span> and <span
+                            class="fail">{{ $run->parsedResults->getTotalFailures() }}
+                            failed</span>
+                    @endif
                 </td>
             </tr>
         @endforeach

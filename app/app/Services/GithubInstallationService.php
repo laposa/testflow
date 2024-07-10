@@ -141,4 +141,22 @@ class GithubInstallationService
 
         return $response->body();
     }
+
+    public function fetchWorkflowRunArtifacts(string $repository, string $runId)
+    {
+        $response = $this->withHeaders()->get(
+            "/repos/{$repository}/actions/runs/{$runId}/artifacts",
+        );
+
+        return $response->json();
+    }
+
+    public function fetchWorkflowRunArtifactsDownload(string $repository, string $artifactId)
+    {
+        $response = $this->withHeaders()->get(
+            "/repos/{$repository}/actions/artifacts/{$artifactId}/zip",
+        );
+
+        return $response->body();
+    }
 }

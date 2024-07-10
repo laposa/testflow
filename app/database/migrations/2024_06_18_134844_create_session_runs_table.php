@@ -21,6 +21,7 @@ return new class extends Migration {
             $table->unsignedInteger('passed')->nullable();
             $table->unsignedInteger('failed')->nullable();
             $table->text('result_log')->nullable();
+            $table->text('run_log')->nullable();
             $table->timestamps();
         });
     }

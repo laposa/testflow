@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\JUnitLogParser;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class SessionRun extends Model
 {
-    protected $fillable = ['service_name', 'status', 'passed', 'failed', 'result_log'];
+    protected $fillable = ['service_name', 'status', 'passed', 'failed', 'result_log', 'run_log'];
 
     protected $table = 'test_session_runs';
 
@@ -33,5 +34,10 @@ class SessionRun extends Model
                 fn($item) => $item->repository_name . $item->service_name . $item->suite_name,
             ),
         );
+    }
+
+    public function parsedResults(): Attribute
+    {
+        return new Attribute(get: fn() => new JUnitLogParser($this->result_log));
     }
 }

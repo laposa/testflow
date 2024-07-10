@@ -33,7 +33,7 @@ class FetchSessionWorkflowRuns
         $client = new GithubInstallationService($session->installation);
 
         // if all runs have logs in the DB, skip fetching from github
-        if ($item->runs->every(fn($run) => $run->result_log)) {
+        if ($item->runs->every(fn($run) => $run->result_log && $run->run_log)) {
             return $item->runs;
         }
 
@@ -61,10 +61,20 @@ class FetchSessionWorkflowRuns
                         : $runData['status'],
                 ]);
 
-                if (!$run->result_log && $runData['status'] === 'completed') {
-                    $run->update([
-                        'result_log' => $this->fetchWorkflowRunLog($client, $item, $runData['id']),
-                    ]);
+                if ($runData['status'] === 'completed') {
+                    if (!$run->result_log) {
+                        $run->result_log = $this->fetchWorkflowResultsLog(
+                            $client,
+                            $item,
+                            $runData['id'],
+                        );
+                    }
+
+                    if (!$run->run_log) {
+                        $run->run_log = $this->fetchWorkflowRunLog($client, $item, $runData['id']);
+                    }
+
+                    $run->save();
                 }
             }
         }
@@ -96,6 +106,36 @@ class FetchSessionWorkflowRuns
             }
         }
         $zip->close();
+
+        Storage::delete($tmpFileName);
+
+        return $log;
+    }
+
+    protected function fetchWorkflowResultsLog(
+        GithubInstallationService $client,
+        SessionItem $item,
+        $runId,
+    ) {
+        // find artifact with the name 'test-results'
+        $artifacts = $client->fetchWorkflowRunArtifacts($item->repository_name, $runId);
+        $artifact = collect($artifacts['artifacts'])->first(
+            fn($artifact) => $artifact['name'] === 'test-results',
+        );
+
+        $zipFile = $client->fetchWorkflowRunArtifactsDownload(
+            $item->repository_name,
+            $artifact['id'],
+        );
+
+        $tmpFileName = 'github_result_logs_' . $runId . '_' . time() . '.zip';
+        Storage::put($tmpFileName, $zipFile);
+
+        // unzip the zipFile and get the first file in the zip
+        $zip = new \ZipArchive();
+        $zip->open(storage_path('app/' . $tmpFileName));
+
+        $log = $zip->getFromIndex(0);
 
         Storage::delete($tmpFileName);
 
