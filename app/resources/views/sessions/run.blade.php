@@ -3,7 +3,7 @@
 
     <x-portal-section title="Test suites">
         <ul class="session-selected-suites">
-            @foreach ($session->itemsGrouped as $path => $tests)
+            @foreach ($run->itemsGrouped as $path => $tests)
                 @php($testSuite = $run->parsedResults->getTestSuite($tests[0]['suite_name']))
                 <li>
                     <b>{{ getTestSuiteName($tests[0]) }}</b>

@@ -18,6 +18,8 @@ class SessionController extends Controller
 
     public function show(Session $session)
     {
+        $session = $session->load('runs.items');
+
         return view('sessions.show', [
             'session' => $session,
         ]);

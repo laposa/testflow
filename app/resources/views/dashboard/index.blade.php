@@ -5,11 +5,9 @@
                 <li>
                     <a href="/sessions/{{ $session->id }}">{{ $session->name }}</a>:
                     @if ($session->runs && isset($session->runs[0]))
-                        @if ($session->runs[0]->result_log)
-                            <span
-                                class="pass">{{ $session->runs[0]->parsedResults->getTotalPassed() }}
-                                passed</span> and <span
-                                class="fail">{{ $session->runs[0]->parsedResults->getTotalFailures() }}
+                        @if (!$session->isRunning)
+                            <span class="pass">{{ $session->passed }}
+                                passed</span> and <span class="fail">{{ $session->failed }}
                                 failed</span>
                         @else
                             <span>Running</span>

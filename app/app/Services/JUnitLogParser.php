@@ -29,7 +29,7 @@ class JUnitLogParser
     public function getTestCase(string $name)
     {
         $name = strtolower(str_replace('_', ' ', $name));
-        $name = str_replace('.js', '', $name);
+        $name = explode('.', $name)[0];
 
         foreach ($this->getTestSuites() as $testSuite) {
             foreach ($testSuite['testCases'] as $testCase) {
@@ -68,6 +68,10 @@ class JUnitLogParser
     {
         if (!empty($this->testSuites)) {
             return $this->testSuites;
+        }
+
+        if (!isset($this->xmlContent->testsuite)) {
+            return [];
         }
 
         $testSuites = [];

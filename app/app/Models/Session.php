@@ -37,6 +37,15 @@ class Session extends Model
         );
     }
 
+    public function itemsGroupedByService(): Attribute
+    {
+        return new Attribute(
+            get: fn() => $this->items->groupBy(
+                fn($item) => $item->repository_name . $item->service_name,
+            ),
+        );
+    }
+
     public function runs(): HasMany
     {
         return $this->hasMany(SessionRun::class);

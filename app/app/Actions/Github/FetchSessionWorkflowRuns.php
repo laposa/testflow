@@ -33,7 +33,7 @@ class FetchSessionWorkflowRuns
         $client = new GithubInstallationService($session->installation);
 
         // if all runs have logs in the DB, skip fetching from github
-        if ($item->runs->every(fn($run) => $run->result_log && $run->run_log)) {
+        if ($item->runs->every(fn($run) => $run->run_log)) {
             return $item->runs;
         }
 
@@ -122,6 +122,10 @@ class FetchSessionWorkflowRuns
         $artifact = collect($artifacts['artifacts'])->first(
             fn($artifact) => $artifact['name'] === 'test-results',
         );
+
+        if (!$artifact) {
+            return null;
+        }
 
         $zipFile = $client->fetchWorkflowRunArtifactsDownload(
             $item->repository_name,

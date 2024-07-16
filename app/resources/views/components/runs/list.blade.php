@@ -3,6 +3,7 @@
     <thead>
         <tr>
             <th>Run ID</th>
+            <th>Service</th>
             <th>Timestamp</th>
             <th>Status</th>
             <th>Results</th>
@@ -19,6 +20,7 @@
                         {{ $run['id'] }}
                     @endif
                 </td>
+                <td>{{ getTestServiceName($run->items[0]) }}</td>
                 <td>{{ $run['created_at'] }}</td>
                 <td>
                     <span class="{{ $run['status'] }}">{{ $run['status'] }}</span>
