@@ -79,11 +79,13 @@ button,
     align-items: center;
     position: relative;
 
+
+
     &:hover {
         background-color: var(--primary);
         color: white;
     }
-    
+
     &.filled {
         background-color: var(--primary);
         color: white;
@@ -94,16 +96,33 @@ button,
         }
     }
 
+    &.danger {
+        background-color: var(--danger);
+        color: white;
+        border-color: var(--danger);
+
+        &:hover {
+            background-color: white;
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+    }
+
     &:disabled {
-        background-color: #dadada;
-        border-color: #dadada;
-        cursor: default;
+        opacity: 0.4;
+        cursor: not-allowed;
     }
 }
 
 input {
     padding: 0.25rem;
     border: 1px solid hsl(0, 0%, 50%);
+}
+
+textarea {
+    padding: 0.5rem;
+    border: 1px solid hsl(0, 0%, 50%);
+    width: 100%;
 }
 
 table {

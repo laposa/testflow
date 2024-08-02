@@ -50,4 +50,15 @@ class Session extends Model
     {
         return $this->hasMany(SessionRun::class);
     }
+
+    public function canRunTests(): bool
+    {
+        /** @var SessionRun|null $lastRun */
+        // If there is a pending or rejected review request in the last test, we can't run tests
+        $lastRun = $this->runs()->orderBy('created_at', 'desc')->first();
+        if ($lastRun && $lastRun->reviewRequests()->orderBy('created_at', 'desc')->first()?->status !== "approved") {
+            return false;
+        }
+        return true;
+    }
 }
