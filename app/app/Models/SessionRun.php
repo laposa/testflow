@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class SessionRun extends Model
 {
@@ -25,6 +26,16 @@ class SessionRun extends Model
             SessionItem::class,
             'test_session_items_test_session_runs',
         )->withTimestamps();
+    }
+
+    public function comments(): MorphMany
+    {
+        return $this->morphMany(Comment::class, 'commentable');
+    }
+
+    public function reviewRequests(): MorphMany
+    {
+        return $this->morphMany(ReviewRequest::class, 'reviewable');
     }
 
     public function itemsGrouped(): Attribute

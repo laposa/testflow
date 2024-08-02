@@ -16,6 +16,34 @@ namespace App\Models{
  * 
  *
  * @property int $id
+ * @property string $commentable_type
+ * @property int $commentable_id
+ * @property int $user_id
+ * @property string $body
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Model|\Eloquent $commentable
+ * @property-read \App\Models\User $user
+ * @method static \Database\Factories\CommentFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder|Comment newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Comment newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Comment query()
+ * @method static \Illuminate\Database\Eloquent\Builder|Comment whereBody($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Comment whereCommentableId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Comment whereCommentableType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Comment whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Comment whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Comment whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|Comment whereUserId($value)
+ */
+	class Comment extends \Eloquent {}
+}
+
+namespace App\Models{
+/**
+ * 
+ *
+ * @property int $id
  * @property string $installation_id
  * @property string $access_token
  * @property string $expires_at
@@ -43,6 +71,39 @@ namespace App\Models{
  * 
  *
  * @property int $id
+ * @property string $reviewable_type
+ * @property int $reviewable_id
+ * @property int $requester_id
+ * @property int $reviewer_id
+ * @property string $status
+ * @property string|null $completed_at
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \App\Models\User $requester
+ * @property-read \Illuminate\Database\Eloquent\Model|\Eloquent $reviewable
+ * @property-read \App\Models\User $reviewer
+ * @method static \Database\Factories\ReviewRequestFactory factory($count = null, $state = [])
+ * @method static \Illuminate\Database\Eloquent\Builder|ReviewRequest newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|ReviewRequest newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|ReviewRequest query()
+ * @method static \Illuminate\Database\Eloquent\Builder|ReviewRequest whereCompletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReviewRequest whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReviewRequest whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReviewRequest whereRequesterId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReviewRequest whereReviewableId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReviewRequest whereReviewableType($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReviewRequest whereReviewerId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReviewRequest whereStatus($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|ReviewRequest whereUpdatedAt($value)
+ */
+	class ReviewRequest extends \Eloquent {}
+}
+
+namespace App\Models{
+/**
+ * 
+ *
+ * @property int $id
  * @property int $installation_id
  * @property int $issuer_id
  * @property string $name
@@ -54,6 +115,7 @@ namespace App\Models{
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SessionItem> $items
  * @property-read int|null $items_count
  * @property-read mixed $items_grouped
+ * @property-read mixed $items_grouped_by_service
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SessionRun> $runs
  * @property-read int|null $runs_count
  * @method static \Illuminate\Database\Eloquent\Builder|Session newModelQuery()
@@ -116,11 +178,17 @@ namespace App\Models{
  * @property int|null $passed
  * @property int|null $failed
  * @property string|null $result_log
+ * @property string|null $run_log
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Comment> $comments
+ * @property-read int|null $comments_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SessionItem> $items
  * @property-read int|null $items_count
  * @property-read mixed $items_grouped
+ * @property-read mixed $parsed_results
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ReviewRequest> $reviewRequests
+ * @property-read int|null $review_requests_count
  * @property-read \App\Models\Session $session
  * @method static \Illuminate\Database\Eloquent\Builder|SessionRun newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|SessionRun newQuery()
@@ -130,6 +198,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|SessionRun whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionRun wherePassed($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionRun whereResultLog($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|SessionRun whereRunLog($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionRun whereSessionId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionRun whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionRun whereUpdatedAt($value)

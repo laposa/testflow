@@ -1,0 +1,45 @@
+.review-form {
+    border: 1px solid #ccc;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+
+    .review-form-icon {
+        width: 32px;
+        height: 32px;
+        background: var(--danger);
+        border-radius: 32px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        svg {
+            color: #fff;
+            width: 20px;
+            height: 20px;
+        }
+    }
+
+    .review-form-title {
+        h3 {
+            margin: 0;
+        }
+        p {
+
+        }
+    }
+    form {
+        margin: 0;
+    }
+
+    p {
+       margin: 0;
+    }
+
+    .review-form-actions {
+        display: flex;
+        gap: 12px;
+        margin-left: auto;
+    }
+}
