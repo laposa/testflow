@@ -17,25 +17,25 @@
             </div>
         </div>
     @endif
-    @if ($entry instanceof App\Models\ReviewRequest)
+    @if ($entry instanceof \Spatie\Activitylog\Models\Activity)
         @php
-            /** @var App\Models\ReviewRequest $entry */
+            /** @var \Spatie\Activitylog\Models\Activity $entry */
         @endphp
         <div class="activity-feed-item activity-feed-item--review-request">
-            @if ($entry->status === "pending")
-                {{ $entry->requester->name }} requested a review for {{ $entry->reviewer->name }}
+{{--            @if ($entry->status === "pending")--}}
+                {{$entry->description}}
 
-                <form wire:submit="delete">
-                    @csrf
-                    <button type="submit">Revoke</button>
-                </form>
-            @endif
-            @if ($entry->status === "approved")
-                {{ $entry->reviewer->name }} approved the review request from {{ $entry->requester->name }}
-            @endif
-            @if ($entry->status === "rejected")
-                {{ $entry->reviewer->name }} rejected the review request from {{ $entry->requester->name }}
-            @endif
+{{--                <form wire:submit="delete">--}}
+{{--                    @csrf--}}
+{{--                    <button type="submit">Revoke</button>--}}
+{{--                </form>--}}
+{{--            @endif--}}
+{{--            @if ($entry->status === "approved")--}}
+{{--                {{ $entry->reviewer->name }} approved the review request from {{ $entry->requester->name }}--}}
+{{--            @endif--}}
+{{--            @if ($entry->status === "rejected")--}}
+{{--                {{ $entry->reviewer->name }} rejected the review request from {{ $entry->requester->name }}--}}
+{{--            @endif--}}
                 <div>{{ $entry->created_at->diffForHumans() }}</div>
 
         </div>

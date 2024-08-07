@@ -18,11 +18,19 @@
             @endforeach
         </div>
 
-        @if ($reviewRequest)
-            <div>
+        @foreach ($reviewRequests as $reviewRequest)
+            @if ($reviewRequest && $reviewRequest->reviewer_id === auth()->id())
                 <livewire:reviews.review-form :review-request="$reviewRequest" :model="$latestRun" />
-            </div>
-        @endif
+            @else
+                <div class="review-form">
+                    Review pending for {{ $reviewRequest->reviewer->name }}
+                    @if ($reviewRequest && $reviewRequest->requester_id === auth()->id())
+                        <br>
+                        <livewire:reviews.revoke-review-form :review-request="$reviewRequest" />
+                    @endif
+                </div>
+            @endif
+        @endforeach
     @endif
 
     @if ($latestRun)

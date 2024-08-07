@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Spatie\Activitylog\ActivitylogServiceProvider;
 
 class SessionRun extends Model
 {
@@ -37,6 +38,13 @@ class SessionRun extends Model
     {
         return $this->morphMany(ReviewRequest::class, 'reviewable');
     }
+
+    public function activities(): MorphMany
+    {
+        return $this->morphMany(ActivitylogServiceProvider::determineActivityModel(), 'subject');
+    }
+
+
 
     public function itemsGrouped(): Attribute
     {

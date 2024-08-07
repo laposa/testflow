@@ -1,24 +1,25 @@
 <?php
 
-namespace App\Livewire\Activity;
+namespace App\Livewire\Reviews;
 
 use App\Models\Comment;
 use App\Models\ReviewRequest;
+use Illuminate\Database\Eloquent\Model;
 use Livewire\Component;
 use Spatie\Activitylog\Models\Activity;
 
-class ActivityFeedItem extends Component
+class RevokeReviewForm extends Component
 {
-    public Comment|Activity $entry;
+    public ReviewRequest $reviewRequest;
 
     public function delete()
     {
-        $this->entry->delete();
+        $this->reviewRequest->delete();
         return redirect(request()->header('Referer'));
     }
 
     public function render()
     {
-        return view('livewire.activity.activity-feed-item');
+        return view('livewire.reviews.revoke-review-form');
     }
 }
