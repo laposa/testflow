@@ -7,6 +7,8 @@
     --primary: #5f9ea0;
     --primary-opaque: rgba(95, 158, 160, 0.5);
     --danger: #ff0000;
+    --success: #10b981;
+    --info: #3b82f6;
 }
 
 * {
