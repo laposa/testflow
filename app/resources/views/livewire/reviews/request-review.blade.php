@@ -1,5 +1,6 @@
 @php
-    /** @var \App\Models\User[] $users */
+    /** @var \Illuminate\Support\Collection|\App\Models\User[] $users */
+    /** @var string $reviewer_id */
 @endphp
 <div>
     <form wire:submit="save" class="request-review">
@@ -9,7 +10,6 @@
             <select name="reviewer_id" wire:model="reviewer_id">
                 <option value="">Select a reviewer</option>
                 @foreach ($users as $user)
-
                     <option value="{{$user->id}}">{{$user->name}}</option>
                 @endforeach
             </select>

@@ -1,3 +1,9 @@
+@php
+ /**
+ * @var array $suites
+ */
+@endphp
+
 <div>
     <form action="/sessions" method="POST">
         @csrf

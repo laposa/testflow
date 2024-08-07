@@ -12,6 +12,7 @@ class DashboardController extends Controller
         $sessions = Session::query()->with('items')->orderBy('created_at', 'desc')->take(3)->get();
 
         foreach ($sessions as $session) {
+
             $session->isRunning = false;
             $session->passed = 0;
             $session->failed = 0;

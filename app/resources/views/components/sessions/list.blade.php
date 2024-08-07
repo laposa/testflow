@@ -1,3 +1,8 @@
+@php
+    /**
+     * @var \Illuminate\Support\Collection<App\Models\Session $sessions>
+     */
+@endphp
 <div class="sessions">
     <div class="filter">
         <div class="search">
@@ -31,6 +36,7 @@
     </thead>
     <tbody>
         @foreach ($sessions->reverse() as $session)
+            @php /* @var \App\Models\Session $session */ @endphp
             <tr>
                 <td><a href="/sessions/{{ $session->id }}">{{ $session->name }}</a></td>
                 <td>PreProd</td>

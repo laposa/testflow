@@ -40,12 +40,12 @@ class GithubInstallationService
         return $response->json();
     }
 
-    public function isAccessTokenExpired()
+    public function isAccessTokenExpired(): bool
     {
         return now()->gte($this->installation->expires_at);
     }
 
-    public function refreshAccessToken()
+    public function refreshAccessToken(): void
     {
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->generateJWTWebToken(),
@@ -63,7 +63,7 @@ class GithubInstallationService
         ]);
     }
 
-    public static function generateJWTWebToken()
+    public static function generateJWTWebToken(): string
     {
         $clientId = env('GITHUB_CLIENT_ID');
         $privateKey = env('GITHUB_PRIVATE_KEY');
@@ -120,8 +120,6 @@ class GithubInstallationService
                 ],
             ])
             ->throw();
-
-        ray('RESPONSE', $response->json());
 
         return $response->json();
     }

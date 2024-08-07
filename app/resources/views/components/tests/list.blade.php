@@ -1,3 +1,11 @@
+@php
+    /**
+     * @var bool $select
+     * @var string $link
+     * @var \Illuminate\Support\Collection|\App\Models\Test[] $tests
+     */
+@endphp
+
 @props(['select' => false, 'link' => true, 'tests' => []])
 
 <table @class([
