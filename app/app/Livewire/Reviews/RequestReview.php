@@ -17,7 +17,8 @@ class RequestReview extends Component
     #[Validate('required')]
     public string $reviewer_id = "";
 
-    public $users = [];
+    /** @var Collection<User> */
+    public Collection $users;
 
     public function mount()
     {

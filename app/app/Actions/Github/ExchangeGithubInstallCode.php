@@ -31,7 +31,6 @@ class ExchangeGithubInstallCode
     //
     //        $data = $response->json();
     //
-    //        dd($data);
     //
     //        return $data['access_token'];
     //    }

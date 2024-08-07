@@ -7,7 +7,7 @@ use App\Services\GithubInstallationService;
 
 class DispatchSessionRun
 {
-    public function handle(Session $session)
+    public function handle(Session $session): void
     {
         $client = new GithubInstallationService($session->installation);
 

@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Validator;
 
 class CreateRun
 {
-    public function handle(Session $session, array $data)
+    public function handle(Session $session, array $data): void
     {
         $validated = Validator::make($data, [
             'run_id' => ['required', 'string'],

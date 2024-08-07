@@ -11,7 +11,7 @@ class FetchSessionWorkflowRuns
 {
     protected $workflowsUpdated = false;
 
-    public function handle(Session $session)
+    public function handle(Session $session): bool
     {
         $this->workflowsUpdated = false;
         collect($session->items)

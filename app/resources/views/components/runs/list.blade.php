@@ -1,3 +1,11 @@
+@php
+/**
+ * @var \Illuminate\Support\Collection<int, App\Models\SessionRun $runs>
+ * @var string $sessionId
+ * @var \App\Http\ViewModels\ViewModel $view
+ */
+@endphp
+
 @props(['runs' => [], 'sessionId' => null])
 <table class="runs-list">
     <thead>
@@ -11,6 +19,9 @@
     </thead>
     <tbody>
         @foreach ($runs as $key => $run)
+            @php
+                /* @var \App\Models\SessionRun $run */
+            @endphp
             <tr>
                 <td>
                     @if ($run->run_log)

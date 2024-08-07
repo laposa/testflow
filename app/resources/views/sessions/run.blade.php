@@ -1,3 +1,7 @@
+@php
+    /** @var \App\Models\Session $session */
+    /** @var \App\Models\SessionRun $run */
+@endphp
 <x-layout>
     <h1>{{ $session->title }}</h1>
 
