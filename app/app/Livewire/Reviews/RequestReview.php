@@ -22,7 +22,19 @@ class RequestReview extends Component
 
     public function mount()
     {
-        $this->users = User::all();
+        if (!method_exists($this->model, 'reviewRequests')) {
+            throw new \InvalidArgumentException("The provided model does not have a 'reviewRequests' relationship.");
+        }
+
+        // Get available reviewers
+        $reviewRequests = $this->model->reviewRequests()
+            ->where('status', 'pending')
+            ->get();
+
+        $this->users = User::whereNotIn(
+            'id',
+            $reviewRequests->pluck('reviewer_id')
+        )->get();
     }
 
     public function save()
@@ -33,14 +45,21 @@ class RequestReview extends Component
 
         $this->validate();
 
-        $user = User::find($this->reviewer_id);
+        $requester = auth()->user();
+        $reviewer = User::find($this->reviewer_id);
 
         $reviewRequest = $this->model->reviewRequests()->create([
             'requester_id' => auth()->id(),
             'reviewer_id' => $this->reviewer_id,
         ]);
 
-        $user->notify(new ReviewRequestNotification($reviewRequest));
+        $reviewer->notify(new ReviewRequestNotification($reviewRequest));
+
+        activity()
+            ->causedBy($requester)
+            ->event("review_request")
+            ->performedOn($this->model)
+            ->log("{$requester->name} requested a review from {$reviewer->name}");
 
         session()->flash("status", "Review requested");
 

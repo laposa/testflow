@@ -63,5 +63,26 @@
         display: flex;
         padding-top: 6px;
         gap: 1rem;
+        svg {
+            width: 24px;
+            height: 24px;
+        }
+
+        &.activity-feed--review_request {
+            svg {
+                color: var(--info);
+            }
+        }
+
+        &.activity-feed--review_approved {
+            svg {
+                color: var(--success);
+            }
+        }
+        &.activity-feed--review_rejected {
+            svg {
+                color: var(--danger);
+            }
+        }
     }
 }

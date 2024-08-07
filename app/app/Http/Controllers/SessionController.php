@@ -22,6 +22,7 @@ class SessionController extends Controller
 
         $targetSessionRun = $session->runs->last();
 
+
         return view('sessions.show', [
             'session' => $session,
             'latestRun' => $targetSessionRun,
@@ -29,14 +30,13 @@ class SessionController extends Controller
                 ->with('user')
                 ->get()
                 ->merge(
-                    $targetSessionRun->reviewRequests()->with('requester')->get()
+                    $targetSessionRun->activities
                 )
                 ->sortBy('created_at'),
-            'reviewRequest' => $targetSessionRun?->reviewRequests()
+            'reviewRequests' => $targetSessionRun?->reviewRequests()
                 ->with('requester')
-                ->where('reviewer_id', auth()->id())
                 ->where('status', 'pending')
-                ->first(),
+                ->get(),
         ]);
     }
 

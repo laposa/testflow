@@ -11,13 +11,28 @@ class ReviewForm extends Component
 
     public function approve()
     {
+        $user = auth()->user();
+
         $this->reviewRequest->update(['status' => 'approved', 'completed_at' => now()]);
+        activity()
+            ->event("review_approved")
+            ->causedBy($user)
+            ->performedOn($this->reviewRequest->reviewable)
+            ->log("{$user->name} approved the review.");
         return redirect(request()->header('Referer'));
     }
 
     public function reject()
     {
+        $user = auth()->user();
+
         $this->reviewRequest->update(['status' => 'rejected', 'completed_at' => now()]);
+
+        activity()
+            ->event("review_rejected")
+            ->causedBy($user)
+            ->performedOn($this->reviewRequest->reviewable)
+            ->log("{$user->name} rejected the review.");
         return redirect(request()->header('Referer'));
     }
 
