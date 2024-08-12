@@ -1,9 +1,11 @@
 <?php
+
 namespace App\Services;
 
 class JUnitLogParser
 {
     private $xmlContent;
+
     private $testSuites = [];
 
     public function __construct($xmlContent)
@@ -13,12 +15,22 @@ class JUnitLogParser
 
     public function getTotalTests()
     {
-        return (int) $this->xmlContent['tests'];
+        $total = 0;
+        foreach ($this->getTestSuites() as $testSuite) {
+            $total += $testSuite['tests'];
+        }
+
+        return $total;
     }
 
     public function getTotalFailures()
     {
-        return (int) $this->xmlContent['failures'];
+        $total = 0;
+        foreach ($this->getTestSuites() as $testSuite) {
+            $total += $testSuite['failures'];
+        }
+
+        return $total;
     }
 
     public function getTotalPassed()
@@ -33,10 +45,10 @@ class JUnitLogParser
 
         foreach ($this->getTestSuites() as $testSuite) {
             foreach ($testSuite['testCases'] as $testCase) {
-                if (
-                    strtolower($testCase['name']) == $name ||
-                    strtolower($testCase['class']) == $name
-                ) {
+                $testCaseName = strtolower(str_replace('_', ' ', $testCase['name']));
+                $testCaseClass = strtolower(str_replace('_', ' ', $testCase['class']));
+
+                if ($testCaseName == $name || $testCaseClass == $name) {
                     return $testCase;
                 }
             }
@@ -50,7 +62,9 @@ class JUnitLogParser
         $name = strtolower(str_replace('_', ' ', $name));
 
         foreach ($this->getTestSuites() as $testSuite) {
-            if (strtolower($testSuite['name']) == $name) {
+            $testSuiteName = strtolower(str_replace('_', ' ', $testSuite['name']));
+
+            if ($testSuiteName == $name) {
                 return $testSuite;
             }
         }
@@ -61,6 +75,7 @@ class JUnitLogParser
     public function getTestSuiteTime(string $name)
     {
         $testSuite = $this->getTestSuite($name);
+
         return $testSuite ? $testSuite['time'] : 0;
     }
 
@@ -105,6 +120,7 @@ class JUnitLogParser
         }
 
         $this->testSuites = $testSuites;
+
         return $this->testSuites;
     }
 }
