@@ -5,12 +5,12 @@
                 <li>
                     <a href="/sessions/{{ $session->id }}">{{ $session->name }}</a>:
                     @if ($session->runs && isset($session->runs[0]))
-                        @if (!$session->isRunning)
+                        @if (!$session->status === "success")
                             <span class="pass">{{ $session->passed }}
                                 passed</span> and <span class="fail">{{ $session->failed }}
                                 failed</span>
                         @else
-                            <span>Running</span>
+                            <span>{{ $session->status }}</span>
                         @endif
                     @else
                         <span>No runs yet</span>

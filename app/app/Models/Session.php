@@ -13,6 +13,7 @@ class Session extends Model
 
     protected $table = 'test_sessions';
 
+
     public function installation(): BelongsTo
     {
         return $this->belongsTo(Installation::class);
@@ -60,5 +61,40 @@ class Session extends Model
             return false;
         }
         return true;
+    }
+
+    public function lastRun(): Attribute
+    {
+        return new Attribute(
+            get: fn() => $this->runs()->orderBy('created_at', 'desc')->first(),
+        );
+    }
+
+    public function isRunning(): Attribute
+    {
+        return new Attribute(
+            get: fn() => $this->last_run && !$this->last_run?->result_log,
+        );
+    }
+
+    public function passedCount(): Attribute
+    {
+        return new Attribute(
+            get: fn() => $this->last_run?->parsedResults->getTotalPassed() ?? 0,
+        );
+    }
+
+    public function failedCount(): Attribute
+    {
+        return new Attribute(
+            get: fn() => $this->last_run?->parsedResults->getTotalFailures() ?? 0,
+        );
+    }
+
+    public function status(): Attribute
+    {
+        return new Attribute(
+            get: fn() => $this->last_run?->status ?? 'unknown',
+        );
     }
 }
