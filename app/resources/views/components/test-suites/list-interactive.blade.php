@@ -4,9 +4,11 @@
     @foreach ($suites as $repositoryTitle => $repository)
         <div class="list-repository list">
             <div class="title">
-                <label for="selector-repository-{{ $repositoryTitle }}" class="checkbox">
+                <label
+                    for="selector-{{ Str::slug($repositoryTitle) }}-repository-{{ $repositoryTitle }}"
+                    class="checkbox">
                     <input class="repository-selector" type="checkbox"
-                        id="selector-repository-{{ $repositoryTitle }}"
+                        id="selector-{{ Str::slug($repositoryTitle) }}-repository-{{ $repositoryTitle }}"
                         value="{{ $repositoryTitle }}">
                     <span class="checkmark"></span>
                 </label>
@@ -16,10 +18,11 @@
             @foreach ($repository as $serviceTitle => $service)
                 <div class="list-service list">
                     <div class="title">
-                        <label for="selector-service-{{ $repositoryTitle }}-{{ $serviceTitle }}"
+                        <label
+                            for="selector-{{ Str::slug($repositoryTitle) }}-service-{{ $repositoryTitle }}-{{ $serviceTitle }}"
                             class="checkbox">
                             <input class="service-selector" type="checkbox"
-                                id="selector-service-{{ $repositoryTitle }}-{{ $serviceTitle }}"
+                                id="selector-{{ Str::slug($repositoryTitle) }}-service-{{ $repositoryTitle }}-{{ $serviceTitle }}"
                                 value="{{ $serviceTitle }}">
                             <span class="checkmark"></span>
                         </label>
@@ -29,9 +32,11 @@
                     @foreach ($service as $suiteTitle => $suite)
                         <div class="list-suite list">
                             <div class="title">
-                                <label for="selector-suite-{{ $suiteTitle }}" class="checkbox">
+                                <label
+                                    for="selector-{{ Str::slug($repositoryTitle) }}-suite-{{ $suiteTitle }}"
+                                    class="checkbox">
                                     <input class="suite-selector" type="checkbox"
-                                        id="selector-suite-{{ $suiteTitle }}"
+                                        id="selector-{{ Str::slug($repositoryTitle) }}-suite-{{ $suiteTitle }}"
                                         value="{{ $suiteTitle }}">
                                     <span class="checkmark"></span>
                                 </label>
@@ -41,10 +46,11 @@
                                 @foreach ($suite as $test)
                                     <div class="test">
                                         @if ($test['workflow_id'])
-                                            <label for="selector-test-{{ $test['test_name'] }}"
+                                            <label
+                                                for="selector-{{ Str::slug($repositoryTitle) }}-test-{{ $test['test_name'] }}"
                                                 class="checkbox">
                                                 <input class="test-selector" type="checkbox"
-                                                    id="selector-test-{{ $test['test_name'] }}"
+                                                    id="selector-{{ Str::slug($repositoryTitle) }}-test-{{ $test['test_name'] }}"
                                                     name="tests[]"
                                                     value="{{ json_encode($test) }}">
                                                 <span class="checkmark"></span>

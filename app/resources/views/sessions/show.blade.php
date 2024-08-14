@@ -42,8 +42,10 @@
         </div>
     @endif
 
-    <section>
-        <h2>Selected Tests</h2>
+    <p><a href="#selected-selects"
+            onclick="document.getElementById('selected-tests').style.display='block'; this.remove()">Show
+            selected tests</a></p>
+    <section style="display: none;" id="selected-tests">
         <ul class="session-selected-suites">
             @foreach ($session->itemsGrouped as $path => $tests)
                 <li><b>{{ getTestSuiteName($tests[0]) }}</b></li>
