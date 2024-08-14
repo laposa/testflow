@@ -15,6 +15,7 @@ class DispatchSessionRun
             ->groupBy('workflow_id')
             ->map(fn($tests) => $this->dispatchWorkflow($client, $session, $tests->toArray()))
             ->toArray();
+
     }
 
     protected function dispatchWorkflow(
@@ -22,9 +23,16 @@ class DispatchSessionRun
         Session $session,
         array $tests,
     ) {
+
+        $serviceType = collect($tests)->unique('service_name')->first()['service_name'];
+
+        if ($serviceType === "mobile") {
+            $testFilter = collect($tests)->unique("suite_name")->pluck('suite_name')->join(",");
+        } else {
         $testFilter = collect($tests)
-            ->map((fn($test) => explode('.', $test['test_name'])[0]))
-            ->join('|');
+            ->map(fn($test) => explode(".", \Str::replace("_", " ", $test['test_name']))[0])
+            ->join("|");
+        }
 
         $client->dispatchWorkflow(
             repository: $tests[0]['repository_name'],
