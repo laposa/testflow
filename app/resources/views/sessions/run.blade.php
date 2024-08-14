@@ -3,9 +3,10 @@
     /** @var \App\Models\SessionRun $run */
 @endphp
 <x-layout>
-    <h1>{{ $session->title }}</h1>
+    <h1>{{ $session->name }}</h1>
 
-    <x-portal-section title="Test suites">
+    <section>
+        <h2>Run {{ $run->id }} for {{ getTestServiceName($run->items[0]) }}</h2>
         <ul class="session-selected-suites">
             @foreach ($run->itemsGrouped as $path => $tests)
                 @php($testSuite = $run->parsedResults->getTestSuite($tests[0]['suite_name']))
@@ -34,14 +35,15 @@
                 </ul>
             @endforeach
         </ul>
-    </x-portal-section>
+    </section>
 
-    <x-portal-section title="Logs">
+    <section title="Logs">
+        <h2>Logs</h2>
         <h3>Run Log</h3>
         <pre>{{ $run->run_log }}</pre>
 
         <h3>Results Log</h3>
         <pre>{{ $run->result_log }}</pre>
-    </x-portal-section>
+    </section>
 
 </x-layout>

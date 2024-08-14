@@ -15,7 +15,6 @@ class DispatchSessionRun
             ->groupBy('workflow_id')
             ->map(fn($tests) => $this->dispatchWorkflow($client, $session, $tests->toArray()))
             ->toArray();
-
     }
 
     protected function dispatchWorkflow(
@@ -23,15 +22,18 @@ class DispatchSessionRun
         Session $session,
         array $tests,
     ) {
-
         $serviceType = collect($tests)->unique('service_name')->first()['service_name'];
 
-        if ($serviceType === "mobile") {
-            $testFilter = collect($tests)->unique("suite_name")->pluck('suite_name')->join(",");
-        } else {
-        $testFilter = collect($tests)
-            ->map(fn($test) => explode(".", \Str::replace("_", " ", $test['test_name']))[0])
-            ->join("|");
+        if ($serviceType === 'mobile') {
+            $testFilter = collect($tests)->unique('suite_name')->pluck('suite_name')->join(',');
+        } elseif ($serviceType === 'web') {
+            $testFilter = collect($tests)
+                ->map(fn($item) => "tests/{$item['suite_name']}/{$item['test_name']}")
+                ->join(',');
+        } elseif ($serviceType === 'api') {
+            $testFilter = collect($tests)
+                ->map(fn($test) => explode('.', \Str::replace('_', ' ', $test['test_name']))[0])
+                ->join('|');
         }
 
         $client->dispatchWorkflow(

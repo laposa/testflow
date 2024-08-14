@@ -44,8 +44,6 @@ class SessionRun extends Model
         return $this->morphMany(ActivitylogServiceProvider::determineActivityModel(), 'subject');
     }
 
-
-
     public function itemsGrouped(): Attribute
     {
         return new Attribute(

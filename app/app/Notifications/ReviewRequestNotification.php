@@ -37,11 +37,11 @@ class ReviewRequestNotification extends Notification
      */
     public function toMail(object $notifiable): MailMessage
     {
-        return (new MailMessage)
-                    ->greeting("Hi {$notifiable->name}")
-                    ->subject('Review Request')
-                    ->line("{$this->reviewRequest->requester->name} has requested a review from you.")
-                    ->action('Review', url('/'));
+        return (new MailMessage())
+            ->greeting("Hi {$notifiable->name}")
+            ->subject('Review Request')
+            ->line("{$this->reviewRequest->requester->name} has requested a review from you.")
+            ->action('Review', url('/'));
     }
 
     /**
@@ -52,7 +52,7 @@ class ReviewRequestNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            //
-        ];
+                //
+            ];
     }
 }

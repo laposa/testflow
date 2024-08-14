@@ -81,8 +81,6 @@ button,
     align-items: center;
     position: relative;
 
-
-
     &:hover {
         background-color: var(--primary);
         color: white;
@@ -196,7 +194,9 @@ ul {
     font-weight: 600;
 }
 
-.fail, .offline, .not-found {
+.fail,
+.offline,
+.not-found {
     color: red;
     font-weight: 600;
 }
@@ -247,7 +247,7 @@ ul {
             top: 0;
             opacity: 0;
             transform: rotate(10deg);
-            font-weight: normal!important;
+            font-weight: normal !important;
         }
 
         &:before {
@@ -262,7 +262,6 @@ ul {
     }
 
     & input:checked {
-
         + .checkmark:before {
             width: 100%;
             height: 100%;

@@ -15,7 +15,7 @@ class RequestReview extends Component
     public Model $model;
 
     #[Validate('required')]
-    public string $reviewer_id = "";
+    public string $reviewer_id = '';
 
     /** @var Collection<User> */
     public Collection $users;
@@ -23,24 +23,23 @@ class RequestReview extends Component
     public function mount()
     {
         if (!method_exists($this->model, 'reviewRequests')) {
-            throw new \InvalidArgumentException("The provided model does not have a 'reviewRequests' relationship.");
+            throw new \InvalidArgumentException(
+                "The provided model does not have a 'reviewRequests' relationship.",
+            );
         }
 
         // Get available reviewers
-        $reviewRequests = $this->model->reviewRequests()
-            ->where('status', 'pending')
-            ->get();
+        $reviewRequests = $this->model->reviewRequests()->where('status', 'pending')->get();
 
-        $this->users = User::whereNotIn(
-            'id',
-            $reviewRequests->pluck('reviewer_id')
-        )->get();
+        $this->users = User::whereNotIn('id', $reviewRequests->pluck('reviewer_id'))->get();
     }
 
     public function save()
     {
         if (!method_exists($this->model, 'reviewRequests')) {
-            throw new \InvalidArgumentException("The provided model does not have a 'reviewRequests' relationship.");
+            throw new \InvalidArgumentException(
+                "The provided model does not have a 'reviewRequests' relationship.",
+            );
         }
 
         $this->validate();
@@ -57,11 +56,11 @@ class RequestReview extends Component
 
         activity()
             ->causedBy($requester)
-            ->event("review_request")
+            ->event('review_request')
             ->performedOn($this->model)
             ->log("{$requester->name} requested a review from {$reviewer->name}");
 
-        session()->flash("status", "Review requested");
+        session()->flash('status', 'Review requested');
 
         return redirect(request()->header('Referer'));
     }

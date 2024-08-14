@@ -1,7 +1,7 @@
 @php
- /**
- * @var array $suites
- */
+    /**
+     * @var array $suites
+     */
 @endphp
 
 <div>
