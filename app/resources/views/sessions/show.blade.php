@@ -42,6 +42,8 @@
         </div>
     @endif
 
+    <p style="text-align: right"><a class="button" href="#" onclick="print()">Print Executive
+            Report</a></p>
     <section x-data="{ show: false }">
         <p>
             <a href="#" x-on:click="show = ! show">
