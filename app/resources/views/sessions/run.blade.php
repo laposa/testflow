@@ -4,14 +4,13 @@
 @endphp
 <x-layout>
     <h1>{{ $session->name }}</h1>
-
+    <p>Run No.{{ $run->id }} for {{ getTestServiceName($run->items[0]) }}</p>
     <section>
-        <h2>Run {{ $run->id }} for {{ getTestServiceName($run->items[0]) }}</h2>
         <ul class="session-selected-suites">
             @foreach ($run->itemsGrouped as $path => $tests)
                 @php($testSuite = $run->parsedResults->getTestSuite($tests[0]['suite_name']))
                 <li>
-                    <b>{{ getTestSuiteName($tests[0]) }}</b>
+                    <b>{{ $tests[0]['suite_name'] }}</b>
                     @if ($testSuite)
                         <span class="run-time">{{ $testSuite['time'] }}s</span>
                     @else
@@ -35,15 +34,28 @@
                 </ul>
             @endforeach
         </ul>
+        <div x-data="{
+            show: false
+        }">
+            <p>
+                <a href="#" x-on:click="show = ! show">
+                    <span x-text="show ? 'Hide' : 'Show'"></span> results in JUnit format
+                </a>
+            </p>
+            <pre x-show="show">{{ $run->result_log }}</pre>
+        </div>
+
     </section>
 
-    <section title="Logs">
-        <h2>Logs</h2>
-        <h3>Run Log</h3>
-        <pre>{{ $run->run_log }}</pre>
+    <section x-data="{ show: false }">
+        <p>
+            <a href="#" x-on:click="show = ! show">
+                <span x-text="show ? 'Hide' : 'Show'"></span> detailed run log
+            </a>
+        </p>
 
-        <h3>Results Log</h3>
-        <pre>{{ $run->result_log }}</pre>
+        <pre x-show="show">{{ $run->run_log }}</pre>
+
     </section>
 
 </x-layout>

@@ -1,6 +1,7 @@
 <header>
     <div class="header">
-        <a href="/" class="logo">LTP<img src="/images/icons/logo_check.svg"></a>
+        <a href="/" class="logo"><img src="/images/icons/logo_check.svg">
+            {{ config('app.name') ?? 'Test Portal' }}</a>
 
         @if ($currentUser)
             <div class="account">
