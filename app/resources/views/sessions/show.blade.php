@@ -42,11 +42,9 @@
         </div>
     @endif
 
-    <p style="text-align: right"><a class="button" href="#" onclick="print()">Print Executive
-            Report</a></p>
     <section x-data="{ show: false }">
         <p>
-            <a href="#" x-on:click="show = ! show">
+            <a class="button" href="#" x-on:click="show = ! show">
                 <span x-text="show ? 'Hide' : 'Show'"></span> selected tests
             </a>
         </p>
@@ -61,4 +59,6 @@
             @endforeach
         </ul>
     </section>
+    <p><a class="button" href="#" onclick="print()">Print Executive
+            Report</a></p>
 </x-layout>
