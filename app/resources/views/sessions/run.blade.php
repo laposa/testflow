@@ -3,7 +3,7 @@
     /** @var \App\Models\SessionRun $run */
 @endphp
 <x-layout>
-    <h1>{{ $session->name }}</h1>
+    <h2>{{ $session->name }}</h2>
     <p>Run No.{{ $run->id }} for {{ getTestServiceName($run->items[0]) }}</p>
     <section>
         <ul class="session-selected-suites">

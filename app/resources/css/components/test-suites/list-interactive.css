@@ -107,8 +107,6 @@
         padding-bottom: 10px;
 
         > .title {
-            font-weight: 600;
-
             .expand:after {
                 content: '▲';
             }
