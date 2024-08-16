@@ -4,18 +4,13 @@
 @endphp
 <x-layout>
     <h2>{{ $session->name }}</h2>
-    <p>Run No.{{ $run->id }} for {{ getTestServiceName($run->items[0]) }}</p>
+    <p>Run #{{ $run->id }} for {{ getTestServiceName($run->items[0]) }}.</p>
     <section>
         <ul class="session-selected-suites">
             @foreach ($run->itemsGrouped as $path => $tests)
                 @php($testSuite = $run->parsedResults->getTestSuite($tests[0]['suite_name']))
                 <li>
-                    <b>{{ $tests[0]['suite_name'] }}</b>
-                    @if ($testSuite)
-                        <span class="run-time">{{ $testSuite['time'] }}s</span>
-                    @else
-                        <span class="not-found">not found</span>
-                    @endif
+                    {{ $tests[0]['suite_name'] }}
                 </li>
                 <ul>
                     @foreach ($tests as $test)
