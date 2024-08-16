@@ -9,6 +9,7 @@ class RepositoryData extends Data
     public function __construct(
         public string $name,
         /** @var Collection<string, RepositoryFolderData> */
-        public Collection $folders
-    ) {}
+        public Collection $folders,
+    ) {
+    }
 }

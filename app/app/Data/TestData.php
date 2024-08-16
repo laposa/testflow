@@ -13,5 +13,6 @@ class TestData extends Data
         public string $suite_name,
         public string $test_name,
         public string $workflow_id,
-    ) {}
+    ) {
+    }
 }

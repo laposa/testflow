@@ -1,14 +1,15 @@
 @php
- /**
- * @var array $suites
- */
+    /**
+     * @var array $suites
+     */
 @endphp
 
 <div>
     <form action="/sessions" method="POST">
         @csrf
 
-        <x-portal-section title="Create new session">
+        <section>
+            <h2>New session</h2>
             <div class="information">
                 <input style="width:60%" type="text" id="name" name="name" required
                     placeholder="Session name" value="{{ old('name') }}">
@@ -16,14 +17,14 @@
                     <option value="preprod">PreProd environment</option>
                 </select>
             </div>
-        </x-portal-section>
+        </section>
 
-        <x-portal-section>
+        <section>
             <x-test-suites.list-interactive :suites="$suites" />
-        </x-portal-section>
+        </section>
 
-        <x-portal-section>
+        <section>
             <button type="submit" class="button filled">Create</button>
-        </x-portal-section>
+        </section>
     </form>
 </div>

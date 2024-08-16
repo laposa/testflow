@@ -36,7 +36,9 @@
     </thead>
     <tbody>
         @foreach ($sessions->reverse() as $session)
-            @php /* @var \App\Models\Session $session */ @endphp
+            @php
+                /* @var \App\Models\Session $session */
+            @endphp
             <tr>
                 <td><a href="/sessions/{{ $session->id }}">{{ $session->name }}</a></td>
                 <td>PreProd</td>

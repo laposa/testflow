@@ -71,7 +71,9 @@ class FetchTestSuites
             }
         }
 
-        return collect($tests)->groupBy(['repository_name', 'service_name', 'suite_name'])->toArray();
+        return collect($tests)
+            ->groupBy(['repository_name', 'service_name', 'suite_name'])
+            ->toArray();
     }
 
     protected function fetchTests($repository)

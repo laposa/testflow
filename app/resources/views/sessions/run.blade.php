@@ -3,19 +3,14 @@
     /** @var \App\Models\SessionRun $run */
 @endphp
 <x-layout>
-    <h1>{{ $session->title }}</h1>
-
-    <x-portal-section title="Test suites">
+    <h2>{{ $session->name }}</h2>
+    <p>Run #{{ $run->id }} for {{ getTestServiceName($run->items[0]) }}.</p>
+    <section>
         <ul class="session-selected-suites">
             @foreach ($run->itemsGrouped as $path => $tests)
                 @php($testSuite = $run->parsedResults->getTestSuite($tests[0]['suite_name']))
                 <li>
-                    <b>{{ getTestSuiteName($tests[0]) }}</b>
-                    @if ($testSuite)
-                        <span class="run-time">{{ $testSuite['time'] }}s</span>
-                    @else
-                        <span class="not-found">not found</span>
-                    @endif
+                    {{ $tests[0]['suite_name'] }}
                 </li>
                 <ul>
                     @foreach ($tests as $test)
@@ -34,14 +29,28 @@
                 </ul>
             @endforeach
         </ul>
-    </x-portal-section>
+        <div x-data="{
+            show: false
+        }">
+            <p>
+                <a href="#" x-on:click="show = ! show">
+                    <span x-text="show ? 'Hide' : 'Show'"></span> results in JUnit format
+                </a>
+            </p>
+            <pre x-show="show">{{ $run->result_log }}</pre>
+        </div>
 
-    <x-portal-section title="Logs">
-        <h3>Run Log</h3>
-        <pre>{{ $run->run_log }}</pre>
+    </section>
 
-        <h3>Results Log</h3>
-        <pre>{{ $run->result_log }}</pre>
-    </x-portal-section>
+    <section x-data="{ show: false }">
+        <p>
+            <a href="#" x-on:click="show = ! show">
+                <span x-text="show ? 'Hide' : 'Show'"></span> detailed run log
+            </a>
+        </p>
+
+        <pre x-show="show">{{ $run->run_log }}</pre>
+
+    </section>
 
 </x-layout>

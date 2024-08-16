@@ -10,10 +10,12 @@
             <select name="reviewer_id" wire:model="reviewer_id">
                 <option value="">Select a reviewer</option>
                 @foreach ($users as $user)
-                    <option value="{{$user->id}}">{{$user->name}}</option>
+                    <option value="{{ $user->id }}">{{ $user->name }}</option>
                 @endforeach
             </select>
-            @error('reviewer_id') <span class="error">{{ $message }}</span> @enderror
+            @error('reviewer_id')
+                <span class="error">{{ $message }}</span>
+            @enderror
         </div>
 
         <button class="button filled" type="submit">Request</button>

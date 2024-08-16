@@ -22,18 +22,17 @@ class SessionController extends Controller
 
         $targetSessionRun = $session->runs->last();
 
-
         return view('sessions.show', [
             'session' => $session,
             'latestRun' => $targetSessionRun,
-            'activity' => $targetSessionRun?->comments()
+            'activity' => $targetSessionRun
+                ?->comments()
                 ->with('user')
                 ->get()
-                ->merge(
-                    $targetSessionRun->activities
-                )
+                ->concat($targetSessionRun->activities)
                 ->sortBy('created_at'),
-            'reviewRequests' => $targetSessionRun?->reviewRequests()
+            'reviewRequests' => $targetSessionRun
+                ?->reviewRequests()
                 ->with('requester')
                 ->where('status', 'pending')
                 ->get(),

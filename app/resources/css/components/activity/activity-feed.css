@@ -50,9 +50,6 @@
             padding: 6px 12px;
             display: flex;
             justify-content: space-between;
-            div {
-                font-size: 14px;
-            }
         }
         .activity-feed-item-body {
             padding: 12px;

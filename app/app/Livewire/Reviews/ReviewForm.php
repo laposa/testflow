@@ -15,7 +15,7 @@ class ReviewForm extends Component
 
         $this->reviewRequest->update(['status' => 'approved', 'completed_at' => now()]);
         activity()
-            ->event("review_approved")
+            ->event('review_approved')
             ->causedBy($user)
             ->performedOn($this->reviewRequest->reviewable)
             ->log("{$user->name} approved the review.");
@@ -29,7 +29,7 @@ class ReviewForm extends Component
         $this->reviewRequest->update(['status' => 'rejected', 'completed_at' => now()]);
 
         activity()
-            ->event("review_rejected")
+            ->event('review_rejected')
             ->causedBy($user)
             ->performedOn($this->reviewRequest->reviewable)
             ->log("{$user->name} rejected the review.");

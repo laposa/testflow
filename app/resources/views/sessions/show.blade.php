@@ -1,10 +1,10 @@
 @php
-/**
- * @var \App\Models\Session $session
- * @var \Illuminate\Support\Collection $activity
- * @var \App\Models\ReviewRequest $reviewRequest
- * @var \App\Models\SessionRun $latestRun
- */
+    /**
+     * @var \App\Models\Session $session
+     * @var \Illuminate\Support\Collection $activity
+     * @var \App\Models\ReviewRequest $reviewRequest
+     * @var \App\Models\SessionRun $latestRun
+     */
 @endphp
 <x-layout>
     <x-portal-section title="{{ $session->name }}">
@@ -37,15 +37,18 @@
         <div>
             <livewire:comments.create-comment :model="$latestRun" />
         </div>
-        <div >
+        <div>
             <livewire:reviews.request-review :model="$latestRun" />
         </div>
     @endif
 
-
-
-    <x-portal-section title="Selected Tests">
-        <ul class="session-selected-suites">
+    <section x-data="{ show: false }">
+        <p>
+            <a href="#" x-on:click="show = ! show">
+                <span x-text="show ? 'Hide' : 'Show'"></span> selected tests
+            </a>
+        </p>
+        <ul class="session-selected-suites" x-show="show">
             @foreach ($session->itemsGrouped as $path => $tests)
                 <li><b>{{ getTestSuiteName($tests[0]) }}</b></li>
                 <ul>
@@ -55,5 +58,5 @@
                 </ul>
             @endforeach
         </ul>
-    </x-portal-section>
+    </section>
 </x-layout>

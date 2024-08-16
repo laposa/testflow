@@ -118,7 +118,7 @@ class GithubInstallationService
                 'inputs' => [
                     'environment' => 'preprod',
                     ...$inputs,
-                ]
+                ],
             ])
             ->throw();
 
@@ -143,7 +143,6 @@ class GithubInstallationService
 
     public function fetchWorkflowRunArtifacts(string $repository, string $runId)
     {
-
         $response = $this->withHeaders()->get(
             "/repos/{$repository}/actions/runs/{$runId}/artifacts",
         );

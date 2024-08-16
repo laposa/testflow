@@ -1,123 +1,121 @@
 .list-interactive {
+    display: flex;
+    flex-direction: column;
+    row-gap: 10px;
 
-	display: flex;
-	flex-direction: column;
-	row-gap: 10px;
+    .test,
+    .title {
+        display: flex;
+        align-items: center;
+        column-gap: 10px;
+    }
 
-	.test, .title {
-		display: flex;
-		align-items: center;
-		column-gap: 10px;
-	}
+    .list {
+        transition: 0.3s ease;
+    }
 
-	.list {
-		transition: 0.3s ease;
-	}
+    .title {
+        padding-right: 15px;
+        transition: 0.5s ease;
+    }
 
-	.title {
-		padding-right: 15px;
-		transition: 0.5s ease;
-	}
+    .test {
+        margin-bottom: 2px;
+    }
 
-	.test {
-		margin-bottom: 2px;
-	}
+    .list-repository {
+        padding-left: 0;
+        box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.1);
+        margin-bottom: 10px;
+        overflow: hidden;
 
-	.list-repository {
-		padding-left: 0;
-		box-shadow: 0px 0px 5px 0px rgba(0,0,0,0.1);
-		margin-bottom: 10px;
-		overflow: hidden;
-		
-		.list {
-			padding-left: 30px;
-			position: relative;
+        .list {
+            padding-left: 30px;
+            position: relative;
 
-			&:nth-child(2n+1):before {
-				content: "";
-				position: absolute;
-				top: 0;
-				margin-left: 50%;
-				left: -50vw;
-				height: 100%;
-				width: 100vw;
-				pointer-events: none;
-				background-color: rgba(95, 158, 160, 0.051);
-			}
-		}
-	
-		> .list {
-			padding-left: 45px;
-		}
+            &:nth-child(2n + 1):before {
+                content: '';
+                position: absolute;
+                top: 0;
+                margin-left: 50%;
+                left: -50vw;
+                height: 100%;
+                width: 100vw;
+                pointer-events: none;
+                background-color: rgba(95, 158, 160, 0.051);
+            }
+        }
 
-		> .title {
-			padding: 15px;
-		}
+        > .list {
+            padding-left: 45px;
+        }
 
-		&.expanded {
-			box-shadow: 0px 0px 10px 5px rgba(95, 158, 160, 0.2);
+        > .title {
+            padding: 15px;
+        }
 
-			> .title {
-				background-color: cadetblue;
-				color: white;
-				margin-bottom: 10px;
+        &.expanded {
+            box-shadow: 0px 0px 10px 5px rgba(95, 158, 160, 0.2);
 
-				.expand {
-					color: white;
-				}
+            > .title {
+                background-color: cadetblue;
+                color: white;
+                margin-bottom: 10px;
 
-				.checkmark {
-					border: 2px solid white!important;
-				}
-			}
-		}
-	}
+                .expand {
+                    color: white;
+                }
 
-	.expand {
-		text-decoration: none;
-		color: black;
+                .checkmark {
+                    border: 2px solid white !important;
+                }
+            }
+        }
+    }
 
-		&:after {
-			opacity: 0;
-			margin-left: 10px;
-			content: "▼";
-			transition: 0.3s ease;
-		}
+    .expand {
+        text-decoration: none;
+        color: black;
 
-		&:hover {
-			&:after {
-				opacity: 1;
-			}
-		}
-	}
+        &:after {
+            opacity: 0;
+            margin-left: 10px;
+            content: '▼';
+            transition: 0.3s ease;
+        }
 
-	.list:not(.list-repository) {
-		overflow: hidden;
-		margin: 0 auto;
-		display: none;
+        &:hover {
+            &:after {
+                opacity: 1;
+            }
+        }
+    }
 
-		&.expanded {
-			overflow: visible;
-			margin-bottom: 10px;
-			padding-top: 10px;
-		}
-	}
-	
-	.list.expanded {
-		padding-bottom: 10px;
+    .list:not(.list-repository) {
+        overflow: hidden;
+        margin: 0 auto;
+        display: none;
 
-		> .title {
-			font-weight: 600;
+        &.expanded {
+            overflow: visible;
+            margin-bottom: 10px;
+            padding-top: 10px;
+        }
+    }
 
-			.expand:after {
-				content: "▲";
-			}
-		}
-	}
+    .list.expanded {
+        padding-bottom: 10px;
 
-	.list-suite.expanded {
-		.list-test {
-			padding-top: 10px;
-		}
-	}
+        > .title {
+            .expand:after {
+                content: '▲';
+            }
+        }
+    }
+
+    .list-suite.expanded {
+        .list-test {
+            padding-top: 10px;
+        }
+    }
 }

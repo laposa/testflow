@@ -3,7 +3,8 @@
 @endphp
 
 <x-layout>
-    <x-portal-section>
+    <section>
+        <h2>All session</h2>
         <x-sessions.list :sessions="$sessions" />
-    </x-portal-section>
+    </section>
 </x-layout>

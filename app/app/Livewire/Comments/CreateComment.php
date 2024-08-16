@@ -14,23 +14,25 @@ class CreateComment extends Component
     public Model $model;
 
     #[Validate('required|min:5')]
-    public string $body = "";
+    public string $body = '';
 
     public function save()
     {
         // check $model is commentable
         if (!method_exists($this->model, 'comments')) {
-            throw new \InvalidArgumentException("The provided model does not have a 'comments' relationship.");
+            throw new \InvalidArgumentException(
+                "The provided model does not have a 'comments' relationship.",
+            );
         }
 
         $this->validate();
 
         $this->model->comments()->create([
             'user_id' => auth()->id(),
-            ...$this->only('body')
+            ...$this->only('body'),
         ]);
 
-        session()->flash("status", "Comment created");
+        session()->flash('status', 'Comment created');
 
         return redirect(request()->header('Referer'));
     }

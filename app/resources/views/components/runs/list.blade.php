@@ -1,9 +1,9 @@
 @php
-/**
- * @var \Illuminate\Support\Collection<int, App\Models\SessionRun $runs>
- * @var string $sessionId
- * @var \App\Http\ViewModels\ViewModel $view
- */
+    /**
+     * @var \Illuminate\Support\Collection<int, App\Models\SessionRun $runs>
+     * @var string $sessionId
+     * @var \App\Http\ViewModels\ViewModel $view
+     */
 @endphp
 
 @props(['runs' => [], 'sessionId' => null])
@@ -12,7 +12,7 @@
         <tr>
             <th>Run ID</th>
             <th>Service</th>
-            <th>Timestamp</th>
+            <th>Started</th>
             <th>Status</th>
             <th>Results</th>
         </tr>
