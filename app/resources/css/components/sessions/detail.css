@@ -9,15 +9,6 @@
         }
     }
 
-    .run-time {
-        font-size: 0.9rem;
-        color: var(--primary);
-    }
-
-    .run-time::before {
-        content: '\1F551';
-    }
-
     .pass::before {
         content: '\2714';
     }

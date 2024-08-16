@@ -18,9 +18,8 @@
                         <li>
                             {{ $test['test_name'] }}
                             @if ($testCase)
-                                <span
-                                    class="{{ $testCase['status'] }}">{{ $testCase['status'] }}</span>
-                                <span class="run-time">{{ $testCase['time'] }}s</span>
+                                <span title="Execution time {{ round($testCase['time'], 1) }}s"
+                                    class="{{ $testCase['status'] }}"></span>
                             @else
                                 <span class="not-found">not found</span>
                             @endif
