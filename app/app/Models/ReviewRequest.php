@@ -2,19 +2,16 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class ReviewRequest extends Model
 {
-    use HasFactory;
-
     protected $fillable = ['requester_id', 'reviewer_id', 'status', 'completed_at'];
-    public function reviewable(): MorphTo
+
+    public function session(): BelongsTo
     {
-        return $this->morphTo();
+        return $this->belongsTo(Session::class);
     }
 
     public function requester(): BelongsTo

@@ -51,43 +51,23 @@ class Session extends Model
         return $this->hasMany(SessionRun::class);
     }
 
+    public function activity(): HasMany
+    {
+        return $this->hasMany(SessionActivity::class);
+    }
+
+    public function reviewRequests(): HasMany
+    {
+        return $this->hasMany(ReviewRequest::class);
+    }
+
     public function canRunTests(): bool
     {
-        /** @var SessionRun|null $lastRun */
-        // If there is a pending or rejected review request in the last test, we can't run tests
-        $lastRun = $this->runs()->orderBy('created_at', 'desc')->first();
-        if (
-            $lastRun &&
-            $lastRun->reviewRequests()->orderBy('created_at', 'desc')->first()?->status !==
-                'approved'
-        ) {
-            return false;
-        }
-        return true;
-    }
-
-    public function lastRun(): Attribute
-    {
-        return new Attribute(get: fn() => $this->runs()->orderBy('created_at', 'desc')->first());
-    }
-
-    public function isRunning(): Attribute
-    {
-        return new Attribute(get: fn() => $this->last_run && !$this->last_run?->result_log);
-    }
-
-    public function passedCount(): Attribute
-    {
-        return new Attribute(get: fn() => $this->last_run?->parsedResults->getTotalPassed() ?? 0);
-    }
-
-    public function failedCount(): Attribute
-    {
-        return new Attribute(get: fn() => $this->last_run?->parsedResults->getTotalFailures() ?? 0);
-    }
-
-    public function status(): Attribute
-    {
-        return new Attribute(get: fn() => $this->last_run?->status ?? 'unknown');
+        // If there is a pending or rejected review request we can't run tests
+        return $this->reviewRequests()
+            ->where('status', 'pending')
+            ->orWhere('status', 'rejected')
+            ->get()
+            ->isEmpty();
     }
 }

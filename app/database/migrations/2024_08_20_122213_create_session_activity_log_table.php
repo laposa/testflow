@@ -10,17 +10,17 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('review_requests', function (Blueprint $table) {
+        Schema::create('session_activity_log', function (Blueprint $table) {
             $table->id();
             $table
                 ->foreignId('session_id')
                 ->constrained('test_sessions')
                 ->onDelete('cascade')
                 ->onUpdate('cascade');
-            $table->foreignId('requester_id')->constrained('users');
-            $table->foreignId('reviewer_id')->constrained('users');
-            $table->string('status')->default('pending');
-            $table->dateTime('completed_at')->nullable();
+            $table->foreignId('user_id')->constrained('users');
+            $table->string('type');
+            $table->text('body')->nullable();
+            $table->json('metadata')->nullable();
             $table->timestamps();
         });
     }
@@ -30,6 +30,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('review_requests');
+        Schema::dropIfExists('session_activity_log');
     }
 };

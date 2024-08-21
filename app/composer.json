@@ -10,12 +10,11 @@
         "laravel/framework": "^11.9",
         "laravel/socialite": "^5.14",
         "laravel/tinker": "^2.9",
-        "lcobucci/jwt": "^5.3",
         "livewire/livewire": "^3.5",
-        "spatie/laravel-activitylog": "^4.8",
         "spatie/laravel-data": "^4.7"
     },
     "require-dev": {
+        "barryvdh/laravel-debugbar": "^3.13",
         "barryvdh/laravel-ide-helper": "^3.0",
         "fakerphp/faker": "^1.23",
         "larastan/larastan": "^2.0",

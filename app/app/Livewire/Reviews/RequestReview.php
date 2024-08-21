@@ -2,9 +2,10 @@
 
 namespace App\Livewire\Reviews;
 
+use App\Enums\SessionActivityType;
 use App\Models\User;
+use App\Models\Session;
 use App\Notifications\ReviewRequestNotification;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -12,7 +13,7 @@ use Livewire\Component;
 class RequestReview extends Component
 {
     #[Validate('required')]
-    public Model $model;
+    public Session $session;
 
     #[Validate('required')]
     public string $reviewer_id = '';
@@ -22,43 +23,31 @@ class RequestReview extends Component
 
     public function mount()
     {
-        if (!method_exists($this->model, 'reviewRequests')) {
-            throw new \InvalidArgumentException(
-                "The provided model does not have a 'reviewRequests' relationship.",
-            );
-        }
-
         // Get available reviewers
-        $reviewRequests = $this->model->reviewRequests()->where('status', 'pending')->get();
+        $reviewRequests = $this->session->reviewRequests()->where('status', 'pending')->get();
 
         $this->users = User::whereNotIn('id', $reviewRequests->pluck('reviewer_id'))->get();
     }
 
     public function save()
     {
-        if (!method_exists($this->model, 'reviewRequests')) {
-            throw new \InvalidArgumentException(
-                "The provided model does not have a 'reviewRequests' relationship.",
-            );
-        }
-
         $this->validate();
 
         $requester = auth()->user();
         $reviewer = User::find($this->reviewer_id);
 
-        $reviewRequest = $this->model->reviewRequests()->create([
-            'requester_id' => auth()->id(),
+        $reviewRequest = $this->session->reviewRequests()->create([
+            'requester_id' => $requester->id,
             'reviewer_id' => $this->reviewer_id,
         ]);
 
         $reviewer->notify(new ReviewRequestNotification($reviewRequest));
 
-        activity()
-            ->causedBy($requester)
-            ->event('review_request')
-            ->performedOn($this->model)
-            ->log("{$requester->name} requested a review from {$reviewer->name}");
+        $this->session->activity()->create([
+            'user_id' => $requester->id,
+            'type' => SessionActivityType::review_requested,
+            'body' => $requester->name . ' requested a review from ' . $reviewer->name,
+        ]);
 
         session()->flash('status', 'Review requested');
 

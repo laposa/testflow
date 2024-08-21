@@ -21,6 +21,11 @@ class ListRuns extends Component
     public function render(FetchSessionWorkflowRuns $fetchSessionWorkflowRuns)
     {
         $this->session->load('items.runs');
+        $this->session->load([
+            'runs' => function ($query) {
+                $query->orderBy('created_at', 'desc');
+            },
+        ]);
         $pollingEnabled = !$fetchSessionWorkflowRuns->handle($this->session);
 
         return view('livewire.runs.list-runs', [
@@ -31,6 +36,16 @@ class ListRuns extends Component
 
     public function createRun(DispatchSessionRun $dispatchSessionRun)
     {
-        $dispatchSessionRun->handle($this->session);
+        $dispatchSessionRun->handle($this->session, null);
+        $this->dispatch('reload-activity');
+    }
+
+    public function rerunRun(DispatchSessionRun $dispatchSessionRun, $runId)
+    {
+        $dispatchSessionRun->handle(
+            $this->session,
+            $this->session->runs()->find($runId)->items->toArray(),
+        );
+        $this->dispatch('reload-activity');
     }
 }

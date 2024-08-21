@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Reviews;
 
+use App\Enums\SessionActivityType;
 use App\Models\ReviewRequest;
 use Livewire\Component;
 
@@ -14,11 +15,13 @@ class ReviewForm extends Component
         $user = auth()->user();
 
         $this->reviewRequest->update(['status' => 'approved', 'completed_at' => now()]);
-        activity()
-            ->event('review_approved')
-            ->causedBy($user)
-            ->performedOn($this->reviewRequest->reviewable)
-            ->log("{$user->name} approved the review.");
+
+        $this->reviewRequest->session->activity()->create([
+            'user_id' => $user->id,
+            'type' => SessionActivityType::review_approved,
+            'body' => $user->name . ' approved the review',
+        ]);
+
         return redirect(request()->header('Referer'));
     }
 
@@ -28,11 +31,12 @@ class ReviewForm extends Component
 
         $this->reviewRequest->update(['status' => 'rejected', 'completed_at' => now()]);
 
-        activity()
-            ->event('review_rejected')
-            ->causedBy($user)
-            ->performedOn($this->reviewRequest->reviewable)
-            ->log("{$user->name} rejected the review.");
+        $this->reviewRequest->session->activity()->create([
+            'user_id' => $user->id,
+            'type' => SessionActivityType::review_rejected,
+            'body' => $user->name . ' rejected the review',
+        ]);
+
         return redirect(request()->header('Referer'));
     }
 
