@@ -2,19 +2,33 @@
 
 namespace App\Actions\Github;
 
+use App\Enums\SessionActivityType;
 use App\Models\Session;
 use App\Services\GithubInstallationService;
 
 class DispatchSessionRun
 {
-    public function handle(Session $session): void
+    public function handle(Session $session, ?array $sessionItems): void
     {
         $client = new GithubInstallationService($session->installation);
 
-        collect($session->items)
+        $runIds = collect($sessionItems ? $sessionItems : $session->items)
             ->groupBy('workflow_id')
             ->map(fn($tests) => $this->dispatchWorkflow($client, $session, $tests->toArray()))
             ->toArray();
+
+        $body = auth()->user()->name . ' has executed ';
+        if (count($runIds) === 1) {
+            $body .= 'run with ID: ' . implode(', ', $runIds);
+        } else {
+            $body .= 'runs with IDs: ' . implode(', ', $runIds);
+        }
+
+        $session->activity()->create([
+            'user_id' => auth()->id(),
+            'type' => SessionActivityType::run_dispatched,
+            'body' => $body,
+        ]);
     }
 
     protected function dispatchWorkflow(
@@ -52,5 +66,7 @@ class DispatchSessionRun
         ]);
 
         $run->items()->attach(collect($tests)->pluck('id'));
+
+        return $run->id;
     }
 }

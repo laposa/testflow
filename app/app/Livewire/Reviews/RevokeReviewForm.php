@@ -2,11 +2,8 @@
 
 namespace App\Livewire\Reviews;
 
-use App\Models\Comment;
 use App\Models\ReviewRequest;
-use Illuminate\Database\Eloquent\Model;
 use Livewire\Component;
-use Spatie\Activitylog\Models\Activity;
 
 class RevokeReviewForm extends Component
 {
@@ -15,6 +12,7 @@ class RevokeReviewForm extends Component
     public function delete()
     {
         $this->reviewRequest->delete();
+
         return redirect(request()->header('Referer'));
     }
 

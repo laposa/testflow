@@ -8,8 +8,16 @@
 }
 
 .activity-feed-item {
-    padding-left: 42px;
     position: relative;
+    padding-left: 42px;
+    display: flex;
+    padding-top: 6px;
+    gap: 1rem;
+
+    svg {
+        width: 24px;
+        height: 24px;
+    }
 
     &:before {
         content: '';
@@ -40,46 +48,48 @@
         transform: translateX(-50%);
     }
 
-    &.activity-feed-item--comment {
+    .activity-feed-body-timestamp,
+    .activity-feed-header-timestamp {
+        display: inline-block;
+        margin-left: 15px;
+        color: #999;
+        font-size: 0.9rem;
+    }
+
+    &.activity-feed--comment {
+        display: block;
+
         > div {
             border: 1px solid #ccc;
         }
 
-        .activity-feed-item-header {
+        .activity-feed-header {
             border-bottom: 1px solid #ccc;
             padding: 6px 12px;
-            display: flex;
-            justify-content: space-between;
         }
-        .activity-feed-item-body {
+        .activity-feed-body {
             padding: 12px;
+        }
+        .activity-feed-body-timestamp {
+            display: none;
         }
     }
 
-    &.activity-feed-item--review-request {
-        display: flex;
-        padding-top: 6px;
-        gap: 1rem;
+    &.activity-feed--review_requested {
         svg {
-            width: 24px;
-            height: 24px;
+            color: var(--info);
         }
+    }
 
-        &.activity-feed--review_request {
-            svg {
-                color: var(--info);
-            }
+    &.activity-feed--review_approved {
+        svg {
+            color: var(--success);
         }
+    }
 
-        &.activity-feed--review_approved {
-            svg {
-                color: var(--success);
-            }
-        }
-        &.activity-feed--review_rejected {
-            svg {
-                color: var(--danger);
-            }
+    &.activity-feed--review_rejected {
+        svg {
+            color: var(--danger);
         }
     }
 }

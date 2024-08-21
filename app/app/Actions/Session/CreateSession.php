@@ -2,6 +2,7 @@
 
 namespace App\Actions\Session;
 
+use App\Enums\SessionActivityType;
 use App\Models\Installation;
 use Illuminate\Support\Facades\Validator;
 
@@ -42,6 +43,12 @@ class CreateSession
                 'service_url' => $test['service_url'],
             ]);
         }
+
+        $session->activity()->create([
+            'user_id' => auth()->id(),
+            'type' => SessionActivityType::session_created,
+            'body' => auth()->user()->name . ' created the session.',
+        ]);
 
         return $session;
     }

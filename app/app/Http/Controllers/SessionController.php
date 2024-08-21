@@ -19,23 +19,11 @@ class SessionController extends Controller
     public function show(Session $session)
     {
         $session = $session->load('runs.items');
-
-        $targetSessionRun = $session->runs->last();
+        $reviewRequests = $session->reviewRequests()->where('status', 'pending')->get();
 
         return view('sessions.show', [
             'session' => $session,
-            'latestRun' => $targetSessionRun,
-            'activity' => $targetSessionRun
-                ?->comments()
-                ->with('user')
-                ->get()
-                ->concat($targetSessionRun->activities)
-                ->sortBy('created_at'),
-            'reviewRequests' => $targetSessionRun
-                ?->reviewRequests()
-                ->with('requester')
-                ->where('status', 'pending')
-                ->get(),
+            'reviewRequests' => $reviewRequests,
         ]);
     }
 
