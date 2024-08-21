@@ -70,4 +70,19 @@ class Session extends Model
             ->get()
             ->isEmpty();
     }
+
+    public function lastRun(): Attribute
+    {
+        return new Attribute(get: fn() => $this->runs()->orderBy('created_at', 'desc')->first());
+    }
+
+    public function isRunning(): Attribute
+    {
+        return new Attribute(get: fn() => $this->last_run && !$this->last_run?->result_log);
+    }
+
+    public function status(): Attribute
+    {
+        return new Attribute(get: fn() => $this->last_run?->status ?? 'unknown');
+    }
 }
