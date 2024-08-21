@@ -12,6 +12,7 @@ class RevokeReviewForm extends Component
     public function delete()
     {
         $this->reviewRequest->delete();
+
         return redirect(request()->header('Referer'));
     }
 

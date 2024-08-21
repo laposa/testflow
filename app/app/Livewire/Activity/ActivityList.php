@@ -3,8 +3,8 @@
 namespace App\Livewire\Activity;
 
 use App\Models\Session;
-use Livewire\Component;
 use Livewire\Attributes\On;
+use Livewire\Component;
 
 class ActivityList extends Component
 {

@@ -4,7 +4,6 @@ namespace App\Livewire\Comments;
 
 use App\Enums\SessionActivityType;
 use App\Models\Session;
-
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 

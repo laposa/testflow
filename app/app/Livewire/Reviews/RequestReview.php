@@ -3,8 +3,8 @@
 namespace App\Livewire\Reviews;
 
 use App\Enums\SessionActivityType;
-use App\Models\User;
 use App\Models\Session;
+use App\Models\User;
 use App\Notifications\ReviewRequestNotification;
 use Illuminate\Support\Collection;
 use Livewire\Attributes\Validate;

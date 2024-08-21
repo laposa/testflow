@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Session;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class DashboardController extends Controller
 {

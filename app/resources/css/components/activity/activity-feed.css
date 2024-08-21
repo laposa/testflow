@@ -48,7 +48,8 @@
         transform: translateX(-50%);
     }
 
-    .activity-feed-body-timestamp, .activity-feed-header-timestamp {
+    .activity-feed-body-timestamp,
+    .activity-feed-header-timestamp {
         display: inline-block;
         margin-left: 15px;
         color: #999;

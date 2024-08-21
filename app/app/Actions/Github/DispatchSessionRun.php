@@ -8,7 +8,7 @@ use App\Services\GithubInstallationService;
 
 class DispatchSessionRun
 {
-    public function handle(Session $session, array|null $sessionItems): void
+    public function handle(Session $session, ?array $sessionItems): void
     {
         $client = new GithubInstallationService($session->installation);
 
@@ -66,6 +66,7 @@ class DispatchSessionRun
         ]);
 
         $run->items()->attach(collect($tests)->pluck('id'));
+
         return $run->id;
     }
 }
