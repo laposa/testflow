@@ -34,7 +34,7 @@
 
     <section x-data="{ show: false }">
         <p>
-            <a class="button" href="#" x-on:click="show = ! show">
+            <a class="button" href="#" x-on:click.prevent="show = ! show">
                 <span x-text="show ? 'Hide' : 'Show'"></span> selected tests
             </a>
         </p>
