@@ -61,16 +61,6 @@ class Session extends Model
         return $this->hasMany(ReviewRequest::class);
     }
 
-    public function canRunTests(): bool
-    {
-        // If there is a pending or rejected review request we can't run tests
-        return $this->reviewRequests()
-            ->where('status', 'pending')
-            ->orWhere('status', 'rejected')
-            ->get()
-            ->isEmpty();
-    }
-
     public function lastRun(): Attribute
     {
         return new Attribute(get: fn() => $this->runs()->orderBy('created_at', 'desc')->first());
