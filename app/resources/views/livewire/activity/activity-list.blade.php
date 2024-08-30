@@ -60,7 +60,12 @@
             </div>
 
             <div class="activity-feed-body">
-                {{ $entry->body }}
+                @if ($entry->type === \App\Enums\SessionActivityType::comment)
+                    <x-markdown>{{ $entry->body }}</x-markdown>
+                @else
+                    {{ $entry->body }}
+                @endif
+
                 <span
                     class="activity-feed-body-timestamp">{{ $entry->created_at->diffForHumans() }}</span>
             </div>

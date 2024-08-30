@@ -15,6 +15,7 @@
     },
     "dependencies": {
         "@prettier/plugin-php": "^0.22.2",
-        "alpinejs": "^3.14.1"
+        "alpinejs": "^3.14.1",
+        "shiki": "^1.14.1"
     }
 }
