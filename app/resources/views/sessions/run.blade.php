@@ -32,7 +32,7 @@
             show: false
         }">
             <p>
-                <a class="button" href="#" x-on:click="show = ! show">
+                <a class="button" href="#" x-on:click.prevent="show = ! show">
                     <span x-text="show ? 'Hide' : 'Show'"></span> results in JUnit format
                 </a>
             </p>
@@ -43,7 +43,7 @@
 
     <section x-data="{ show: false }">
         <p>
-            <a class="button" href="#" x-on:click="show = ! show">
+            <a class="button" href="#" x-on:click.prevent="show = ! show">
                 <span x-text="show ? 'Hide' : 'Show'"></span> detailed run log
             </a>
         </p>

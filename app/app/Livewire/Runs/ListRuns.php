@@ -28,9 +28,11 @@ class ListRuns extends Component
         ]);
         $pollingEnabled = !$fetchSessionWorkflowRuns->handle($this->session);
 
+        $failedRuns = $this->getFailedRuns();
         return view('livewire.runs.list-runs', [
             'session' => $this->session,
             'pollingEnabled' => $pollingEnabled,
+            'failedRuns' => $failedRuns,
         ]);
     }
 
@@ -40,12 +42,33 @@ class ListRuns extends Component
         $this->dispatch('reload-activity');
     }
 
-    public function rerunRun(DispatchSessionRun $dispatchSessionRun, $runId)
+    public function rerunFailed(DispatchSessionRun $dispatchSessionRun)
     {
-        $dispatchSessionRun->handle(
-            $this->session,
-            $this->session->runs()->find($runId)->items->toArray(),
-        );
+        $items = $this->getFailedRuns()
+            ->map(fn($run) => $run->items->toArray())
+            ->flatten(1)
+            ->toArray();
+
+        $dispatchSessionRun->handle($this->session, $items);
         $this->dispatch('reload-activity');
+    }
+
+    protected function getFailedRuns()
+    {
+        $failedRuns = [];
+        $successfulRuns = [];
+        foreach ($this->session->runs as $run) {
+            $groupBy = $run->repository_name . $run->service_name;
+            // skip runs that have already passed
+            if ($run->parsedResults->getTotalFailures() > 0 && !isset($successfulRuns[$groupBy])) {
+                $failedRuns[$groupBy] = $run;
+            }
+
+            if ($run->parsedResults->getTotalFailures() === 0) {
+                $successfulRuns[$groupBy] = $run;
+            }
+        }
+
+        return collect($failedRuns);
     }
 }

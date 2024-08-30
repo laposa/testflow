@@ -3,7 +3,7 @@
         @csrf
         <div class="form-group">
             <label for="body">Add a comment</label>
-            <textarea id="body" wire:model="body"></textarea>
+            <textarea id="body" wire:model="body" rows="10"></textarea>
             @error('body')
                 <span class="error">{{ $message }}</span>
             @enderror

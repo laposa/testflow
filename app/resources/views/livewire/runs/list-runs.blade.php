@@ -11,7 +11,6 @@
                 <th>Started</th>
                 <th>Status</th>
                 <th>Results</th>
-                <th></th>
             </tr>
         </thead>
         <tbody>
@@ -41,17 +40,18 @@
                                 failed</span>
                         @endif
                     </td>
-                    <td>
-                        @if ($run->parsedResults->getTotalFailures() > 0 && $session->canRunTests())
-                            <button wire:click="rerunRun({{ $run['id'] }})"
-                                wire:loading.attr="disabled" class="filled">Rerun</button>
-                        @endif
-                    </td>
                 </tr>
             @endforeach
         </tbody>
     </table>
 
-    <button type="submit" wire:click="createRun" wire:loading.attr="disabled"
-        @if (!$session->canRunTests()) disabled @endif class="filled">Run all tests</button>
+    <button type="button" wire:click="createRun" wire:loading.attr="disabled" class="filled">
+        Run all tests
+    </button>
+
+    @if (count($failedRuns) > 0)
+        <button type="button" wire:click="rerunFailed" wire:loading.attr="disabled" class="filled">
+            Re-run failed tests ({{ count($failedRuns) }})
+        </button>
+    @endif
 </div>
