@@ -33,6 +33,16 @@ class JUnitLogParser
         return $total;
     }
 
+    public function getTotalDuration()
+    {
+        $total = $this->testSuites['time'] ?? 0;
+        foreach ($this->getTestSuites() as $testSuite) {
+            $total += $testSuite['time'] ?? 0;
+        }
+
+        return $total;
+    }
+
     public function getTotalPassed()
     {
         return $this->getTotalTests() - $this->getTotalFailures();

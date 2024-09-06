@@ -1,22 +1,21 @@
 @php
     /** @var \App\Models\Session $session */
-    /** @var \App\Models\SessionRun $run */
+    /** @var \App\Models\SessionServiceRun $run */
 @endphp
 <x-layout>
     <h2>{{ $session->name }}</h2>
-    <p>Run #{{ $run->id }} for {{ getTestServiceName($run->items[0]) }}.</p>
+    <p>Run #{{ $run->id }} for {{ $run->service->displayName }}.</p>
     <section>
         <ul class="session-selected-suites">
-            @foreach ($run->itemsGrouped as $path => $tests)
-                @php($testSuite = $run->parsedResults->getTestSuite($tests[0]['suite_name']))
+            @foreach ($run->service->suites as $suite)
                 <li>
-                    {{ $tests[0]['suite_name'] }}
+                    {{ $suite->name }}
                 </li>
                 <ul>
-                    @foreach ($tests as $test)
-                        @php($testCase = $run->parsedResults->getTestCase($test['test_name']))
+                    @foreach ($suite->tests as $test)
+                        @php($testCase = $run->parsedResults->getTestCase($test->name))
                         <li>
-                            {{ $test['test_name'] }}
+                            {{ $test->name }}
                             @if ($testCase)
                                 <span title="Execution time {{ round($testCase['time'], 1) }}s"
                                     class="{{ $testCase['status'] }}"></span>

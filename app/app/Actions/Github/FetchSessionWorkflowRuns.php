@@ -3,7 +3,7 @@
 namespace App\Actions\Github;
 
 use App\Models\Session;
-use App\Models\SessionItem;
+use App\Models\SessionService;
 use App\Services\GithubInstallationService;
 use Illuminate\Support\Facades\Storage;
 
@@ -14,37 +14,31 @@ class FetchSessionWorkflowRuns
     public function handle(Session $session): bool
     {
         $this->workflowsUpdated = false;
-        collect($session->items)
-            ->groupBy('workflow_id')
-            ->map(fn($items) => $this->fetchRunsForItem($session, $items[0]));
+        $session->services->map(fn($service) => $this->fetchRunsForService($session, $service));
 
-        if ($this->workflowsUpdated) {
-            $session->load('items.runs');
-        }
-
-        // if all runs have logs in the DB, return true
-        return $session->items->every(
-            fn($item) => $item->runs->every(fn($run) => $run->result_log),
-        );
+        return $this->workflowsUpdated;
     }
 
-    protected function fetchRunsForItem(Session $session, SessionItem $item)
+    protected function fetchRunsForService(Session $session, SessionService $service)
     {
         $client = new GithubInstallationService($session->installation);
 
         // if all runs have logs in the DB, skip fetching from github
-        if ($item->runs->every(fn($run) => $run->run_log)) {
-            return $item->runs;
+        if ($service->runs->every(fn($run) => $run->run_log)) {
+            return;
         }
 
         // Github Status: queued, in_progress, completed
         // Github Conclusion: success, failure, neutral, cancelled, skipped, timed_out, action_required
 
         // update item's runs with the latest data from github (based on the crated_at timestamp +- 5 seconds)
-        $workflowRuns = $client->fetchWorkflowRuns($item->repository_name, $item->workflow_id)[
-            'workflow_runs'
-        ];
-        foreach ($item->runs as $run) {
+        $workflowRuns = $client->fetchWorkflowRuns(
+            $service->repository_name,
+            $service->workflow_id,
+        )['workflow_runs'];
+
+        foreach ($service->runs as $run) {
+            // find the workflow run based no the created_at timestamp +- 5 seconds
             $runData = collect($workflowRuns)->first(
                 fn($workflowRun) => $workflowRun['created_at'] >=
                     $run->created_at->subSeconds(5)->toIso8601String() &&
@@ -65,13 +59,21 @@ class FetchSessionWorkflowRuns
                     if (!$run->result_log) {
                         $run->result_log = $this->fetchWorkflowResultsLog(
                             $client,
-                            $item,
+                            $service,
                             $runData['id'],
                         );
+
+                        $run->passed = $run->parsedResults->getTotalPassed();
+                        $run->failed = $run->parsedResults->getTotalFailures();
+                        $run->duration = $run->parsedResults->getTotalDuration();
                     }
 
                     if (!$run->run_log) {
-                        $run->run_log = $this->fetchWorkflowRunLog($client, $item, $runData['id']);
+                        $run->run_log = $this->fetchWorkflowRunLog(
+                            $client,
+                            $service,
+                            $runData['id'],
+                        );
                     }
 
                     $run->save();
@@ -82,10 +84,10 @@ class FetchSessionWorkflowRuns
 
     protected function fetchWorkflowRunLog(
         GithubInstallationService $client,
-        SessionItem $item,
+        SessionService $service,
         $runId,
     ) {
-        $zipFile = $client->fetchWorkflowRunLog($item->repository_name, $runId);
+        $zipFile = $client->fetchWorkflowRunLog($service->repository_name, $runId);
 
         $tmpFileName = 'github_run_logs_' . $runId . '_' . time() . '.zip';
         Storage::put($tmpFileName, $zipFile);
@@ -114,11 +116,11 @@ class FetchSessionWorkflowRuns
 
     protected function fetchWorkflowResultsLog(
         GithubInstallationService $client,
-        SessionItem $item,
+        SessionService $service,
         $runId,
     ) {
         // find artifact with the name 'test-results'
-        $artifacts = $client->fetchWorkflowRunArtifacts($item->repository_name, $runId);
+        $artifacts = $client->fetchWorkflowRunArtifacts($service->repository_name, $runId);
         $artifact = collect($artifacts['artifacts'])->first(
             fn($artifact) => $artifact['name'] === 'test-results',
         );
@@ -128,7 +130,7 @@ class FetchSessionWorkflowRuns
         }
 
         $zipFile = $client->fetchWorkflowRunArtifactsDownload(
-            $item->repository_name,
+            $service->repository_name,
             $artifact['id'],
         );
 

@@ -39,11 +39,16 @@
             </a>
         </p>
         <ul class="session-selected-suites" x-show="show">
-            @foreach ($session->itemsGrouped as $path => $tests)
-                <li><b>{{ getTestSuiteName($tests[0]) }}</b></li>
+            @foreach ($session->services as $service)
+                <li><b>{{ $service->displayName }}</b></li>
                 <ul>
-                    @foreach ($tests as $test)
-                        <li>{{ $test['test_name'] }}</li>
+                    @foreach ($service->suites as $suite)
+                        <li><b>{{ $suite->name }}</b></li>
+                        <ul>
+                            @foreach ($suite->tests as $test)
+                                <li>{{ $test['name'] }}</li>
+                            @endforeach
+                        </ul>
                     @endforeach
                 </ul>
             @endforeach
