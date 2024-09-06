@@ -13,6 +13,9 @@ class ListRuns extends Component
 
     public bool $isLoading = false;
 
+    public array $selectedServices = [];
+    public array $displayedRuns = [];
+
     public function mounted(Session $session)
     {
         $this->session = $session;
@@ -20,55 +23,31 @@ class ListRuns extends Component
 
     public function render(FetchSessionWorkflowRuns $fetchSessionWorkflowRuns)
     {
-        $this->session->load('items.runs');
         $this->session->load([
-            'runs' => function ($query) {
+            'services.runs' => function ($query) {
                 $query->orderBy('created_at', 'desc');
             },
         ]);
-        $pollingEnabled = !$fetchSessionWorkflowRuns->handle($this->session);
 
-        $failedRuns = $this->getFailedRuns();
+        $updated = $fetchSessionWorkflowRuns->handle($this->session);
+
+        if ($updated) {
+            $this->session->load([
+                'services.runs' => function ($query) {
+                    $query->orderBy('created_at', 'desc');
+                },
+            ]);
+        }
+
         return view('livewire.runs.list-runs', [
             'session' => $this->session,
-            'pollingEnabled' => $pollingEnabled,
-            'failedRuns' => $failedRuns,
+            'pollingEnabled' => true,
         ]);
     }
 
     public function createRun(DispatchSessionRun $dispatchSessionRun)
     {
-        $dispatchSessionRun->handle($this->session, null);
+        $dispatchSessionRun->handle($this->session, $this->selectedServices);
         $this->dispatch('reload-activity');
-    }
-
-    public function rerunFailed(DispatchSessionRun $dispatchSessionRun)
-    {
-        $items = $this->getFailedRuns()
-            ->map(fn($run) => $run->items->toArray())
-            ->flatten(1)
-            ->toArray();
-
-        $dispatchSessionRun->handle($this->session, $items);
-        $this->dispatch('reload-activity');
-    }
-
-    protected function getFailedRuns()
-    {
-        $failedRuns = [];
-        $successfulRuns = [];
-        foreach ($this->session->runs as $run) {
-            $groupBy = $run->repository_name . $run->service_name;
-            // skip runs that have already passed
-            if ($run->parsedResults->getTotalFailures() > 0 && !isset($successfulRuns[$groupBy])) {
-                $failedRuns[$groupBy] = $run;
-            }
-
-            if ($run->parsedResults->getTotalFailures() === 0) {
-                $successfulRuns[$groupBy] = $run;
-            }
-        }
-
-        return collect($failedRuns);
     }
 }

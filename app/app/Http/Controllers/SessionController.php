@@ -18,7 +18,7 @@ class SessionController extends Controller
 
     public function show(Session $session)
     {
-        $session = $session->load('runs.items');
+        $session = $session->load('services.suites.tests');
         $reviewRequests = $session->reviewRequests()->where('status', 'pending')->get();
 
         return view('sessions.show', [

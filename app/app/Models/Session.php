@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Session extends Model
 {
@@ -23,32 +23,38 @@ class Session extends Model
         return $this->belongsTo(User::class, foreignKey: 'issuer_id');
     }
 
-    public function items(): HasMany
+    public function services(): HasMany
     {
-        return $this->hasMany(SessionItem::class);
+        return $this->hasMany(SessionService::class);
     }
 
-    public function itemsGrouped(): Attribute
+    public function runs(): HasManyThrough
     {
-        return new Attribute(
-            get: fn() => $this->items->groupBy(
-                fn($item) => $item->repository_name . $item->service_name . $item->suite_name,
-            ),
-        );
+        return $this->hasManyThrough(
+            SessionServiceRun::class,
+            SessionService::class,
+            'session_id',
+            'service_id',
+        )->select([
+            'test_session_service_runs.id',
+            'test_session_service_runs.service_id',
+            'test_session_service_runs.status',
+            'test_session_service_runs.passed',
+            'test_session_service_runs.failed',
+            'test_session_service_runs.skipped',
+            'test_session_service_runs.duration',
+            'test_session_service_runs.created_at',
+        ]);
     }
 
-    public function itemsGroupedByService(): Attribute
+    public function lastRuns(): HasManyThrough
     {
-        return new Attribute(
-            get: fn() => $this->items->groupBy(
-                fn($item) => $item->repository_name . $item->service_name,
-            ),
-        );
-    }
-
-    public function runs(): HasMany
-    {
-        return $this->hasMany(SessionRun::class);
+        return $this->runs()->whereIn('test_session_service_runs.id', function ($query) {
+            $query
+                ->select(\DB::raw('MAX(id)'))
+                ->from('test_session_service_runs')
+                ->groupBy('service_id');
+        });
     }
 
     public function activity(): HasMany
@@ -59,20 +65,5 @@ class Session extends Model
     public function reviewRequests(): HasMany
     {
         return $this->hasMany(ReviewRequest::class);
-    }
-
-    public function lastRun(): Attribute
-    {
-        return new Attribute(get: fn() => $this->runs()->orderBy('created_at', 'desc')->first());
-    }
-
-    public function isRunning(): Attribute
-    {
-        return new Attribute(get: fn() => $this->last_run && !$this->last_run?->result_log);
-    }
-
-    public function status(): Attribute
-    {
-        return new Attribute(get: fn() => $this->last_run?->status ?? 'unknown');
     }
 }

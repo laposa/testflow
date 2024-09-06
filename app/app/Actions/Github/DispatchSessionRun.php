@@ -4,24 +4,35 @@ namespace App\Actions\Github;
 
 use App\Enums\SessionActivityType;
 use App\Models\Session;
+use App\Models\SessionService;
 use App\Services\GithubInstallationService;
 
 class DispatchSessionRun
 {
-    public function handle(Session $session, ?array $sessionItems): void
+    public function handle(Session $session, ?array $servicesIds): void
     {
         $client = new GithubInstallationService($session->installation);
 
-        $runIds = collect($sessionItems ? $sessionItems : $session->items)
-            ->groupBy('workflow_id')
-            ->map(fn($tests) => $this->dispatchWorkflow($client, $session, $tests->toArray()))
-            ->toArray();
+        $services = $session->services()->with('suites.tests');
+        if ($servicesIds && count($servicesIds) > 0) {
+            $services = $services->whereIn('id', $servicesIds);
+        }
 
-        $body = auth()->user()->name . ' has executed ';
-        if (count($runIds) === 1) {
-            $body .= 'run with ID: ' . implode(', ', $runIds);
-        } else {
-            $body .= 'runs with IDs: ' . implode(', ', $runIds);
+        $services = $services->get();
+        $runs = [];
+
+        foreach ($services as $service) {
+            $run = $this->dispatchWorkflow($client, $session, $service);
+            $runs[] = ['run' => $run, 'service' => $service];
+        }
+
+        $body = auth()->user()->name . ' has executed: ';
+        foreach ($runs as $i => $run) {
+            if ($i > 0) {
+                $body .= ', ';
+            }
+
+            $body .= $run['service']->displayName . ' with run ID ' . $run['run']->id;
         }
 
         $session->activity()->create([
@@ -34,25 +45,30 @@ class DispatchSessionRun
     protected function dispatchWorkflow(
         GithubInstallationService $client,
         Session $session,
-        array $tests,
+        SessionService $service,
     ) {
-        $serviceType = collect($tests)->unique('service_name')->first()['service_name'];
+        $tests = $service->suites->flatMap(function ($suite) {
+            return $suite->tests->map(function ($test) use ($suite) {
+                $test['suite'] = $suite;
+                return $test;
+            });
+        });
 
-        if ($serviceType === 'mobile') {
-            $testFilter = collect($tests)->unique('suite_name')->pluck('suite_name')->join(',');
-        } elseif ($serviceType === 'web') {
+        if ($service->name === 'mobile') {
+            $testFilter = $tests->map(fn($test) => $test['suite']->name)->join(',');
+        } elseif ($service->name === 'web') {
             $testFilter = collect($tests)
-                ->map(fn($item) => "tests/{$item['suite_name']}/{$item['test_name']}")
+                ->map(fn($item) => "tests/{$item['suite']->name}/{$item['name']}")
                 ->join(',');
-        } elseif ($serviceType === 'api') {
+        } elseif ($service->name === 'api') {
             $testFilter = collect($tests)
-                ->map(fn($test) => explode('.', \Str::replace('_', ' ', $test['test_name']))[0])
+                ->map(fn($test) => explode('.', \Str::replace('_', ' ', $test['name']))[0])
                 ->join('|');
         }
 
         $client->dispatchWorkflow(
-            repository: $tests[0]['repository_name'],
-            workflowId: $tests[0]['workflow_id'],
+            repository: $service->repository_name,
+            workflowId: $service->workflow_id,
             inputs: [
                 'environment' => $session->environment,
                 'test_filter' => $testFilter,
@@ -61,12 +77,10 @@ class DispatchSessionRun
 
         // create run in the DB
         // it will be matched with the run ID later (based on timestamp)
-        $run = $session->runs()->create([
+        $run = $service->runs()->create([
             'status' => 'unknown',
         ]);
 
-        $run->items()->attach(collect($tests)->pluck('id'));
-
-        return $run->id;
+        return $run;
     }
 }

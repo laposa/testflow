@@ -1,3 +1,12 @@
 .runs-list {
     margin-bottom: 20px;
+
+    .more-runs-list {
+        background-color: #f9f9f9;
+    }
+
+    .icon {
+        width: 22px;
+        height: 22px;
+    }
 }

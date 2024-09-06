@@ -10,18 +10,18 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('test_session_items_test_session_runs', function (Blueprint $table) {
+        Schema::create('test_session_service_suite_tests', function (Blueprint $table) {
             $table->id();
+
             $table
-                ->foreignId('session_item_id')
-                ->constrained('test_session_items')
+                ->foreignId('suite_id')
+                ->constrained('test_session_service_suites')
                 ->onDelete('cascade')
                 ->onUpdate('cascade');
-            $table
-                ->foreignId('session_run_id')
-                ->constrained('test_session_runs')
-                ->onDelete('cascade')
-                ->onUpdate('cascade');
+
+            $table->string('name');
+            $table->string('url');
+
             $table->timestamps();
         });
     }
@@ -31,6 +31,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('test_session_items_test_session_runs');
+        Schema::dropIfExists('session_service_suite_tests');
     }
 };

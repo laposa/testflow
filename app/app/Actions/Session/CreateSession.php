@@ -30,17 +30,39 @@ class CreateSession
         ]);
         $session->save();
 
+        $services = [];
+        $suites = [];
+
         foreach ($validated['tests'] as $testJson) {
             $test = json_decode($testJson, true);
 
-            $session->items()->create([
-                'repository_id' => $test['repository_id'],
-                'workflow_id' => $test['workflow_id'],
-                'repository_name' => $test['repository_name'],
-                'service_name' => $test['service_name'],
-                'suite_name' => $test['suite_name'],
-                'test_name' => $test['test_name'],
-                'service_url' => $test['service_url'],
+            if (!isset($services[$test['service_name']])) {
+                $service = $session->services()->create([
+                    'repository_id' => $test['repository_id'],
+                    'workflow_id' => $test['workflow_id'],
+                    'name' => $test['service_name'],
+                    'url' => $test['service_url'],
+                    'repository_name' => $test['repository_name'],
+                ]);
+                $service->save();
+
+                $services[$test['service_name']] = $service;
+            }
+
+            if (!isset($suites[$test['suite_name']])) {
+                $suite = $services[$test['service_name']]->suites()->create([
+                    'name' => $test['suite_name'],
+                    'url' => $test['service_url'] . '/' . $test['suite_name'],
+                ]);
+                $suite->save();
+
+                $suites[$test['suite_name']] = $suite;
+            }
+
+            $suites[$test['suite_name']]->tests()->create([
+                'name' => $test['test_name'],
+                'url' =>
+                    $test['service_url'] . '/' . $test['suite_name'] . '/' . $test['test_name'],
             ]);
         }
 

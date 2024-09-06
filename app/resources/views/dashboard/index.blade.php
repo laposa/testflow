@@ -4,8 +4,8 @@
             @foreach ($sessions as $session)
                 <li>
                     <a href="/sessions/{{ $session->id }}">{{ $session->name }}</a>:
-                    @if ($session->runs && isset($session->runs[0]))
-                        @if ($session->status === 'success')
+                    @if ($session->lastRuns && isset($session->lastRuns[0]))
+                        @if (!$session->isRunning)
                             <span class="pass">{{ $session->passed }}
                                 passed</span> and <span class="fail">{{ $session->failed }}
                                 failed</span>
