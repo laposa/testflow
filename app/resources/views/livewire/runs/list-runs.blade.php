@@ -44,7 +44,10 @@
                             @endif
                         </td>
                         <td>{{ $run->created_at }}</td>
-                        <td>{{ $run->humanReadableDuration }}
+                        <td>
+                            @if ($run->result_log)
+                                {{ $run->humanReadableDuration }}
+                            @endif
                         </td>
                         <td>
                             <span class="{{ $run->status }}">{{ $run->status }}</span>
@@ -90,7 +93,10 @@
                                 @endif
                             </td>
                             <td>{{ $run->created_at }}</td>
-                            <td>{{ $run->humanReadableDuration }}
+                            <td>
+                                @if ($run->result_log)
+                                    {{ $run->humanReadableDuration }}
+                                @endif
                             </td>
                             <td>
                                 <span class="{{ $run->status }}">{{ $run->status }}</span>

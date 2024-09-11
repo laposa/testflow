@@ -13,7 +13,7 @@ class ActivityList extends Component
     #[On('reload-activity')]
     public function render()
     {
-        $activity = $this->session->activity()->orderBy('created_at', 'desc')->get();
+        $activity = $this->session->activity()->orderBy('created_at', 'asc')->get();
 
         return view('livewire.activity.activity-list', [
             'activity' => $activity,

@@ -48,6 +48,7 @@ class ListRuns extends Component
     public function createRun(DispatchSessionRun $dispatchSessionRun)
     {
         $dispatchSessionRun->handle($this->session, $this->selectedServices);
+        $this->selectedServices = [];
         $this->dispatch('reload-activity');
     }
 }
