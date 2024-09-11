@@ -1,4 +1,5 @@
 .request-review {
     display: flex;
     gap: 12px;
+    margin: 24px 0;
 }

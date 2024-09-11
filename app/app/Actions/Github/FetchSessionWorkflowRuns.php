@@ -4,8 +4,10 @@ namespace App\Actions\Github;
 
 use App\Models\Session;
 use App\Models\SessionService;
+use App\Models\SessionServiceRun;
 use App\Services\GithubInstallationService;
 use Illuminate\Support\Facades\Storage;
+use App\Enums\SessionActivityType;
 
 class FetchSessionWorkflowRuns
 {
@@ -49,6 +51,8 @@ class FetchSessionWorkflowRuns
             if ($runData) {
                 $this->workflowsUpdated = true;
 
+                $oldStatus = $run->status;
+
                 $run->update([
                     'status' => $runData['conclusion']
                         ? $runData['conclusion']
@@ -78,8 +82,31 @@ class FetchSessionWorkflowRuns
 
                     $run->save();
                 }
+
+                $this->logRunStatusChange($session, $run, $oldStatus);
             }
         }
+    }
+
+    protected function logRunStatusChange(Session $session, SessionServiceRun $run, $oldStatus)
+    {
+        if ($oldStatus === $run->status) {
+            return;
+        }
+
+        $body = "Run {$run->id} has changed status from {$oldStatus} to {$run->status}";
+        if ($run->result_log) {
+            $route = route('session.runs.show', [$session, $run]);
+            $body = str_replace($run->id, "<a href='{$route}'>{$run->id}</a>", $body);
+            $body .= "  with <span class='pass'>{$run->passed} passed</span> and <span class='fail'>{$run->failed} failed</span> tests";
+        }
+        $body .= '.';
+
+        $session->activity()->create([
+            'type' => SessionActivityType::run_status_changed,
+            'body' => $body,
+            'user_id' => auth()->id(),
+        ]);
     }
 
     protected function fetchWorkflowRunLog(
