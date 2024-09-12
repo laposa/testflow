@@ -14,7 +14,11 @@
                 <input style="width:60%" type="text" id="name" name="name" required
                     placeholder="Session name" value="{{ old('name') }}">
                 <select name="environment">
-                    <option value="preprod">PreProd environment</option>
+                    @foreach (config('app.test_session_environments') as $env)
+                        <option value="{{ $env }}"
+                            @if (old('environment') === $env) selected @endif>{{ ucfirst($env) }}
+                        </option>
+                    @endforeach
                 </select>
             </div>
         </section>

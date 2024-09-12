@@ -6,6 +6,9 @@
 @endphp
 <x-layout>
     <x-portal-section title="{{ $session->name }}">
+        <div class="session-environment">
+            Environment: <span>{{ ucfirst($session->environment) }}</span>
+        </div>
         <livewire:runs.list-runs :session="$session" />
     </x-portal-section>
 
