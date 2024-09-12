@@ -71,3 +71,5 @@ GITHUB_APP_INSTALATION_ID=51847197
 GITHUB_PRIVATE_KEY="op://laposa-secrets-dev/test-portal/GITHUB_PRIVATE_KEY"
 
 SUPPORT_EMAIL=support@laposa.ie
+
+TEST_SESSION_ENVIRONMENTS=preprod,beta,prod
