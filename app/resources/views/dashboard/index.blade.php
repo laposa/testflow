@@ -3,14 +3,16 @@
         <ul>
             @foreach ($sessions as $session)
                 <li>
-                    <a href="/sessions/{{ $session->id }}">{{ $session->name }}</a>:
+                    <a href="/sessions/{{ $session->id }}">
+                        {{ $session->name }}
+                    </a>:
                     @if ($session->lastRuns && isset($session->lastRuns[0]))
                         @if (!$session->isRunning)
                             <span class="pass">{{ $session->passed }}
                                 passed</span> and <span class="fail">{{ $session->failed }}
                                 failed</span>
                         @else
-                            <span>{{ $session->status }}</span>
+                            <span>Running...</span>
                         @endif
                     @else
                         <span>No runs yet</span>

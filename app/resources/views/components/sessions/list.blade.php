@@ -41,7 +41,7 @@
             @endphp
             <tr>
                 <td><a href="/sessions/{{ $session->id }}">{{ $session->name }}</a></td>
-                <td>PreProd</td>
+                <td>{{ ucfirst($session->environment) }}</td>
                 <td>{{ $session->created_at->format('d M, Y h:m') }}</td>
                 <td>{{ $session->issuer->name }}</td>
             </tr>

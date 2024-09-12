@@ -21,3 +21,14 @@
         content: '\1F6AB';
     }
 }
+
+.session-environment {
+    position: absolute;
+    top: 7px;
+    right: 20px;
+    font-size: 14px;
+    
+    span {
+        font-weight: bold;
+    }
+}
