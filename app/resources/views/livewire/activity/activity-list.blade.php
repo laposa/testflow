@@ -71,7 +71,7 @@
             </div>
 
             <div class="activity-feed-body">
-                <span class="activity-feed-body-timestamp">{{ $entry->created_at }}</span>
+                <div class="activity-feed-body-timestamp">{{ $entry->created_at }}</div>
 
                 @if ($entry->type === \App\Enums\SessionActivityType::comment)
                     <x-markdown>{{ $entry->body }}</x-markdown>

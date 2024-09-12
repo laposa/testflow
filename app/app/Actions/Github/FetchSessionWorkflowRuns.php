@@ -102,6 +102,16 @@ class FetchSessionWorkflowRuns
         }
         $body .= '.';
 
+        if ($run->service->name === 'mobile' && $run->run_log) {
+            $matches = [];
+            $pattern = '/https:\/\/console\.mobile\.dev\/uploads[^\s]*/';
+            preg_match($pattern, $run->run_log, $matches);
+
+            if (isset($matches[0])) {
+                $body .= "<br/>See <a href='{$matches[0]}' target='_blank'>Maestro Cloud Console</a> recorded videos for more details.";
+            }
+        }
+
         $session->activity()->create([
             'type' => SessionActivityType::run_status_changed,
             'body' => $body,
