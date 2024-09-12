@@ -17,6 +17,7 @@
     svg {
         width: 24px;
         height: 24px;
+        margin-top: 2px;
     }
 
     &:before {
@@ -50,9 +51,8 @@
 
     .activity-feed-body-timestamp,
     .activity-feed-header-timestamp {
-        display: inline-block;
-        margin-left: 15px;
         color: #999;
+        margin-right: 1rem;
         font-size: 0.9rem;
     }
 

@@ -62,23 +62,23 @@
                     @break
 
                     @case(\App\Enums\SessionActivityType::comment)
-                        <strong>{{ $entry->user->name }}</strong> commented
                         <span class="activity-feed-header-timestamp">
-                            {{ $entry->created_at->diffForHumans() }}
+                            {{ $entry->created_at }}
                         </span>
+                        <strong>{{ $entry->user->name }}</strong> commented
                     @break
                 @endswitch
             </div>
 
             <div class="activity-feed-body">
+                <span class="activity-feed-body-timestamp">{{ $entry->created_at }}</span>
+
                 @if ($entry->type === \App\Enums\SessionActivityType::comment)
                     <x-markdown>{{ $entry->body }}</x-markdown>
                 @else
                     {!! $entry->body !!}
                 @endif
 
-                <span
-                    class="activity-feed-body-timestamp">{{ $entry->created_at->diffForHumans() }}</span>
             </div>
         </div>
     @endforeach

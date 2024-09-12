@@ -94,9 +94,9 @@ class FetchSessionWorkflowRuns
             return;
         }
 
-        $body = "Run {$run->id} has changed status from {$oldStatus} to {$run->status}";
+        $body = "Run {$run->id} for {$run->service->displayName} has changed status from {$oldStatus} to {$run->status}";
         if ($run->result_log) {
-            $route = route('session.runs.show', [$session, $run]);
+            $route = route('session.runs.show', [$session, $run], false);
             $body = str_replace($run->id, "<a href='{$route}'>{$run->id}</a>", $body);
             $body .= "  with <span class='pass'>{$run->passed} passed</span> and <span class='fail'>{$run->failed} failed</span> tests";
         }
