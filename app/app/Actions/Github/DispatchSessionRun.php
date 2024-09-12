@@ -55,7 +55,7 @@ class DispatchSessionRun
         });
 
         if ($service->name === 'mobile') {
-            $testFilter = $tests->map(fn($test) => $test['suite']->name)->join(',');
+            $testFilter = $tests->map(fn($test) => $test['suite']->name)->unique()->join(',');
         } elseif ($service->name === 'web') {
             $testFilter = collect($tests)
                 ->map(fn($item) => "tests/{$item['suite']->name}/{$item['name']}")
