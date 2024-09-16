@@ -62,7 +62,7 @@ class DispatchSessionRun
                 ->join(',');
         } elseif ($service->name === 'api') {
             $testFilter = collect($tests)
-                ->map(fn($test) => explode('.', \Str::replace('_', ' ', $test['name']))[0])
+                ->map(fn($test) => explode('.', $test['name'])[0])
                 ->join('|');
         }
 
