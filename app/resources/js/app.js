@@ -1,4 +1,7 @@
+import { AnsiUp } from 'ansi_up';
 import './bootstrap';
+
+window.AnsiUp = AnsiUp;
 
 document.body.addEventListener('click', function (e) {
     if (e.target.classList.contains('expand') && !e.target.classList.contains('collapse')) {
