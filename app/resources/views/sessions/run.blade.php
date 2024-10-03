@@ -2,6 +2,18 @@
     /** @var \App\Models\Session $session */
     /** @var \App\Models\SessionServiceRun $run */
 @endphp
+<script type="text/javascript">
+
+    document.addEventListener('DOMContentLoaded', (event) => {
+        var ansi_up = new AnsiUp;
+        ansi_up._escape_html = false;
+
+        document.querySelectorAll('pre').forEach((block) => {
+            block.innerHTML = ansi_up.ansi_to_html(block.innerHTML);
+        });
+    });
+
+</script>
 <x-layout>
     <x-portal-section title="{{ $session->name }}">
         <div class="session-environment">
