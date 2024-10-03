@@ -4,12 +4,32 @@
 @endphp
 <script type="text/javascript">
 
+    // Open modal window
+    function openModal() {
+        var dialog = document.getElementById('test-dialog');
+        dialog.querySelector('.content').innerText = 'Hello';
+        dialog.showModal();
+    }
+
     document.addEventListener('DOMContentLoaded', (event) => {
+
+        // Log text formatter
         var ansi_up = new AnsiUp;
         ansi_up._escape_html = false;
 
         document.querySelectorAll('pre').forEach((block) => {
             block.innerHTML = ansi_up.ansi_to_html(block.innerHTML);
+        });
+
+        // Close dialog on backdrop click
+        var dialog = document.getElementById('test-dialog');
+        dialog.addEventListener('click', function(event) {
+            var rect = dialog.getBoundingClientRect();
+            var isInDialog = (rect.top <= event.clientY && event.clientY <= rect.top + rect.height &&
+                rect.left <= event.clientX && event.clientX <= rect.left + rect.width);
+            if (!isInDialog) {
+                dialog.close();
+            }
         });
     });
 
@@ -31,7 +51,7 @@
                     <ul>
                         @foreach ($suite->tests as $test)
                             @php($testCase = $run->parsedResults->getTestCase($test->name))
-                            <li>
+                            <li class="test-file" onclick="openModal()" title="show file contents">
                                 {{ $test->name }}
                                 @if ($testCase)
                                     <span title="Execution time {{ round($testCase['time'], 1) }}s"
@@ -67,5 +87,13 @@
             <pre x-show="show">{{ $run->run_log }}</pre>
 
         </section>
+
+        <dialog id="test-dialog">
+            <pre class="content">
+            </pre>
+            <form>
+                <button formmethod="dialog">Close</button>
+            </form>
+        </dialog>
     </x-portal-section>
 </x-layout>
