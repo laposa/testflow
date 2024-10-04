@@ -125,11 +125,11 @@ class FetchTests
             ->map(
                 fn($dir) => [
                     'commit_sha' => isset($parent['commit_sha']) ? $parent['commit_sha'] : null,
-                    'full_path' => "{$services['full_name']}/{$dir['path']}",
+                    'full_path' => "{$repository['full_name']}/{$dir['path']}",
                     'path' => $dir['path'],
                     'name' => $dir['name'],
                     'url' => "{$parent['url']}/{$dir['name']}",
-                    'children' => $this->fetchDirectoryRecursive($services, $dir, $level + 1),
+                    'children' => $this->fetchDirectoryRecursive($repository, $dir, $level + 1),
                 ],
             )
             // filter out everything that starts with an underscore

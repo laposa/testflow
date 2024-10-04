@@ -56,4 +56,17 @@ class SessionServiceRun extends Model
                 ->forHumans(),
         );
     }
+
+    // calculate average duration based on started_at and finished_at timestamps and grouped by service_id
+    public static function averageDuration(): array
+    {
+        return static::query()
+            ->selectRaw(
+                'service_id, AVG(TIMESTAMPDIFF(SECOND, started_at, finished_at)) as average_duration',
+            )
+            ->groupBy('service_id')
+            ->get()
+            ->pluck('average_duration', 'service_id')
+            ->toArray();
+    }
 }
