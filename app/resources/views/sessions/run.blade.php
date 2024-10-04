@@ -4,9 +4,24 @@
 @endphp
 <script type="text/javascript">
     // Open modal window
-    function openModal() {
+    function openModal(testId) {
         var dialog = document.getElementById('test-dialog');
-        dialog.querySelector('.content').innerText = 'Hello';
+        dialog.querySelector('.content').style.display = 'none';
+        dialog.querySelector('.loading').style.display = 'block';
+
+        // make an ajax call and load the result into content
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', '/sessions/{{ $session->id }}/run/{{ $run->id }}/test/' + testId,
+            true);
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4 && xhr.status === 200) {
+                dialog.querySelector('.content').innerText = xhr.responseText;
+                dialog.querySelector('.loading').style.display = 'none';
+                dialog.querySelector('.content').style.display = 'block';
+            }
+        };
+        xhr.send();
+
         dialog.showModal();
     }
 
@@ -23,8 +38,9 @@
         var dialog = document.getElementById('test-dialog');
         dialog.addEventListener('click', function(event) {
             var rect = dialog.getBoundingClientRect();
-            var isInDialog = (rect.top <= event.clientY && event.clientY <= rect
-                .top + rect.height &&
+            var isInDialog = (
+                rect.top <= event.clientY && event.clientY <= rect.top + rect
+                .height &&
                 rect.left <= event.clientX && event.clientX <= rect.left + rect
                 .width);
             if (!isInDialog) {
@@ -50,7 +66,8 @@
                     <ul>
                         @foreach ($suite->tests as $test)
                             @php($testCase = $run->parsedResults->getTestCase($test->name))
-                            <li class="test-file" onclick="openModal()" title="show file contents">
+                            <li class="test-file" onclick="openModal({{ $test->id }})"
+                                title="show file contents">
                                 {{ $test->name }}
                                 @if ($testCase)
                                     <span title="Execution time {{ round($testCase['time'], 1) }}s"
@@ -88,8 +105,10 @@
         </section>
 
         <dialog id="test-dialog">
-            <pre class="content">
-            </pre>
+            <div class="loading">
+                <x-loading-overlay relative="true"></x-loading-overlay>
+            </div>
+            <pre class="content"></pre>
             <form>
                 <button formmethod="dialog">Close</button>
             </form>

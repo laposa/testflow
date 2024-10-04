@@ -87,9 +87,14 @@ class GithubClient
         return $response->json();
     }
 
-    public function fetchRepositoryContents($fullName, $path)
+    public function fetchRepositoryContents($fullName, $path, $ref = null)
     {
-        $response = $this->withHeaders()->get("/repos/{$fullName}/contents/{$path}");
+        $url = "/repos/{$fullName}/contents/{$path}";
+        if ($ref) {
+            $url .= "?ref={$ref}";
+        }
+
+        $response = $this->withHeaders()->get($url);
 
         return $response->json();
     }

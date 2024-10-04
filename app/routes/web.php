@@ -47,4 +47,9 @@ Route::group(['middleware' => 'auth'], function () {
         \App\Http\Controllers\SessionRunController::class,
         'show',
     ])->name('session.runs.show');
+
+    Route::get('/sessions/{session}/run/{run}/test/{test}', [
+        \App\Http\Controllers\SessionRunController::class,
+        'showTestFile',
+    ])->name('session.runs.showTestFile');
 });
