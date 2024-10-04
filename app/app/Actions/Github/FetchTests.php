@@ -3,38 +3,38 @@
 namespace App\Actions\Github;
 
 use App\Models\Installation;
-use App\Services\GithubInstallationService;
+use App\Services\GithubClient;
 use Illuminate\Support\Arr;
 
-class FetchTestSuites
+class FetchTests
 {
-    protected GithubInstallationService $client;
+    protected GithubClient $client;
 
     public function __construct()
     {
         $installation = Installation::first();
-        $this->client = new GithubInstallationService($installation);
+        $this->client = new GithubClient($installation);
     }
 
     public function handle(): array
     {
         $repositories = $this->client->fetchRepositories();
-        $suites = [];
+        $tests = [];
 
         collect(Arr::get($repositories, 'repositories', []))->each(function ($repository) use (
-            &$suites,
+            &$tests,
         ) {
             $contents = $this->fetchTests($repository);
             if ($contents) {
                 $workflows = $this->fetchWorkflows($repository);
-                $suites = array_merge(
-                    $suites,
+                $tests = array_merge(
+                    $tests,
                     $this->formatTests($contents, $repository, $workflows),
                 );
             }
         });
 
-        return $suites;
+        return $tests;
     }
 
     protected function formatTests($contents, $repository, $workflows)
@@ -56,10 +56,13 @@ class FetchTestSuites
                     $item = [
                         'repository_id' => $repository['id'],
                         'repository_name' => $repository['full_name'],
+                        'commit_sha' => $service['commit_sha'],
                         'service_name' => $service['name'],
-                        'service_url' => $service['url'],
+                        'service_path' => $service['path'],
                         'suite_name' => $suite['name'],
+                        'suite_path' => $suite['path'],
                         'test_name' => $test['name'],
+                        'test_path' => $test['path'],
                     ];
 
                     if ($workflow) {
@@ -84,8 +87,10 @@ class FetchTestSuites
             return $this->fetchDirectoryRecursive($repository, [
                 'path' => 'tests',
                 'url' => "{$repository['html_url']}/tree/{$latestCommit['sha']}/tests",
+                'commit_sha' => $latestCommit['sha'],
             ]);
         } catch (\Exception $e) {
+            dd($e);
             return null;
         }
     }
@@ -119,11 +124,12 @@ class FetchTestSuites
         $dirs = collect($dirs)
             ->map(
                 fn($dir) => [
-                    'full_path' => "{$repository['full_name']}/{$dir['path']}",
+                    'commit_sha' => isset($parent['commit_sha']) ? $parent['commit_sha'] : null,
+                    'full_path' => "{$services['full_name']}/{$dir['path']}",
                     'path' => $dir['path'],
                     'name' => $dir['name'],
                     'url' => "{$parent['url']}/{$dir['name']}",
-                    'children' => $this->fetchDirectoryRecursive($repository, $dir, $level + 1),
+                    'children' => $this->fetchDirectoryRecursive($services, $dir, $level + 1),
                 ],
             )
             // filter out everything that starts with an underscore

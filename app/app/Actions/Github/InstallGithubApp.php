@@ -3,16 +3,13 @@
 namespace App\Actions\Github;
 
 use App\Models\Installation;
-use App\Services\GithubInstallationService;
+use App\Services\GithubClient;
 
 class InstallGithubApp
 {
     public function handle($installationId, $action): Installation
     {
-        $data = GithubInstallationService::getAccessToken(
-            $installationId,
-            GithubInstallationService::generateJWTWebToken(),
-        );
+        $data = GithubClient::getAccessToken($installationId, GithubClient::generateJWTWebToken());
 
         return Installation::updateOrCreate(
             [

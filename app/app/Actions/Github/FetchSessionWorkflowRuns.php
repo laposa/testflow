@@ -5,7 +5,7 @@ namespace App\Actions\Github;
 use App\Models\Session;
 use App\Models\SessionService;
 use App\Models\SessionServiceRun;
-use App\Services\GithubInstallationService;
+use App\Services\GithubClient;
 use Illuminate\Support\Facades\Storage;
 use App\Enums\SessionActivityType;
 
@@ -23,7 +23,7 @@ class FetchSessionWorkflowRuns
 
     protected function fetchRunsForService(Session $session, SessionService $service)
     {
-        $client = new GithubInstallationService($session->installation);
+        $client = new GithubClient($session->installation);
 
         // if all runs have logs in the DB, skip fetching from github
         if ($service->runs->every(fn($run) => $run->run_log)) {
@@ -53,11 +53,25 @@ class FetchSessionWorkflowRuns
 
                 $oldStatus = $run->status;
 
-                $run->update([
+                $attributes = [
                     'status' => $runData['conclusion']
                         ? $runData['conclusion']
                         : $runData['status'],
-                ]);
+                    'github_run_id' => $runData['id'],
+                    'commit_sha' => $runData['head_sha'],
+                ];
+
+                $jobs = $client->fetchWorkflowRunJobs(
+                    $run->service->repository_name,
+                    $runData['id'],
+                )['jobs'];
+
+                if (count($jobs) > 0) {
+                    $startedAt = collect($jobs)->min('started_at');
+                    $attributes['started_at'] = $startedAt;
+                }
+
+                $run->update($attributes);
 
                 if ($runData['status'] === 'completed') {
                     if (!$run->result_log) {
@@ -79,6 +93,8 @@ class FetchSessionWorkflowRuns
                             $runData['id'],
                         );
                     }
+
+                    $run->finished_at = collect($jobs)->max('completed_at');
 
                     $run->save();
                 }
@@ -119,11 +135,8 @@ class FetchSessionWorkflowRuns
         ]);
     }
 
-    protected function fetchWorkflowRunLog(
-        GithubInstallationService $client,
-        SessionService $service,
-        $runId,
-    ) {
+    protected function fetchWorkflowRunLog(GithubClient $client, SessionService $service, $runId)
+    {
         $zipFile = $client->fetchWorkflowRunLog($service->repository_name, $runId);
 
         $tmpFileName = 'github_run_logs_' . $runId . '_' . time() . '.zip';
@@ -152,7 +165,7 @@ class FetchSessionWorkflowRuns
     }
 
     protected function fetchWorkflowResultsLog(
-        GithubInstallationService $client,
+        GithubClient $client,
         SessionService $service,
         $runId,
     ) {

@@ -42,8 +42,10 @@ class CreateSession
                     'repository_id' => $test['repository_id'],
                     'workflow_id' => $test['workflow_id'],
                     'name' => $test['service_name'],
-                    'url' => $test['service_url'],
+                    'path' => $test['service_path'],
                     'repository_name' => $test['repository_name'],
+                    'commit_sha' => $test['commit_sha'],
+                    'branch' => 'master',
                 ]);
                 $service->save();
 
@@ -54,7 +56,7 @@ class CreateSession
             if (!isset($suites[$suiteId])) {
                 $suite = $services[$serviceId]->suites()->create([
                     'name' => $test['suite_name'],
-                    'url' => $test['service_url'] . '/' . $test['suite_name'],
+                    'path' => $test['suite_path'],
                 ]);
                 $suite->save();
 
@@ -63,8 +65,7 @@ class CreateSession
 
             $suites[$suiteId]->tests()->create([
                 'name' => $test['test_name'],
-                'url' =>
-                    $test['service_url'] . '/' . $test['suite_name'] . '/' . $test['test_name'],
+                'path' => $test['test_path'],
             ]);
         }
 

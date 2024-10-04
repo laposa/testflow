@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SessionServiceSuite extends Model
 {
-    protected $fillable = ['name', 'url'];
+    protected $fillable = ['name', 'path'];
 
     protected $table = 'test_session_service_suites';
 

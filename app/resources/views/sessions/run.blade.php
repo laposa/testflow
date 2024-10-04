@@ -3,7 +3,6 @@
     /** @var \App\Models\SessionServiceRun $run */
 @endphp
 <script type="text/javascript">
-
     // Open modal window
     function openModal() {
         var dialog = document.getElementById('test-dialog');
@@ -12,7 +11,6 @@
     }
 
     document.addEventListener('DOMContentLoaded', (event) => {
-
         // Log text formatter
         var ansi_up = new AnsiUp;
         ansi_up._escape_html = false;
@@ -25,14 +23,15 @@
         var dialog = document.getElementById('test-dialog');
         dialog.addEventListener('click', function(event) {
             var rect = dialog.getBoundingClientRect();
-            var isInDialog = (rect.top <= event.clientY && event.clientY <= rect.top + rect.height &&
-                rect.left <= event.clientX && event.clientX <= rect.left + rect.width);
+            var isInDialog = (rect.top <= event.clientY && event.clientY <= rect
+                .top + rect.height &&
+                rect.left <= event.clientX && event.clientX <= rect.left + rect
+                .width);
             if (!isInDialog) {
                 dialog.close();
             }
         });
     });
-
 </script>
 <x-layout>
     <x-portal-section title="{{ $session->name }}">

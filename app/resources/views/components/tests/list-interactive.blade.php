@@ -1,7 +1,7 @@
-@props(['title' => 'Select Tests', 'suites' => []])
+@props(['tests' => []])
 
 <div class="list-interactive">
-    @foreach ($suites as $repositoryTitle => $repository)
+    @foreach ($tests as $repositoryTitle => $repository)
         <div class="list-repository list">
             <div class="title">
                 <label

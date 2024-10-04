@@ -7,7 +7,7 @@ use Firebase\JWT\JWT;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 
-class GithubInstallationService
+class GithubClient
 {
     protected Installation $installation;
 
@@ -101,13 +101,34 @@ class GithubInstallationService
         return $response->json();
     }
 
-    public function fetchWorkflowRuns(string $repository, string $workflowId)
-    {
+    public function fetchWorkflowRuns(
+        string $repository,
+        string $workflowId,
+        $perPage = 30,
+        $page = 1,
+    ) {
         $response = $this->withHeaders()->get(
-            "/repos/{$repository}/actions/workflows/{$workflowId}/runs",
+            "/repos/{$repository}/actions/workflows/{$workflowId}/runs?per_page={$perPage}&page={$page}",
         );
 
         return $response->json();
+    }
+
+    public function fetchAllWorkflowRuns(string $repository, string $workflowId)
+    {
+        $page = 1;
+        $perPage = 100;
+        $workflowRuns = [];
+
+        do {
+            $response = $this->fetchWorkflowRuns($repository, $workflowId, $perPage, $page);
+
+            $workflowRuns = array_merge($workflowRuns, $response['workflow_runs']);
+
+            $page++;
+        } while (count($response['workflow_runs']) === $perPage);
+
+        return $workflowRuns;
     }
 
     public function dispatchWorkflow(string $repository, string $workflowId, array $inputs)
@@ -157,5 +178,12 @@ class GithubInstallationService
         );
 
         return $response->body();
+    }
+
+    public function fetchWorkflowRunJobs(string $repository, string $runId)
+    {
+        $response = $this->withHeaders()->get("/repos/{$repository}/actions/runs/{$runId}/jobs");
+
+        return $response->json();
     }
 }
