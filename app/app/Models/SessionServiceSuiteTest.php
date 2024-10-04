@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SessionServiceSuiteTest extends Model
 {
-    protected $fillable = ['name', 'url'];
+    protected $fillable = ['name', 'path'];
 
     protected $table = 'test_session_service_suite_tests';
 

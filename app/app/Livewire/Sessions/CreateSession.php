@@ -2,18 +2,18 @@
 
 namespace App\Livewire\Sessions;
 
-use App\Actions\Github\FetchTestSuites;
+use App\Actions\Github\FetchTests;
 use Illuminate\Support\Facades\Cache;
 use Livewire\Component;
 
 class CreateSession extends Component
 {
-    public function render(FetchTestSuites $fetchTestSuites)
+    public function render(FetchTests $fetchTests)
     {
-        $suites = Cache::remember('suites', now()->addHour(), fn() => $fetchTestSuites->handle());
+        $tests = Cache::remember('tests', now()->addHour(), fn() => $fetchTests->handle());
 
         return view('livewire.sessions.create-session', [
-            'suites' => $suites,
+            'tests' => $tests,
         ]);
     }
 

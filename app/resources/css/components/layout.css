@@ -304,6 +304,11 @@ ul {
     z-index: 1000;
 }
 
+.loading-overlay.relative {
+    position: absolute;
+    z-index: inherit;
+}
+
 .alert-icon {
     display: flex;
     align-items: center;

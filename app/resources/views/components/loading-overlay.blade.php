@@ -1,4 +1,6 @@
-<div class="loading-overlay">
+@props(['relative' => false])
+
+<div @class(['loading-overlay', 'relative' => $relative])>
     <svg width="75px" height="75px" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
         <!-- Mask Definition -->
         <mask id="circleMask">

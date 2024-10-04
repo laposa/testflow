@@ -1,6 +1,6 @@
 @php
     /**
-     * @var array $suites
+     * @var array $tests
      */
 @endphp
 
@@ -24,7 +24,7 @@
         </section>
 
         <section>
-            <x-test-suites.list-interactive :suites="$suites" />
+            <x-tests.list-interactive :tests="$tests" />
         </section>
 
         <section>

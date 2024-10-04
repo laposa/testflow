@@ -11,7 +11,7 @@ Route::get('/login', [AuthController::class, 'login'])->name('login');
 
 Route::group(['middleware' => 'auth'], function () {
     // landing page showing who is logged in to the portal - authorised with GitHub
-    Route::get('/', [\App\Http\Controllers\DashboardController::class, 'index'])->name(
+    Route::get('/', [\App\Http\Controllers\SessionController::class, 'index'])->name(
         'dashboard.index',
     );
 
@@ -47,4 +47,9 @@ Route::group(['middleware' => 'auth'], function () {
         \App\Http\Controllers\SessionRunController::class,
         'show',
     ])->name('session.runs.show');
+
+    Route::get('/sessions/{session}/run/{run}/test/{test}', [
+        \App\Http\Controllers\SessionRunController::class,
+        'showTestFile',
+    ])->name('session.runs.showTestFile');
 });

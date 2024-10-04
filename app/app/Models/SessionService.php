@@ -9,7 +9,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SessionService extends Model
 {
-    protected $fillable = ['repository_id', 'workflow_id', 'name', 'url', 'repository_name'];
+    protected $fillable = [
+        'repository_id',
+        'workflow_id',
+        'name',
+        'path',
+        'repository_name',
+        'commit_sha',
+        'branch',
+    ];
 
     protected $table = 'test_session_services';
 

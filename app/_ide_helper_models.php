@@ -143,10 +143,12 @@ namespace App\Models{
  * @property int $repository_id
  * @property int $workflow_id
  * @property string $name
- * @property string $url
+ * @property string $path
  * @property string $repository_name
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property string $commit_sha
+ * @property string $branch
  * @property-read mixed $display_name
  * @property-read mixed $repository_name_without_owner
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\SessionServiceRun> $runs
@@ -157,14 +159,16 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|SessionService newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|SessionService newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|SessionService query()
+ * @method static \Illuminate\Database\Eloquent\Builder|SessionService whereBranch($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|SessionService whereCommitSha($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionService whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionService whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionService whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|SessionService wherePath($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionService whereRepositoryId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionService whereRepositoryName($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionService whereSessionId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionService whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SessionService whereUrl($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionService whereWorkflowId($value)
  */
 	class SessionService extends \Eloquent {}
@@ -180,26 +184,35 @@ namespace App\Models{
  * @property int|null $passed
  * @property int|null $failed
  * @property int|null $skipped
- * @property int|null $duration
+ * @property float|null $duration
  * @property string|null $result_log
  * @property string|null $run_log
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property int|null $github_run_id
+ * @property string|null $commit_sha
+ * @property string|null $started_at
+ * @property string|null $finished_at
  * @property-read mixed $human_readable_duration
+ * @property-read mixed $human_readable_test_duration
  * @property-read mixed $parsed_results
  * @property-read \App\Models\SessionService $service
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceRun newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceRun newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceRun query()
+ * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceRun whereCommitSha($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceRun whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceRun whereDuration($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceRun whereFailed($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceRun whereFinishedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceRun whereGithubRunId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceRun whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceRun wherePassed($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceRun whereResultLog($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceRun whereRunLog($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceRun whereServiceId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceRun whereSkipped($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceRun whereStartedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceRun whereStatus($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceRun whereUpdatedAt($value)
  */
@@ -213,7 +226,7 @@ namespace App\Models{
  * @property int $id
  * @property int $service_id
  * @property string $name
- * @property string $url
+ * @property string $path
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \App\Models\SessionService $service
@@ -225,9 +238,9 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceSuite whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceSuite whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceSuite whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceSuite wherePath($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceSuite whereServiceId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceSuite whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceSuite whereUrl($value)
  */
 	class SessionServiceSuite extends \Eloquent {}
 }
@@ -239,7 +252,7 @@ namespace App\Models{
  * @property int $id
  * @property int $suite_id
  * @property string $name
- * @property string $url
+ * @property string $path
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  * @property-read \App\Models\SessionServiceSuite $suite
@@ -249,9 +262,9 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceSuiteTest whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceSuiteTest whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceSuiteTest whereName($value)
+ * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceSuiteTest wherePath($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceSuiteTest whereSuiteId($value)
  * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceSuiteTest whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder|SessionServiceSuiteTest whereUrl($value)
  */
 	class SessionServiceSuiteTest extends \Eloquent {}
 }

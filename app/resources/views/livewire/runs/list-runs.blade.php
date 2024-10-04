@@ -9,7 +9,8 @@
                 <th></th>
                 <th>Service</th>
                 <th>Run ID</th>
-                <th>Started</th>
+                <th>Initiated</th>
+                <th>Picked by Runner</th>
                 <th>Duration</th>
                 <th>Status</th>
                 <th>Results</th>
@@ -34,6 +35,7 @@
                         <td>-</td>
                         <td>-</td>
                         <td>-</td>
+                        <td>-</td>
                     @else
                         <td>
                             @if ($run->run_log)
@@ -44,8 +46,9 @@
                             @endif
                         </td>
                         <td>{{ $run->created_at }}</td>
+                        <td>{{ $run->started_at }}</td>
                         <td>
-                            @if ($run->result_log)
+                            @if ($run->finished_at)
                                 {{ $run->humanReadableDuration }}
                             @endif
                         </td>
@@ -93,6 +96,7 @@
                                 @endif
                             </td>
                             <td>{{ $run->created_at }}</td>
+                            <td>{{ $run->started_at }}</td>
                             <td>
                                 @if ($run->result_log)
                                     {{ $run->humanReadableDuration }}

@@ -29,8 +29,9 @@
     <thead>
         <tr>
             <th>Name</th>
+            <th>Status</th>
             <th>Environment</th>
-            <th>Timestamp</th>
+            <th>Created</th>
             <th>Issuer</th>
         </tr>
     </thead>
@@ -41,6 +42,19 @@
             @endphp
             <tr>
                 <td><a href="/sessions/{{ $session->id }}">{{ $session->name }}</a></td>
+                <td>
+                    @if ($session->lastRuns && isset($session->lastRuns[0]))
+                        @if (!$session->isRunning)
+                            <span class="pass">{{ $session->passed }}
+                                passed</span> and <span class="fail">{{ $session->failed }}
+                                failed</span>
+                        @else
+                            <span>{{ $session->lastRuns[0]->status }}</span>
+                        @endif
+                    @else
+                        <span>No runs yet</span>
+                    @endif
+                </td>
                 <td>{{ ucfirst($session->environment) }}</td>
                 <td>{{ $session->created_at->format('d M, Y h:m') }}</td>
                 <td>{{ $session->issuer->name }}</td>
