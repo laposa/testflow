@@ -13,7 +13,7 @@ class SessionController extends Controller
     {
         $sessions = Session::query()
             ->with(['lastRuns', 'issuer'])
-            ->orderBy('created_at', 'desc')
+            ->orderBy('id', 'desc')
             ->get();
 
         foreach ($sessions as $session) {
