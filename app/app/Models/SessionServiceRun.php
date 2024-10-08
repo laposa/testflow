@@ -62,11 +62,17 @@ class SessionServiceRun extends Model
     {
         return static::query()
             ->selectRaw(
-                'service_id, AVG(TIMESTAMPDIFF(SECOND, started_at, finished_at)) as average_duration',
+                'CONCAT(repository_name, \'/\', path) as service, AVG(EXTRACT(EPOCH FROM (finished_at - started_at))) as average_duration',
             )
-            ->groupBy('service_id')
+            ->leftJoin(
+                'test_session_services',
+                'test_session_service_runs.service_id',
+                '=',
+                'test_session_services.id',
+            )
+            ->groupBy('repository_name', 'path')
             ->get()
-            ->pluck('average_duration', 'service_id')
+            ->pluck('average_duration', 'service')
             ->toArray();
     }
 }

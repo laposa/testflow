@@ -57,6 +57,10 @@
 
         <p>Run #{{ $run->id }} for {{ $run->service->displayName }}.</p>
         <p>Started at {{ $run->created_at }} and run for {{ $run->humanReadableDuration }}.</p>
+        <p>
+            <x-passed-failed passed="{{ $run->passed }}" failed="{{ $run->failed }}"
+                show-zero="true" />
+        </p>
         <section>
             <ul class="session-selected-suites">
                 @foreach ($run->service->suites as $suite)

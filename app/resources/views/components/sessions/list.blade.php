@@ -36,7 +36,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach ($sessions->reverse() as $session)
+        @foreach ($sessions as $session)
             @php
                 /* @var \App\Models\Session $session */
             @endphp
@@ -45,9 +45,8 @@
                 <td>
                     @if ($session->lastRuns && isset($session->lastRuns[0]))
                         @if (!$session->isRunning)
-                            <span class="pass">{{ $session->passed }}
-                                passed</span> and <span class="fail">{{ $session->failed }}
-                                failed</span>
+                            <x-passed-failed passed="{{ $session->passed }}"
+                                failed="{{ $session->failed }}" />
                         @else
                             <span>{{ $session->lastRuns[0]->status }}</span>
                         @endif

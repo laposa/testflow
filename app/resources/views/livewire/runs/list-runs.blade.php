@@ -2,7 +2,7 @@
     /** @var \App\Models\Session $session */
 @endphp
 
-<div @if ($pollingEnabled) wire:poll.10s @endif x-data="{ selectedServices: [];displayedRuns: [] }">
+<div @if ($pollingEnabled) wire:poll.10s @endif x-data="{ selectedServices: [], displayedRuns: [] }">
     <table class="runs-list">
         <thead>
             <tr>
@@ -10,9 +10,7 @@
                 <th>Service</th>
                 <th>Run ID</th>
                 <th>Initiated</th>
-                <th>Picked by Runner</th>
                 <th>Duration</th>
-                <th>Status</th>
                 <th>Results</th>
                 <th></th>
             </tr>
@@ -34,8 +32,6 @@
                         <td>-</td>
                         <td>-</td>
                         <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
                     @else
                         <td>
                             @if ($run->run_log)
@@ -46,21 +42,18 @@
                             @endif
                         </td>
                         <td>{{ $run->created_at }}</td>
-                        <td>{{ $run->started_at }}</td>
-                        <td>
+                        <td
+                            @if ($run->started_at) title="Picked by runner at {{ $run->started_at }}" @endif>
                             @if ($run->finished_at)
                                 {{ $run->humanReadableDuration }}
+                            @else
+                                <span class="running">Running</span>
                             @endif
                         </td>
                         <td>
-                            <span class="{{ $run->status }}">{{ $run->status }}</span>
-                        </td>
-                        <td>
                             @if ($run->result_log)
-                                <span class="pass">{{ $run->parsedResults->getTotalPassed() }}
-                                    passed</span> and <span
-                                    class="fail">{{ $run->parsedResults->getTotalFailures() }}
-                                    failed</span>
+                                <x-passed-failed passed="{{ $run->passed }}"
+                                    failed="{{ $run->failed }}" />
                             @endif
                         </td>
                         <td>
@@ -96,22 +89,18 @@
                                 @endif
                             </td>
                             <td>{{ $run->created_at }}</td>
-                            <td>{{ $run->started_at }}</td>
-                            <td>
-                                @if ($run->result_log)
+                            <td
+                                @if ($run->started_at) title="Picked by runner at {{ $run->started_at }}" @endif>
+                                @if ($run->finished_at)
                                     {{ $run->humanReadableDuration }}
+                                @else
+                                    <span class="running">Running</span>
                                 @endif
                             </td>
                             <td>
-                                <span class="{{ $run->status }}">{{ $run->status }}</span>
-                            </td>
-                            <td>
                                 @if ($run->result_log)
-                                    <span
-                                        class="pass">{{ $run->parsedResults->getTotalPassed() }}
-                                        passed</span> and <span
-                                        class="fail">{{ $run->parsedResults->getTotalFailures() }}
-                                        failed</span>
+                                    <x-passed-failed passed="{{ $run->passed }}"
+                                        failed="{{ $run->failed }}" />
                                 @endif
                             </td>
                             <td></td>
