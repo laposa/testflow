@@ -44,6 +44,9 @@ class Session extends Model
             'test_session_service_runs.skipped',
             'test_session_service_runs.duration',
             'test_session_service_runs.created_at',
+            'test_session_service_runs.started_at',
+            'test_session_service_runs.finished_at',
+            'test_session_service_runs.result_log',
         ]);
     }
 

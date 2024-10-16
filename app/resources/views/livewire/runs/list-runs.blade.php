@@ -111,8 +111,10 @@
         </tbody>
     </table>
 
-    <button type="button" wire:click="createRun" wire:loading.attr="disabled" class="filled">
-        Run <span
-            x-text="$wire.selectedServices.length === 0 ? 'All Tests' : 'Selected Tests (' + $wire.selectedServices.length + ')'"></span>
-    </button>
+    <div class="list-runs-actions">
+        <button type="button" wire:click="createRun" wire:loading.attr="disabled" class="filled">
+            Run <span
+                x-text="$wire.selectedServices.length === 0 ? 'All Tests' : 'Selected Tests (' + $wire.selectedServices.length + ')'"></span>
+        </button>
+    </div>
 </div>

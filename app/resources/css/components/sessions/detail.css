@@ -27,8 +27,13 @@
     top: 7px;
     right: 20px;
     font-size: 14px;
-    
+
     span {
         font-weight: bold;
     }
+}
+
+.session-report-actions {
+    display: flex;
+    gap: 1rem;
 }

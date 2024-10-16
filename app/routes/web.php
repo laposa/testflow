@@ -39,6 +39,16 @@ Route::group(['middleware' => 'auth'], function () {
         \App\Http\Controllers\SessionController::class,
         'show',
     ])->name('sessions.show');
+
+    Route::get('/sessions/{session}/executive', [
+        \App\Http\Controllers\SessionReportController::class,
+        'executive',
+    ])->name('sessions.executive');
+
+    Route::get('/sessions/{session}/full', [
+        \App\Http\Controllers\SessionReportController::class,
+        'full',
+    ])->name('sessions.full');
     /**
      * for manual, checkboxes with option to add comments
      * for automated, show button to execute
