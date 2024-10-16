@@ -9,4 +9,21 @@
         width: 22px;
         height: 22px;
     }
+
+}
+
+
+@media print {
+    .runs-list {
+        tr {
+            td, th {
+                &:first-child {
+                    display: none;
+                }
+            }
+        }
+    }
+    .list-runs-actions {
+        display: none;
+    }
 }

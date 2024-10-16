@@ -56,7 +56,15 @@
                 </ul>
             @endforeach
         </ul>
+        <hr>
+        <div class="session-report-actions">
+            <a class="button" href="/sessions/{{ $session->id }}/executive">
+                View Executive Report
+            </a>
+            <a class="button" href="/sessions/{{ $session->id }}/full">
+                View Full Report
+            </a>
+        </div>
     </section>
-    <p><a class="button" href="#" onclick="print()">Print Executive
-            Report</a></p>
+
 </x-layout>
