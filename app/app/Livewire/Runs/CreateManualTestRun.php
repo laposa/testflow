@@ -20,6 +20,7 @@ class CreateManualTestRun extends Component
 {
     public Session $session;
     public Collection $tests;
+    public array $runIds = [];
     public int $index = 0;
     public array $result = [];
     public bool $open = false;
@@ -27,7 +28,9 @@ class CreateManualTestRun extends Component
 
     protected $listeners = [
         'show' => 'show',
-        'close' => 'close'
+        'close' => 'close',
+        'start-run' => 'startRun',
+        'end-run' => 'submitTest'
     ];
 
     public function show()
@@ -44,6 +47,19 @@ class CreateManualTestRun extends Component
     public function mount() {
         $this->tests = $this->session->getManualTests();
     }
+
+    public function startRun() {
+        $this->session->services->each(function(SessionService $service) {
+            $run = $service->runs()->create([
+                'service_id' => $service->id,
+                'status' => 'In Progress', // Change this to fail if any test fails
+                'started_at' => now(),
+            ]);
+            $this->runIds[] = $run->id;
+        });
+        $this->open = true;
+    }
+
     public function next() {
         $this->goToIndex($this->index + 1);
     }
@@ -76,6 +92,8 @@ class CreateManualTestRun extends Component
             'comment' => $comment,
         ];
 
+        $this->updateResultLog();
+
         if ($this->index < $this->tests->count() - 1) {
             $this->next();
         } else {
@@ -83,60 +101,74 @@ class CreateManualTestRun extends Component
         }
     }
 
+    public function updateResultLog() {
+        collect($this->runIds)->each(function($id) {
+            $run = SessionServiceRun::find($id);
+
+            $results = collect($this->result)
+                ->filter(fn($result) => $result['service_id'] === $run->service_id);
+
+
+            $xml = $this->transformResultLog($run, $results->toArray());
+
+            $run->update([
+                'result_log' => $xml,
+                'passed' => count(collect($results)->where('status', 'pass')),
+                'failed' => count($results->where('status', 'fail'))
+            ]);
+        });
+
+    }
+
+    public function transformResultLog(SessionServiceRun $run, array $data): string
+    {
+
+        $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><testsuites></testsuites>');
+
+        collect($data)->groupBy('suite_id')
+            ->each(function ($tests, $suiteId) use ($xml, $run) {
+                $suite = SessionServiceSuite::findOrFail($suiteId);
+                $testSuite = $xml->addChild('testsuite');
+                $testSuite->addAttribute('name', explode('.', $suite->name)[0]);
+                $testSuite->addAttribute('tests', count($tests));
+
+                $testSuite->addAttribute('failures', count($tests->where('status', 'fail')));
+                $testSuite->addAttribute('time', 0);
+
+                collect($tests)->each(function($result) use ($xml, $testSuite) {
+                    $test = SessionServiceSuiteTest::find($result['test_id']);
+
+                    $testCase = $testSuite->addChild('testcase');
+                    $testCase->addAttribute('id', $test->id);
+                    $testCase->addAttribute('name', explode('.', $test->name)[0]);
+                    $testCase->addAttribute('classname', $test->name);
+                    $testCase->addAttribute('status', $test['status']);
+
+
+                    if ($result['status'] === "fail") {
+                        $failure = $testCase->addChild('failure', "Test failed");
+                        $failure->addAttribute('message', $result['comment']);
+                    }
+                });
+            });
+
+        return $xml->asXML();
+    }
+
+
+
     public function submitTest()
     {
-        collect($this->result)
-            ->groupBy('service_id')
-            ->each(function ($tests, $serviceId) {
-                $service = SessionService::find($serviceId);
-                $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><testsuites></testsuites>');
+        collect($this->runIds)->each(function($id) {
+            $run = SessionServiceRun::find($id);
 
-                collect($tests)
-                    ->groupBy('suite_id')
-                    ->each(function ($tests, $suiteId) use ($xml, $service){
-                        $suite = SessionServiceSuite::findOrFail($suiteId);
+            $run->update([
+               'status' => 'success',
+                'finished_at' => now(),
+            ]);
+        });
 
-                        $testSuite = $xml->addChild('testsuite');
-                        $testSuite->addAttribute('name', explode('.', $suite->name)[0]);
-                        $testSuite->addAttribute('tests', count($tests));
-
-                        $testSuite->addAttribute('failures', count($tests->where('status', 'fail')));
-                        $testSuite->addAttribute('time', 0);
-
-                        collect($tests)->each(function($result) use ($xml, $testSuite) {
-                            $test = SessionServiceSuiteTest::find($result['test_id']);
-
-                            $testCase = $testSuite->addChild('testcase');
-                            $testCase->addAttribute('id', $test->id);
-                            $testCase->addAttribute('name', explode('.', $test->name)[0]);
-                            $testCase->addAttribute('classname', $test->name);
-                            $testCase->addAttribute('status', $test['status']);
-
-
-                           if ($result['status'] === "fail") {
-                               $failure = $testCase->addChild('failure', "Test failed");
-                               $failure->addAttribute('message', $result['comment']);
-                           }
-                        });
-                    }
-                );
-
-                $service->runs()->create([
-                    'service_id' => $service->id,
-                    'status' => 'success', // Change this to fail if any test fails
-                    'result_log' => $xml->asXML(),
-                    'run_log' => '',
-                    'finished_at' => now(),
-                    'started_at' => now(),
-                    'passed' => count($tests->where('status', 'pass')),
-                    'failed' => count($tests->where('status', 'fail')),
-                ]);
-
-                return redirect(request()->header('Referer'));
-            }
-        );
-
-
+        return redirect(request()->header('Referer'));
     }
 
     public function render()

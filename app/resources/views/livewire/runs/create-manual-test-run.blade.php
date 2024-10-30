@@ -4,12 +4,18 @@
 @endphp
 
 <div>
-<div x-data="{open: @entangle('open')}"
-     x-on:run-created="$refs.dialog.close()"
-    >
-    <button type="button" class="filled" @click="$dispatch('show')">Run Manual Tests</button>
+<div x-data="{
+    open: @entangle('open'),
+    close() {
+        if (confirm('Closing will finish the run, would you like to continue?')) {
+            $dispatch('end-run');
+        }
+    }
+}">
+    <button type="button" class="filled" @click="$dispatch('start-run')">Run Manual Tests</button>
+
     <dialog x-ref="dialog" class="dialog" x-bind:open="open">
-        <button type="submit" class="dialog-close" aria-label="close" @click="$dispatch('close')">X</button>
+        <button type="submit" class="dialog-close" aria-label="close" @click="close()">X</button>
 
         <div>Test {{ $index + 1}}/{{$tests->count()}}</div>
         @if ($this->currentTest)
@@ -17,16 +23,7 @@
         @else
             <p>No test selected</p>
         @endif
-
-        @if ($tests->count() > 1)
-            <div>
-                @foreach ($tests as $test)
-                    <button type="button"  wire:click="goToIndex({{ $loop->index }})">
-                        {{ $loop->index + 1 }}
-                    </button>
-                @endforeach
-            </div>
-        @endif
+{
     </dialog>
 </div>
 </div>
