@@ -34,12 +34,12 @@
                         <td>-</td>
                     @else
                         <td>
-                            @if ($run->run_log)
+{{--                            @if ($run->run_log)--}}
                                 <a href="/sessions/{{ $session->id }}/run/{{ $run->id }}"
                                     title="Show logs">{{ $run->id }}</a>
-                            @else
-                                {{ $run->id }}
-                            @endif
+{{--                            @else--}}
+{{--                                {{ $run->id }}--}}
+{{--                            @endif--}}
                         </td>
                         <td>{{ $run->created_at }}</td>
                         <td
@@ -81,12 +81,8 @@
                             <td></td>
                             <td></td>
                             <td>
-                                @if ($run->run_log)
                                     <a href="/sessions/{{ $session->id }}/run/{{ $run->id }}"
                                         title="Show logs">{{ $run->id }}</a>
-                                @else
-                                    {{ $run->id }}
-                                @endif
                             </td>
                             <td>{{ $run->created_at }}</td>
                             <td
@@ -116,5 +112,10 @@
             Run <span
                 x-text="$wire.selectedServices.length === 0 ? 'All Tests' : 'Selected Tests (' + $wire.selectedServices.length + ')'"></span>
         </button>
+
+        @if ($session->hasManualTests)
+            <livewire:runs.create-manual-test-run :session="$session" />
+        @endif
+
     </div>
 </div>

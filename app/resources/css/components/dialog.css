@@ -1,0 +1,35 @@
+.dialog {
+    border: none !important;
+    box-shadow: 0 0 #0000, 0 0 #0000, 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    padding: 1.6rem;
+    max-width: 600px;
+    height: auto;
+    z-index: 100;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+max-height: 90vh;
+    overflow: auto;
+    &::backdrop {
+        position: fixed;
+        inset: 0px;
+        background: rgba(0, 0, 0, 0.1);
+    }
+    .dialog-close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        cursor: pointer;
+        background-color: transparent;
+        width: 35px;
+        height: 35px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 1px solid var(--body);
+        color: var(--body);
+        border-radius: 35px;
+
+    }
+}
