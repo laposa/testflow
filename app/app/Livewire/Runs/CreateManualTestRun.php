@@ -97,7 +97,7 @@ class CreateManualTestRun extends Component
                         $suite = SessionServiceSuite::findOrFail($suiteId);
 
                         $testSuite = $xml->addChild('testsuite');
-                        $testSuite->addAttribute('name', $suite->name);
+                        $testSuite->addAttribute('name', explode('.', $suite->name)[0]);
                         $testSuite->addAttribute('tests', count($tests));
 
                         $testSuite->addAttribute('failures', count($tests->where('status', 'fail')));
@@ -108,7 +108,7 @@ class CreateManualTestRun extends Component
 
                             $testCase = $testSuite->addChild('testcase');
                             $testCase->addAttribute('id', $test->id);
-                            $testCase->addAttribute('name', $test->name);
+                            $testCase->addAttribute('name', explode('.', $test->name)[0]);
                             $testCase->addAttribute('classname', $test->name);
                             $testCase->addAttribute('status', $test['status']);
 
