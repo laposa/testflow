@@ -49,7 +49,10 @@
                         <li><b>{{ $suite->name }}</b></li>
                         <ul>
                             @foreach ($suite->tests as $test)
-                                <li>{{ $test['name'] }}</li>
+                                <li>
+                                    {{ $test->name }}
+
+                                </li>
                             @endforeach
                         </ul>
                     @endforeach

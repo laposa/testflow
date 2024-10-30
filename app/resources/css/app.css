@@ -1,6 +1,7 @@
 @import 'components/layout.css';
 @import 'components/header.css';
 @import 'components/footer.css';
+@import 'components/dialog.css';
 @import 'components/portal-section.css';
 @import 'components/error-list.css';
 @import 'components/test-suites/index.css';

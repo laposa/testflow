@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -68,5 +69,21 @@ class Session extends Model
     public function reviewRequests(): HasMany
     {
         return $this->hasMany(ReviewRequest::class);
+    }
+
+    public function getManualTests()
+    {
+        return $this->services->flatMap(
+            fn ($service) => $service->suites->flatMap(
+                fn ($suite) => $suite->tests->filter(
+                    fn ($test) => $test->isManualTest
+                )
+            )
+        );
+    }
+
+    public function hasManualTests(): Attribute
+    {
+        return new Attribute(get: fn() => $this->getManualTests()->isNotEmpty());
     }
 }

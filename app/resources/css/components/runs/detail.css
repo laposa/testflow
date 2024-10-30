@@ -17,10 +17,6 @@ dialog {
 	box-shadow: 0 0 16px rgba(0, 0, 0, 0.1);
 	flex-direction: column;
 
-	form {
-		margin-top: auto;
-	}
-
 	.content {
 		height: 100%;
 	}
