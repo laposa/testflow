@@ -176,6 +176,8 @@ class GithubClient
         return $response->json();
     }
 
+
+
     public function fetchWorkflowRunArtifactsDownload(string $repository, string $artifactId)
     {
         $response = $this->withHeaders()->get(
@@ -189,6 +191,13 @@ class GithubClient
     {
         $response = $this->withHeaders()->get("/repos/{$repository}/actions/runs/{$runId}/jobs");
 
+        return $response->json();
+    }
+
+    public function fetchFileContents(string $path)
+    {
+//        dd("/repos/contents$path");
+        $response = $this->withHeaders()->get("/repos/contents$path");
         return $response->json();
     }
 }
