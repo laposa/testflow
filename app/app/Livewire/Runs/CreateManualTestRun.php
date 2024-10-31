@@ -145,6 +145,10 @@ class CreateManualTestRun extends Component
                     $testCase->addAttribute('classname', $test->name);
                     $testCase->addAttribute('status', $test['status']);
 
+                    if ($result['comment']) {
+                        $testCase->addChild('system-out', $result['comment']);
+                    }
+
                     if ($result['status'] === "fail") {
                         $failure = $testCase->addChild('failure', "Test failed");
                         $failure->addAttribute('message', $result['comment']);
