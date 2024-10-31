@@ -16,6 +16,7 @@ class GithubClient
 
     public function __construct()
     {
+        GithubAppAuth::connect();
         $this->githubApp = GithubAppAuth::get();
         $this->githubAppInstallationId = env("GITHUB_APP_INSTALATION_ID");
 
