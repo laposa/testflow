@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Session\CreateSession;
-use App\Models\Installation;
 use App\Models\Session;
 use Illuminate\Http\Request;
 
@@ -54,7 +53,7 @@ class SessionController extends Controller
 
     public function store(Request $request, CreateSession $createSession)
     {
-        $session = $createSession->handle(Installation::first(), $request->all());
+        $session = $createSession->handle($request->all());
 
         return redirect()->route('sessions.show', $session);
     }

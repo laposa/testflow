@@ -2,7 +2,6 @@
 
 namespace App\Actions\Github;
 
-use App\Models\Installation;
 use App\Services\GithubClient;
 use Illuminate\Support\Arr;
 
@@ -12,8 +11,7 @@ class FetchTests
 
     public function __construct()
     {
-        $installation = Installation::first();
-        $this->client = new GithubClient($installation);
+        $this->client = new GithubClient();
     }
 
     public function handle(): array

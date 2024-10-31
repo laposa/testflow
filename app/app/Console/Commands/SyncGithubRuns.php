@@ -2,12 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Installation;
 use App\Models\SessionServiceRun;
-use App\Models\SessionServiceSuite;
-use App\Models\SessionServiceSuiteTest;
 use Illuminate\Console\Command;
-use App\Models\SessionService;
 use App\Services\GithubClient;
 
 class SyncGithubRuns extends Command
@@ -31,7 +27,6 @@ class SyncGithubRuns extends Command
      */
     public function handle()
     {
-        $installation = Installation::first();
         $runs = SessionServiceRun::select([
             'id',
             'service_id',
@@ -44,7 +39,7 @@ class SyncGithubRuns extends Command
             ->with('service')
             ->get();
 
-        $client = new GithubClient($installation);
+        $client = new GithubClient();
 
         $workflowRuns = [];
 

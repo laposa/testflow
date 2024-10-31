@@ -3,9 +3,9 @@
 namespace App\Actions\Github;
 
 use App\Data\ManualTestData;
-use App\Models\Installation;
 use App\Models\SessionServiceSuiteTest;
 use App\Services\GithubClient;
+use App\Services\GithubAppAuth;
 use Illuminate\Support\Arr;
 use Symfony\Component\Yaml\Yaml;
 
@@ -13,8 +13,7 @@ class FetchManualTestContent
 {
     public function handle(SessionServiceSuiteTest $test): ManualTestData
     {
-        $installation = Installation::first();
-        $client = new GithubClient($installation);
+        $client = new GithubClient();
         $fileContents = $client->fetchRepositoryContents(
             fullName: $test->suite->service->repository_name,
             path: $test->path
