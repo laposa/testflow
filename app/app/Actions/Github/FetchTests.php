@@ -16,6 +16,8 @@ class FetchTests
 
     public function handle(): array
     {
+        set_time_limit(0);
+        
         $repositories = $this->client->fetchRepositories();
         $tests = [];
 
