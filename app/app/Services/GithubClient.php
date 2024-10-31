@@ -16,6 +16,7 @@ class GithubClient
 
     public function __construct()
     {
+        GithubAppAuth::connect();
         $this->githubApp = GithubAppAuth::get();
         $this->githubAppInstallationId = env("GITHUB_APP_INSTALATION_ID");
 
@@ -29,7 +30,7 @@ class GithubClient
     {
 
         return Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->installation->access_token,
+            'Authorization' => 'Bearer ' . $this->githubApp->access_token,
             'Accept' => 'application/vnd.github.v3+json',
         ])->baseUrl($this->baseUrl);
     }
