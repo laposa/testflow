@@ -11,7 +11,7 @@ class DispatchSessionRun
 {
     public function handle(Session $session, ?array $servicesIds): void
     {
-        $client = new GithubClient($session->installation);
+        $client = new GithubClient();
 
         $services = $session->services()->with('suites.tests');
         if ($servicesIds && count($servicesIds) > 0) {

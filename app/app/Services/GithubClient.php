@@ -2,20 +2,20 @@
 
 namespace App\Services;
 
-use App\Models\Installation;
+use App\Data\InstallationData;
 use Firebase\JWT\JWT;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 
 class GithubClient
 {
-    protected Installation $installation;
+    protected InstallationData $installation;
 
     protected string $baseUrl = 'https://api.github.com';
 
-    public function __construct(Installation $installation)
+    public function __construct()
     {
-        $this->installation = $installation;
+        $this->installation = Installation::get();
 
         if ($this->isAccessTokenExpired()) {
             $this->refreshAccessToken();
