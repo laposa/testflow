@@ -19,6 +19,8 @@ use SimpleXMLElement;
 class CreateManualTestRun extends Component
 {
     public Session $session;
+    public string $serviceId;
+    public SessionService $service;
     public Collection $tests;
     public array $runIds = [];
     public int $index = 0;
@@ -45,7 +47,8 @@ class CreateManualTestRun extends Component
 
 
     public function mount() {
-        $this->tests = $this->session->getManualTests();
+        $this->service = SessionService::find($this->serviceId);
+        $this->tests = $this->service->getManualTests();
     }
 
     public function startRun() {

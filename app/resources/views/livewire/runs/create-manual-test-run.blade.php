@@ -12,7 +12,7 @@
         }
     }
 }">
-    <button type="button" class="filled" @click="$dispatch('start-run')">Run Manual Tests</button>
+    <button type="button" class="filled" @click="$dispatch('start-run')">Run Manual Tests ({{ $service->name }})</button>
 
     <dialog x-ref="dialog" class="dialog" x-bind:open="open">
         <button type="submit" class="dialog-close" aria-label="close" @click="close()">X</button>
@@ -23,7 +23,6 @@
         @else
             <p>No test selected</p>
         @endif
-{
     </dialog>
 </div>
 </div>

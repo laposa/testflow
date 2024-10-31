@@ -10,8 +10,8 @@ use Livewire\Component;
 class ListRuns extends Component
 {
     public Session $session;
-
     public bool $isLoading = false;
+    public bool $pollingEnabled = true;
 
     public array $selectedServices = [];
     public array $displayedRuns = [];
@@ -20,6 +20,7 @@ class ListRuns extends Component
     {
         $this->session = $session;
     }
+
 
     public function render(FetchSessionWorkflowRuns $fetchSessionWorkflowRuns)
     {
@@ -39,10 +40,7 @@ class ListRuns extends Component
             ]);
         }
 
-        return view('livewire.runs.list-runs', [
-            'session' => $this->session,
-            'pollingEnabled' => true,
-        ]);
+        return view('livewire.runs.list-runs');
     }
 
     public function createRun(DispatchSessionRun $dispatchSessionRun)
