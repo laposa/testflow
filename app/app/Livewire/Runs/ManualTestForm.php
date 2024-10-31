@@ -19,7 +19,11 @@ class ManualTestForm extends Component
 
     public function save()
     {
-        $this->dispatch('test-updated', $this->test->id, $this->result, $this->comment);
+        $this->dispatch('updated',
+            id: $this->test->id,
+            result: $this->result,
+            comment: $this->comment
+        );
     }
 
     public function render()

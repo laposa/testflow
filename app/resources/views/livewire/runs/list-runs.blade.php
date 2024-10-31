@@ -1,8 +1,12 @@
 @php
     /** @var \App\Models\Session $session */
+    /** @var array $selectedServices */
+    /** @var bool $pollingEnabled */
 @endphp
 
-<div @if ($pollingEnabled) wire:poll.10s @endif x-data="{ selectedServices: [], displayedRuns: [] }">
+<div
+    @if ($pollingEnabled) wire:poll.10s @endif
+    x-data="{  displayedRuns: [] }">
     <table class="runs-list">
         <thead>
             <tr>
@@ -23,7 +27,8 @@
                 @endphp
                 <tr>
                     <td>
-                        <input type="checkbox" wire:model="selectedServices"
+                        <input type="checkbox"
+                               wire:model.live="selectedServices"
                             value="{{ $service->id }}">
                     </td>
                     <td>{{ $service->displayName }}</td>
@@ -34,12 +39,8 @@
                         <td>-</td>
                     @else
                         <td>
-{{--                            @if ($run->run_log)--}}
-                                <a href="/sessions/{{ $session->id }}/run/{{ $run->id }}"
-                                    title="Show logs">{{ $run->id }}</a>
-{{--                            @else--}}
-{{--                                {{ $run->id }}--}}
-{{--                            @endif--}}
+                            <a href="/sessions/{{ $session->id }}/run/{{ $run->id }}"
+                                title="Show logs">{{ $run->id }}</a>
                         </td>
                         <td>{{ $run->created_at }}</td>
                         <td
@@ -114,7 +115,14 @@
         </button>
 
         @if ($session->hasManualTests)
-            <livewire:runs.create-manual-test-run :session="$session" />
+            @php
+                $manualServices = count($this->selectedServices) > 0 ?
+                                    $this->selectedServices :
+                                    $session->services->filter(fn($service) => $service->hasManualTests())->pluck('id')->toArray();
+            @endphp
+            @foreach($manualServices as $service)
+                <livewire:runs.create-manual-test-run key="manual-service-{{$service}}" :session="$session" :service-id="$service" />
+            @endforeach
         @endif
 
     </div>

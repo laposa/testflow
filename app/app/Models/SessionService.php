@@ -45,4 +45,18 @@ class SessionService extends Model
     {
         return new Attribute(get: fn() => $this->repositoryNameWithoutOwner . '/' . $this->name);
     }
+
+    public function getManualTests()
+    {
+        return $this->suites->flatMap(
+            fn ($suite) => $suite->tests->filter(
+                fn ($test) => $test->isManualTest
+            )
+        );
+    }
+
+    public function hasManualTests(): Attribute
+    {
+        return new Attribute(get: fn() => $this->getManualTests()->isNotEmpty());
+    }
 }

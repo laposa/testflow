@@ -74,11 +74,7 @@ class Session extends Model
     public function getManualTests()
     {
         return $this->services->flatMap(
-            fn ($service) => $service->suites->flatMap(
-                fn ($suite) => $suite->tests->filter(
-                    fn ($test) => $test->isManualTest
-                )
-            )
+            fn ($service) => $service->getManualTests()
         );
     }
 

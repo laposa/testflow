@@ -24,6 +24,7 @@ class GithubClient
 
     public function withHeaders(): PendingRequest
     {
+
         return Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->installation->access_token,
             'Accept' => 'application/vnd.github.v3+json',
