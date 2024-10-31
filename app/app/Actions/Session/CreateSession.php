@@ -3,12 +3,12 @@
 namespace App\Actions\Session;
 
 use App\Enums\SessionActivityType;
-use App\Models\Installation;
+use App\Models\Session;
 use Illuminate\Support\Facades\Validator;
 
 class CreateSession
 {
-    public function handle(Installation $installation, array $data)
+    public function handle(array $data)
     {
         $validated = Validator::make(
             $data,
@@ -23,7 +23,7 @@ class CreateSession
             ],
         )->validate();
 
-        $session = $installation->sessions()->create([
+        $session = Session::create([
             'name' => $validated['name'],
             'environment' => $validated['environment'],
             'issuer_id' => auth()->id(),

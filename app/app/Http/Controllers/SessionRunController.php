@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Installation;
 use App\Models\Session;
 use App\Models\SessionServiceRun;
 use App\Models\SessionServiceSuiteTest;
@@ -25,7 +24,7 @@ class SessionRunController extends Controller
         SessionServiceRun $run,
         SessionServiceSuiteTest $test,
     ) {
-        $client = new GithubClient(Installation::first());
+        $client = new GithubClient();
 
         $fileContent = $client->fetchRepositoryContents(
             $run->service->repository_name,

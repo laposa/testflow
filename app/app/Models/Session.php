@@ -14,10 +14,6 @@ class Session extends Model
 
     protected $table = 'test_sessions';
 
-    public function installation(): BelongsTo
-    {
-        return $this->belongsTo(Installation::class);
-    }
 
     public function issuer(): BelongsTo
     {

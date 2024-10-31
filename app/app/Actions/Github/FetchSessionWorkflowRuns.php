@@ -23,7 +23,7 @@ class FetchSessionWorkflowRuns
 
     protected function fetchRunsForService(Session $session, SessionService $service)
     {
-        $client = new GithubClient($session->installation);
+        $client = new GithubClient();
 
         // if all runs have logs in the DB, skip fetching from github
         if ($service->runs->every(fn($run) => $run->run_log)) {

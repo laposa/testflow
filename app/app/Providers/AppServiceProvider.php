@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Services\GithubAppAuth;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\View;
@@ -22,6 +23,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        GithubAppAuth::connect();
+
         View::composer('*', function ($view) {
             $view->with('currentUser', Auth::user());
         });
