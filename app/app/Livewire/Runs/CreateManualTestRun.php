@@ -159,7 +159,6 @@ class CreateManualTestRun extends Component
 
     public function submitTest()
     {
-        ray("submitTest");
         collect($this->runIds)->each(function($id) {
             $run = SessionServiceRun::find($id);
 
