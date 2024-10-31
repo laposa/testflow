@@ -61,6 +61,14 @@
             </div>
         </fieldset>
 
+        <div>
+            <label for="comment">Comment</label>
+            <textarea
+                id="comment"
+                name="comment"
+                wire:model="comment"></textarea>
+        </div>
+
 
         <button type="submit">Submit</button>
     </form>

@@ -79,6 +79,12 @@
                                 @else
                                     <span class="not-found">not found</span>
                                 @endif
+
+                                @if ($testCase['comment'])
+                                    <div>
+                                        <em>{{ $testCase['comment'] }}</em>
+                                    </div>
+                                @endif
                             </li>
                         @endforeach
                     </ul>
