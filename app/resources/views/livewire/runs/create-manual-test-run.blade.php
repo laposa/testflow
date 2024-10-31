@@ -12,14 +12,16 @@
         }
     }
 }">
-    <button type="button" class="filled" @click="$dispatch('start-run')">Run Manual Tests ({{ $service->name }})</button>
-
+    <button type="button" class="filled" wire:click="startRun()">Run Manual Tests ({{ $service->name }})</button>
     <dialog x-ref="dialog" class="dialog" x-bind:open="open">
         <button type="submit" class="dialog-close" aria-label="close" @click="close()">X</button>
 
         <div>Test {{ $index + 1}}/{{$tests->count()}}</div>
         @if ($this->currentTest)
-            <livewire:runs.manual-test-form key="{{$this->currentTest->id}}" :test="$this->currentTest" />
+            <livewire:runs.manual-test-form
+                key="{{$this->currentTest->id}}"
+                :test="$this->currentTest"
+                @updated="updateResults($event.detail.id, $event.detail.result, $event.detail.comment)"/>
         @else
             <p>No test selected</p>
         @endif

@@ -22,6 +22,7 @@ class CreateManualTestRun extends Component
     public string $serviceId;
     public SessionService $service;
     public Collection $tests;
+
     public array $runIds = [];
     public int $index = 0;
     public array $result = [];
@@ -52,15 +53,15 @@ class CreateManualTestRun extends Component
     }
 
     public function startRun() {
-        $this->session->services->each(function(SessionService $service) {
-            $run = $service->runs()->create([
-                'service_id' => $service->id,
-                'status' => 'In Progress', // Change this to fail if any test fails
-                'started_at' => now(),
-            ]);
-            $this->runIds[] = $run->id;
-        });
-        $this->open = true;
+
+        $run = $this->service->runs()->create([
+            'service_id' => $this->service->id,
+            'status' => 'In Progress', // Change this to fail if any test fails
+            'started_at' => now(),
+        ]);
+        $this->runIds[] = $run->id;
+
+        $this->show();
     }
 
     public function next() {
@@ -84,7 +85,6 @@ class CreateManualTestRun extends Component
         return $this->tests->get($this->index);
     }
 
-    #[On('test-updated')]
     public function updateResults(int $id, string $result, string $comment) {
         $test = SessionServiceSuiteTest::find($id);
         $this->result[$id] = [
@@ -111,7 +111,6 @@ class CreateManualTestRun extends Component
             $results = collect($this->result)
                 ->filter(fn($result) => $result['service_id'] === $run->service_id);
 
-
             $xml = $this->transformResultLog($run, $results->toArray());
 
             $run->update([
@@ -125,7 +124,6 @@ class CreateManualTestRun extends Component
 
     public function transformResultLog(SessionServiceRun $run, array $data): string
     {
-
         $xml = new SimpleXMLElement('<?xml version="1.0" encoding="UTF-8"?><testsuites></testsuites>');
 
         collect($data)->groupBy('suite_id')
@@ -147,7 +145,6 @@ class CreateManualTestRun extends Component
                     $testCase->addAttribute('classname', $test->name);
                     $testCase->addAttribute('status', $test['status']);
 
-
                     if ($result['status'] === "fail") {
                         $failure = $testCase->addChild('failure', "Test failed");
                         $failure->addAttribute('message', $result['comment']);
@@ -162,6 +159,7 @@ class CreateManualTestRun extends Component
 
     public function submitTest()
     {
+        ray("submitTest");
         collect($this->runIds)->each(function($id) {
             $run = SessionServiceRun::find($id);
 
@@ -170,6 +168,7 @@ class CreateManualTestRun extends Component
                 'finished_at' => now(),
             ]);
         });
+
 
         return redirect(request()->header('Referer'));
     }

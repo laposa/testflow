@@ -39,12 +39,8 @@
                         <td>-</td>
                     @else
                         <td>
-{{--                            @if ($run->run_log)--}}
-                                <a href="/sessions/{{ $session->id }}/run/{{ $run->id }}"
-                                    title="Show logs">{{ $run->id }}</a>
-{{--                            @else--}}
-{{--                                {{ $run->id }}--}}
-{{--                            @endif--}}
+                            <a href="/sessions/{{ $session->id }}/run/{{ $run->id }}"
+                                title="Show logs">{{ $run->id }}</a>
                         </td>
                         <td>{{ $run->created_at }}</td>
                         <td
@@ -125,7 +121,7 @@
                                     $session->services->filter(fn($service) => $service->hasManualTests())->pluck('id')->toArray();
             @endphp
             @foreach($manualServices as $service)
-                <livewire:runs.create-manual-test-run :session="$session" :service-id="$service" />
+                <livewire:runs.create-manual-test-run key="manual-service-{{$service}}" :session="$session" :service-id="$service" />
             @endforeach
         @endif
 

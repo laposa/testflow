@@ -12,7 +12,6 @@ class ListRuns extends Component
     public Session $session;
     public bool $isLoading = false;
     public bool $pollingEnabled = true;
-
     public array $selectedServices = [];
     public array $displayedRuns = [];
 
@@ -20,7 +19,6 @@ class ListRuns extends Component
     {
         $this->session = $session;
     }
-
 
     public function render(FetchSessionWorkflowRuns $fetchSessionWorkflowRuns)
     {
