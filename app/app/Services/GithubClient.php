@@ -2,20 +2,23 @@
 
 namespace App\Services;
 
-use App\Data\InstallationData;
+use App\Data\GithubAppAuthData;
 use Firebase\JWT\JWT;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 
 class GithubClient
 {
-    protected InstallationData $installation;
+    protected GithubAppAuthData $githubApp;
+    protected string $githubAppInstallationId;
 
     protected string $baseUrl = 'https://api.github.com';
 
     public function __construct()
     {
-        $this->installation = Installation::get();
+        $this->githubApp = GithubAppAuth::get();
+        $this->githubAppInstallationId = env("GITHUB_APP_INSTALATION_ID");
+
 
         if ($this->isAccessTokenExpired()) {
             $this->refreshAccessToken();
@@ -43,7 +46,7 @@ class GithubClient
 
     public function isAccessTokenExpired(): bool
     {
-        return now()->gte($this->installation->expires_at);
+        return now()->gte($this->githubApp->expires_at);
     }
 
     public function refreshAccessToken(): void
@@ -52,15 +55,16 @@ class GithubClient
             'Authorization' => 'Bearer ' . $this->generateJWTWebToken(),
             'Accept' => 'application/vnd.github.v3+json',
         ])->post(
-            "https://api.github.com/app/installations/{$this->installation->installation_id}/access_tokens",
+            "https://api.github.com/app/installations/{$this->githubAppInstallationId}/access_tokens",
         );
 
         $data = $response->json();
 
-        $this->installation->update([
-            'access_token' => $data['token'],
-            'expires_at' => $data['expires_at'],
-            'repository_selection' => $data['repository_selection'],
+        dd($data);
+        GithubAppAuth::update([
+                'token' => $data['token'],
+                'expires_at' => $data['expires_at'],
+                'repository_selection' => $data['repository_selection'],
         ]);
     }
 

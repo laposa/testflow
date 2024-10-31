@@ -2,15 +2,15 @@
 
 namespace App\Services;
 
-use App\Data\InstallationData;
+use App\Data\GithubAppAuthData;
 use Illuminate\Support\Facades\Cache;
 
 use Carbon\Carbon;
 use Illuminate\Validation\UnauthorizedException;
 
-class Installation
+class GithubAppAuth
 {
-    static public function get(): ?InstallationData
+    static public function get(): ?GithubAppAuthData
     {
         $data = Cache::get('installation');
 
@@ -18,7 +18,7 @@ class Installation
             throw new UnauthorizedException('Installation not found.');
         }
 
-        return  $data ? InstallationData::from($data): null;
+        return  $data ? GithubAppAuthData::from($data): null;
     }
 
     static public function exists(): bool
@@ -29,10 +29,15 @@ class Installation
     static public function set()
     {
         $data = GithubClient::getAccessToken(env("GITHUB_APP_INSTALATION_ID"), GithubClient::generateJWTWebToken());
+        self::update($data);
+    }
+
+    static public function update(array $data)
+    {
         $cacheDuration = now()->diffInSeconds(Carbon::parse($data['expires_at']));
         Cache::put(
             key: 'installation',
-            value: InstallationData::from([
+            value: GithubAppAuthData::from([
                 'access_token' => $data['token'],
                 'expires_at' => $data['expires_at'],
                 'repository_selection' => $data['repository_selection'],
@@ -41,7 +46,7 @@ class Installation
         );
     }
 
-    static public function install(): bool
+    static public function connect(): bool
     {
         if (self::exists()) {
             $installation = self::get();

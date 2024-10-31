@@ -5,7 +5,7 @@ namespace App\Actions\Github;
 use App\Data\ManualTestData;
 use App\Models\SessionServiceSuiteTest;
 use App\Services\GithubClient;
-use App\Services\Installation;
+use App\Services\GithubAppAuth;
 use Illuminate\Support\Arr;
 use Symfony\Component\Yaml\Yaml;
 
