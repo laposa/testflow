@@ -80,7 +80,7 @@
                                     <span class="not-found">not found</span>
                                 @endif
 
-                                @if ($testCase['comment'])
+                                @if (array_key_exists("comment", $testCase ?? []) && $testCase['comment'])
                                     <div>
                                         <em>{{ $testCase['comment'] }}</em>
                                     </div>
