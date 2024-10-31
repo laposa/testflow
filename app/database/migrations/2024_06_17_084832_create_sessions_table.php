@@ -12,11 +12,6 @@ return new class extends Migration {
     {
         Schema::create('test_sessions', function (Blueprint $table) {
             $table->id();
-            $table
-                ->foreignId('installation_id')
-                ->constrained()
-                ->onDelete('cascade')
-                ->onUpdate('cascade');
             $table->foreignId('issuer_id')->constrained('users');
             $table->string('name');
             $table->string('environment');
