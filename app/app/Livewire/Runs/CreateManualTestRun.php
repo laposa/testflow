@@ -4,6 +4,7 @@ namespace App\Livewire\Runs;
 
 use App\Actions\Github\DispatchSessionRun;
 use App\Actions\Github\FetchSessionWorkflowRuns;
+use App\Enums\SessionActivityType;
 use App\Http\Controllers\SessionRunController;
 use App\Models\Session;
 use App\Models\SessionService;
@@ -61,6 +62,11 @@ class CreateManualTestRun extends Component
         ]);
         $this->runIds[] = $run->id;
 
+        $this->session->activity()->create([
+            'user_id' => auth()->id(),
+            'type' => SessionActivityType::manual_run_started,
+            'body' => "Manual run {$run->id} for {$this->service->displayName} started by " . auth()->user()->name  
+        ]);
         $this->show();
     }
 
@@ -170,7 +176,17 @@ class CreateManualTestRun extends Component
                'status' => 'success',
                 'finished_at' => now(),
             ]);
+
+            $body = "Finished run {$run->id} for {$run->service->displayName}  with <span class='pass'>{$run->passed} passed</span> and <span class='fail'>{$run->failed} failed</span> tests";
+
+            $this->session->activity()->create([
+                'user_id' => auth()->id(),
+                'type' => SessionActivityType::manual_run_finished,
+                'body' => $body
+            ]);
         });
+
+
 
 
         return redirect(request()->header('Referer'));
