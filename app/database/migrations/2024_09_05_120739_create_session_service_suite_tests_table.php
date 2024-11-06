@@ -31,6 +31,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('session_service_suite_tests');
+        Schema::dropIfExists('test_session_service_suite_tests');
     }
 };
