@@ -5,6 +5,10 @@
     src: url('/public/fonts/DMSans-VariableFont_opsz,wght.ttf');
 }
 
+[x-cloak] {
+    display: none;
+}
+
 :root {
     --primary: #5f9ea0;
     --primary-opaque: rgba(95, 158, 160, 0.5);

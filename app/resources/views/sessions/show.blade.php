@@ -10,6 +10,7 @@
             Environment: <span>{{ ucfirst($session->environment) }}</span>
         </div>
         <livewire:runs.list-runs :session="$session" />
+        <livewire:runs.manual-test-run  />
     </x-portal-section>
 
     <livewire:activity.activity-list :session="$session" />

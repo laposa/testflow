@@ -13,6 +13,7 @@ class SessionServiceRun extends Model
 {
     protected $fillable = [
         'status',
+        'type',
         'passed',
         'failed',
         'skipped',
@@ -31,6 +32,8 @@ class SessionServiceRun extends Model
     {
         return $this->belongsTo(SessionService::class, 'service_id');
     }
+
+
 
     public function parsedResults(): Attribute
     {

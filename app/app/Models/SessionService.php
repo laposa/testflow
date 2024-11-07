@@ -12,7 +12,9 @@ class SessionService extends Model
     protected $fillable = [
         'repository_id',
         'workflow_id',
+        'type',
         'name',
+        'display_name',
         'path',
         'repository_name',
         'commit_sha',
@@ -43,7 +45,7 @@ class SessionService extends Model
 
     public function displayName(): Attribute
     {
-        return new Attribute(get: fn() => $this->repositoryNameWithoutOwner . '/' . $this->name);
+        return new Attribute(get: fn() => $this->repositoryNameWithoutOwner . '/' . $this->name . " ({$this->type})");
     }
 
     public function getManualTests()

@@ -5,8 +5,8 @@
 @endphp
 
 <div
-    @if ($pollingEnabled) wire:poll.10s @endif
-    x-data="{  displayedRuns: [] }">
+    @if ($pollingEnabled) wire:poll.30s="refreshSessionWorkflowRuns(false)" @endif
+    x-data="{ expanded: [] }">
     <table class="runs-list">
         <thead>
             <tr>
@@ -23,15 +23,24 @@
             @foreach ($session->services as $service)
                 @php
                     /** @var \App\Models\SessionService $service */
-                    $run = $service->runs->first();
+                    $run = $service->runs()
+                        ->latest()
+                        ->first();
+
+                    $relatedRuns = $run ? $run->service->runs()->where('type', $run->type)->where('id', '!=', $run->id)->get() : null;
+
                 @endphp
                 <tr>
                     <td>
                         <input type="checkbox"
                                wire:model.live="selectedServices"
-                            value="{{ $service->id }}">
+                               value="{{ $service->id }}"
+                        >
                     </td>
-                    <td>{{ $service->displayName }}</td>
+                    <td>
+                        {{ $service->display_name }}
+
+                    </td>
                     @if (count($service->runs) == 0)
                         <td>No runs</td>
                         <td>-</td>
@@ -40,7 +49,9 @@
                     @else
                         <td>
                             <a href="/sessions/{{ $session->id }}/run/{{ $run->id }}"
-                                title="Show logs">{{ $run->id }}</a>
+                               title="Show logs">
+                                {{ $run->id }}
+                            </a>
                         </td>
                         <td>{{ $run->created_at }}</td>
                         <td
@@ -54,50 +65,57 @@
                         <td>
                             @if ($run->result_log)
                                 <x-passed-failed passed="{{ $run->passed }}"
-                                    failed="{{ $run->failed }}" />
+                                                 failed="{{ $run->failed }}" />
+                            @elseif ($run->type === 'manual')
+                                <button type="button" class="filled"
+                                        x-on:click.prevent="$dispatch('manual-test-run.load-run', { runId: {{ $run->id }}})"
+                                >
+                                    Complete Manual Tests
+                                </button>
                             @endif
                         </td>
                         <td>
-                            @if (count($service->runs) > 1)
+                            @if (count($relatedRuns) > 0)
                                 <a href="#"
-                                    x-on:click.prevent="$wire.displayedRuns.includes({{ $service->id }}) ? $wire.displayedRuns = $wire.displayedRuns.filter(id => id !== {{ $service->id }}) : $wire.displayedRuns.push({{ $service->id }})">
+                                   x-on:click.prevent="expanded.includes('{{ $run->type }}-{{ $service->id }}') ? expanded = expanded.filter(id => id !== '{{ $run->type }}-{{ $service->id }}') : expanded.push('{{ $run->type }}-{{ $service->id }}')">
 
                                     <img src="/images/icons/plus.svg" alt="Show more runs"
-                                        x-show="!$wire.displayedRuns.includes({{ $service->id }})"
-                                        class="icon">
+                                         x-show="!expanded.includes('{{ $run->type }}-{{ $service->id }}')"
+                                         class="icon">
 
                                     <img src="/images/icons/minus.svg" alt="Hide runs"
-                                        x-show="$wire.displayedRuns.includes({{ $service->id }})"
-                                        class="icon">
+                                         x-cloak
+                                         x-show="expanded.includes('{{ $run->type }}-{{ $service->id }}')"
+                                         class="icon">
                                 </a>
                             @endif
                         </td>
                     @endif
                 </tr>
-
-                @if (count($service->runs) > 1)
-                    @foreach ($service->runs->skip(1) as $run)
+                @if ($relatedRuns && count($relatedRuns) > 0)
+                    @foreach ($relatedRuns as $relatedRun)
                         <tr class="more-runs-list"
-                            x-show="$wire.displayedRuns.includes({{ $service->id }})">
+                            x-cloak
+                            x-show="expanded.includes('{{ $run->type }}-{{ $service->id }}')">
                             <td></td>
                             <td></td>
                             <td>
-                                    <a href="/sessions/{{ $session->id }}/run/{{ $run->id }}"
-                                        title="Show logs">{{ $run->id }}</a>
+                                <a href="/sessions/{{ $session->id }}/run/{{ $relatedRun->id }}"
+                                   title="Show logs">{{ $relatedRun->id }}</a>
                             </td>
-                            <td>{{ $run->created_at }}</td>
+                            <td>{{ $relatedRun->created_at }}</td>
                             <td
-                                @if ($run->started_at) title="Picked by runner at {{ $run->started_at }}" @endif>
-                                @if ($run->finished_at)
-                                    {{ $run->humanReadableDuration }}
+                                @if ($relatedRun->started_at) title="Picked by runner at {{ $relatedRun->started_at }}" @endif>
+                                @if ($relatedRun->finished_at)
+                                    {{ $relatedRun->humanReadableDuration }}
                                 @else
                                     <span class="running">Running</span>
                                 @endif
                             </td>
                             <td>
-                                @if ($run->result_log)
-                                    <x-passed-failed passed="{{ $run->passed }}"
-                                        failed="{{ $run->failed }}" />
+                                @if ($relatedRun->result_log)
+                                    <x-passed-failed passed="{{ $relatedRun->passed }}"
+                                                     failed="{{ $relatedRun->failed }}" />
                                 @endif
                             </td>
                             <td></td>
@@ -110,20 +128,13 @@
 
     <div class="list-runs-actions">
         <button type="button" wire:click="createRun" wire:loading.attr="disabled" class="filled">
-            Run <span
-                x-text="$wire.selectedServices.length === 0 ? 'All Tests' : 'Selected Tests (' + $wire.selectedServices.length + ')'"></span>
+            @if (count($selectedServices) > 0)
+                Run Selected Tests ({{ count($selectedServices) }})
+            @else
+                Run All Tests
+            @endif
         </button>
-
-        @if ($session->hasManualTests)
-            @php
-                $manualServices = count($this->selectedServices) > 0 ?
-                                    $this->selectedServices :
-                                    $session->services->filter(fn($service) => $service->hasManualTests())->pluck('id')->toArray();
-            @endphp
-            @foreach($manualServices as $service)
-                <livewire:runs.create-manual-test-run key="manual-service-{{$service}}" :session="$session" :service-id="$service" />
-            @endforeach
-        @endif
-
     </div>
 </div>
+
+

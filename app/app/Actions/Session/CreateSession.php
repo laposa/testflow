@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Validator;
 
 class CreateSession
 {
+    protected array $services = [];
+    protected array $suites = [];
     public function handle(array $data)
     {
         $validated = Validator::make(
@@ -30,51 +32,51 @@ class CreateSession
         ]);
         $session->save();
 
-        $services = [];
-        $suites = [];
+        collect($validated['tests'])
+            ->map(fn ($test) => json_decode($test, true))
+            ->groupBy(fn ($test) => \Str::contains( $test['test_name'], 'manual') ? 'manual' : 'automated')
+            ->map(fn($tests, $type) => $this->createService($session, $type, $tests->toArray()));
 
-        foreach ($validated['tests'] as $testJson) {
-            $test = json_decode($testJson, true);
-
-            $serviceId = $test['repository_name'] . $test['service_name'];
-            if (!isset($services[$serviceId])) {
-                $service = $session->services()->create([
-                    'repository_id' => $test['repository_id'],
-                    'workflow_id' => $test['workflow_id'],
-                    'name' => $test['service_name'],
-                    'path' => $test['service_path'],
-                    'repository_name' => $test['repository_name'],
-                    'commit_sha' => $test['commit_sha'],
-                    'branch' => 'master',
-                ]);
-                $service->save();
-
-                $services[$serviceId] = $service;
-            }
-
-            $suiteId = $serviceId . $test['suite_name'];
-            if (!isset($suites[$suiteId])) {
-                $suite = $services[$serviceId]->suites()->create([
-                    'name' => $test['suite_name'],
-                    'path' => $test['suite_path'],
-                ]);
-                $suite->save();
-
-                $suites[$suiteId] = $suite;
-            }
-
-            $suites[$suiteId]->tests()->create([
-                'name' => $test['test_name'],
-                'path' => $test['test_path'],
+            $session->activity()->create([
+                'user_id' => auth()->id(),
+                'type' => SessionActivityType::session_created,
+                'body' => auth()->user()->name . ' created the session.',
             ]);
-        }
-
-        $session->activity()->create([
-            'user_id' => auth()->id(),
-            'type' => SessionActivityType::session_created,
-            'body' => auth()->user()->name . ' created the session.',
-        ]);
 
         return $session;
+    }
+
+    protected function createService(Session $session, string $type, array $tests)
+    {
+        collect($tests)
+            ->groupBy(fn ($test) => $test['repository_name'] . $test['service_name'] . " ($type)")
+            ->each(function($tests) use ($session, $type) {
+                $service = $session->services()->create([
+                    'repository_id' => $tests[0]['repository_id'],
+                    'workflow_id' => $tests[0]['workflow_id'],
+                    'name' => $tests[0]['service_name'],
+                    'type' => $type,
+                    'path' => $tests[0]['service_path'],
+                    'repository_name' => $tests[0]['repository_name'],
+                    'commit_sha' => $tests[0]['commit_sha'],
+                    'branch' => 'master',
+                ]);
+
+                $tests
+                    ->groupBy(fn ($test) => $test['suite_name'])
+                    ->each(function($tests) use ($service) {
+                        $suite = $service->suites()->create([
+                            'name' => $tests[0]['suite_name'],
+                            'path' => $tests[0]['suite_path'],
+                        ]);
+
+                        $suite->tests()->createMany(
+                            $tests->map(fn ($test) => [
+                                'name' => $test['test_name'],
+                                'path' => $test['test_path'],
+                            ])->toArray()
+                        );
+                    });
+            });
     }
 }
