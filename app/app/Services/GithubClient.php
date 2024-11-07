@@ -61,7 +61,6 @@ class GithubClient
 
         $data = $response->json();
 
-        dd($data);
         GithubAppAuth::update([
                 'token' => $data['token'],
                 'expires_at' => $data['expires_at'],

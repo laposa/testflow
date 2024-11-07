@@ -12,8 +12,10 @@
 
     .modal-content {
         max-width: 90%;
-        width: 600px;
+        width: 1280px;
         background: white;
         padding: 24px;
+        max-height: 90%;
+        overflow: auto;
     }
 }
