@@ -14,7 +14,7 @@ class ManualTestForm extends Component
 {
     public SessionServiceSuiteTest $test;
 
-    public string $result = 'fail';
+    public string $result = '';
     public string $comment = "";
 
     public function save()
