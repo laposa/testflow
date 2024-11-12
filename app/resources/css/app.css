@@ -3,11 +3,9 @@
 @import 'components/footer.css';
 @import 'components/dialog.css';
 @import 'components/modal.css';
-@import 'components/portal-section.css';
 @import 'components/error-list.css';
 @import 'components/test-suites/index.css';
 @import 'components/sessions/index.css';
-@import 'components/tests/index.css';
 @import 'components/runs/index.css';
 @import 'components/activity/activity-feed.css';
 @import 'components/comment/create-comment.css';

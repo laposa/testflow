@@ -30,7 +30,7 @@
             "x-on:keydown.escape.window" => "\$dispatch('close-modal','{$name}')",
         ]) }}>
         <div class="modal-content" @click.outside="$dispatch('close-modal', '{{ $name }}')">
-            <button @click.prevent="$dispatch('close-modal','{{ $name }}')">×</button>
+            <button @click.prevent="$dispatch('close-modal','{{ $name }}')" class="close">×</button>
             <div class="content">
                 {{ $slot }}
             </div>
