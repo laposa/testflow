@@ -12,6 +12,7 @@
 :root {
     --primary: #5f9ea0;
     --primary-opaque: rgba(95, 158, 160, 0.5);
+    --error: #ca3131;
     --danger: #ff0000;
     --success: #10b981;
     --info: #3b82f6;
@@ -192,6 +193,14 @@ select {
 ul {
     list-style: none;
     padding: 0;
+
+    &.bullet-list {
+        list-style: disc;
+
+        li::marker {
+            color: var(--primary);
+        }
+    }
 }
 
 .online {
@@ -207,14 +216,14 @@ ul {
 }
 
 .pass {
-    color: green;
+    color: var(--primary);
     font-weight: 600;
 }
 
 .fail,
 .offline,
 .not-found {
-    color: red;
+    color: var(--error);
     font-weight: 600;
 }
 

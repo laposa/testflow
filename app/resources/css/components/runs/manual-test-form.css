@@ -1,0 +1,96 @@
+.manual-test {
+    
+    .heading {
+
+        h2 {
+            margin-bottom: 0;
+        }
+
+        .description {
+            color: var(--primary-opaque);
+            margin-bottom: 2rem;
+        }
+    }
+
+    .radio-wrapper {
+        display: flex;
+        column-gap: 5px;
+    }
+
+    .input {
+
+        .collapse-input, .expand-input {
+            color: var(--primary);
+            cursor: pointer;
+            text-decoration: underline;            
+        }
+
+        .content {
+            max-height: 0; 
+            overflow: hidden; 
+            transition: max-height 0.3s ease;
+        }
+    }
+
+    .custom-radio {
+        font-size: 0;
+
+        .radio {
+            width: 30px;
+            height: 30px;
+            border: 2px solid #ccc;
+            cursor: pointer;
+            transition: 0.3s ease;
+
+            &::before {
+                display: block;
+                color: #ccc;
+                padding-left: 4px;
+                margin-top: -4px;
+                transition: 0.3s ease;
+            }
+
+            &.pass::before {
+                content: "";
+                position: relative;
+                top: 10px;
+                left: 4px;
+                width: 10px;
+                height: 8px;
+                border-bottom: 3px solid #ccc;
+                border-left: 3px solid #ccc;
+                margin-top: -6px;
+                transform: rotate(-45deg);
+            }
+
+            &.fail::before {
+                content: "×";
+                font-size: 2rem;
+                line-height: 1;
+            }
+        }
+
+        input {
+            display: none;
+        }
+
+        input:checked + .radio {
+
+            &:before {
+                color: inherit;
+            }
+
+            &.pass {
+                border-color: var(--primary);
+
+                &:before {
+                    border-color: var(--primary);
+                }
+            }
+
+            &.fail {
+                border-color: var(--error);
+            }
+        }
+    }
+}
