@@ -95,6 +95,7 @@
                        name="result"
                        value="pass"
                        wire:model="result"
+                       required
                 />
                 <label for="pass">Pass</label>
             </div>
@@ -106,6 +107,7 @@
                     value="fail"
                     name="result"
                     wire:model="result"
+                    required
                 />
                 <label for="fail">Fail</label>
             </div>
