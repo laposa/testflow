@@ -13,9 +13,8 @@ return new class extends Migration
     {
         Schema::table('test_sessions', function (Blueprint $table) {
             $table->dropForeign(['installation_id']);
-            $table->dropColumn('installation_id');
         });
-        
+
         Schema::dropIfExists('installations');
     }
 
