@@ -1,6 +1,6 @@
 APP_NAME=Laravel
 APP_ENV=local
-APP_KEY="op://laposa-secrets-dev/test-portal/APP_KEY"
+APP_KEY="op://laposa-secrets-dev/testflow/APP_KEY"
 APP_DEBUG=true
 APP_TIMEZONE=UTC
 APP_URL=http://localhost
@@ -64,11 +64,11 @@ AWS_USE_PATH_STYLE_ENDPOINT=false
 VITE_APP_NAME="${APP_NAME}"
 
 GITHUB_CLIENT_ID=Iv23liaHFw1JSb9s2tC6 #  https://github.com/organizations/laposa/settings/apps/laposa-test-portal-dev
-GITHUB_CLIENT_SECRET="op://laposa-secrets-dev/test-portal/GITHUB_CLIENT_SECRET"
+GITHUB_CLIENT_SECRET="op://laposa-secrets-dev/testflow/GITHUB_CLIENT_SECRET"
 
 GITHUB_CALLBACK=/auth/callback
 GITHUB_APP_INSTALATION_ID=51847197
-GITHUB_PRIVATE_KEY="op://laposa-secrets-dev/test-portal/GITHUB_PRIVATE_KEY"
+GITHUB_PRIVATE_KEY="op://laposa-secrets-dev/testflow/GITHUB_PRIVATE_KEY"
 
 SUPPORT_EMAIL=support@laposa.ie
 

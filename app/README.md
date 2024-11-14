@@ -1,4 +1,4 @@
-# Test portal app
+# TestFlow app
 
 Using PHP Laravel + Sqlite.
 
@@ -51,4 +51,4 @@ npm run format
 
 ## Usage
 
-- login via GitHub
+-   login via GitHub
