@@ -53,7 +53,7 @@
                                 <div class="content">
                                     @foreach($step->input as $key => $input)
                                         <!-- TODO copy to clipboard when attribute is added -->
-                                        <div><b>{{ $key }}</b>: {{ $input }}</div>
+                                        <div><b>{{ $input['description'] }}</b>: {{ $input['value'] }}</div>
                                     @endforeach
                                 </div>
                             </div>
