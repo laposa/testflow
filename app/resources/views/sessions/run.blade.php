@@ -56,7 +56,11 @@
         </div>
 
         <p>Run #{{ $run->id }} for {{ $run->service->displayName }}.</p>
-        <p>Started at {{ $run->created_at }} and run for {{ $run->humanReadableDuration }}.</p>
+        @if($run->finished_at)
+            <p>Started at {{ $run->created_at }} and run for {{ $run->humanReadableDuration }}.</p>
+        @else
+            <p>Started at {{ $run->created_at }} and is still running ...</p>
+        @endif
         <p>
             <x-passed-failed passed="{{ $run->passed }}" failed="{{ $run->failed }}"
                 show-zero="true" />

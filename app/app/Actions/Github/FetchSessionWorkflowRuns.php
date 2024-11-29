@@ -40,6 +40,11 @@ class FetchSessionWorkflowRuns
         )['workflow_runs'];
 
         foreach ($service->runs as $run) {
+
+            if($run->type === 'manual') {
+                continue;
+            }
+
             // find the workflow run based no the created_at timestamp +- 5 seconds
             $runData = collect($workflowRuns)->first(
                 fn($workflowRun) => $workflowRun['created_at'] >=
