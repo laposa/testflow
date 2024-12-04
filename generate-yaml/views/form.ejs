@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/style.css" />
+    <title>YAML Generator</title>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Generate YAML File</h1>
+      <form action="/generate-yaml" method="POST">
+        <label for="testName">Test Name:</label>
+        <input type="text" id="testName" name="testName" required />
+
+        <label for="suite">Suite:</label>
+        <input type="text" id="suite" name="suite" required />
+
+        <label for="description">Description:</label>
+        <textarea id="description" name="description" required></textarea>
+
+        <h3>Steps</h3>
+        <div id="steps-container">
+          <div class="step"></div>
+        </div>
+        <button type="button" id="add-step">Add Step</button>
+        <button type="submit" id="generate-yaml" disabled>Generate YAML</button>
+      </form>
+    </div>
+    <script>
+      let inputIndex = 0;
+      document
+        .querySelector("div.container")
+        .addEventListener("click", (event) => {
+          if (event.target.matches("button#add-step")) {
+            document
+              .getElementById("generate-yaml")
+              .attributes.removeNamedItem("disabled");
+            const addStepButton = event.target;
+            const container = document.querySelector("div#steps-container");
+            const newStep = document.createElement("div");
+            newStep.className = "step";
+            newStep.innerHTML = `
+            <label>Action:</label>
+            <textarea name="action[]" required></textarea>
+            <div id="input-container">
+              <button type="button" id="add-input">Add Input</button>
+            </div>
+            <label>Result:</label>
+            <textarea name="result[]" required></textarea>
+            `;
+            container.appendChild(newStep);
+          } else if (event.target.matches("button#add-input")) {
+            const container = event.target.parentElement;
+            const newInput = document.createElement("div");
+            newInput.className = "input";
+            newInput.innerHTML = `
+            <button type="button" id="remove-input">Remove Input</button>
+
+            <label>Input Name</label>
+            
+            <input type="text" name="input[${inputIndex}][name]" required>
+            
+            <label>Input Description:</label>
+            <input type="text" name="input[${inputIndex}][description]" required>
+
+            <label>Input Value:</label>
+            <input type="text" name="input[${inputIndex}][value]">
+            `;
+            container.appendChild(newInput);
+            inputIndex++;
+          } else if (event.target.matches("button#remove-input")) {
+            const container = event.target.parentElement;
+            container.remove();
+          }
+        });
+    </script>
+  </body>
+</html>
