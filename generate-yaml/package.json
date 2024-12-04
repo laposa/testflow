@@ -1,0 +1,16 @@
+{
+  "name": "generate-yaml",
+  "version": "1.0.0",
+  "description": "generating test yaml files",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "ejs": "^3.1.10",
+    "express": "^4.21.1",
+    "js-yaml": "^4.1.0"
+  }
+}
