@@ -11,6 +11,13 @@ app.set('view engine', 'ejs');
 app.use(express.static('public'));
 
 app.get('/', (req, res) => {
+    if (!fs.existsSync('./output')) {
+        fs.mkdir('./output', (err) => {
+            if (err) {
+                console.error('Error creating directory:', err);
+            };
+        });
+    }
     res.render('form');
 });
 
@@ -51,14 +58,6 @@ app.post('/generate-yaml', (req, res) => {
 
     const yamlString = yaml.dump(yamlData);
 
-    // Save YAML to file
-    if (!fs.existsSync('./output')) {
-        fs.mkdir('./output', (err) => {
-            if (err) {
-                console.error('Error creating directory:', err);
-            };
-        });
-    }
     const filePath = `./output/${testName || 'test'}.yaml`;
     fs.writeFileSync(filePath, yamlString);
 

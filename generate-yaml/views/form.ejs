@@ -33,9 +33,10 @@
         .querySelector("div.container")
         .addEventListener("click", (event) => {
           if (event.target.matches("button#add-step")) {
-            document
-              .getElementById("generate-yaml")
-              .attributes.removeNamedItem("disabled");
+            const generateYamlButton = document.getElementById("generate-yaml");
+            if (generateYamlButton.disabled) {
+              generateYamlButton.attributes.removeNamedItem("disabled");
+            }
             const addStepButton = event.target;
             const container = document.querySelector("div#steps-container");
             const newStep = document.createElement("div");
