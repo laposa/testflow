@@ -33,7 +33,7 @@ app.post('/generate-yaml', (req, res) => {
     } = req.body;
 
     const steps = action.map((act, index) => {
-        const filteredInputs = input.filter(inp => Number.parseInt(inp.relatedStep) === index);
+        const filteredInputs = input ? input.filter(inp => Number.parseInt(inp.relatedStep) === index) : [];
         if(filteredInputs.length > 0) {
             return {
                 action: act.split('\r\n'),
