@@ -22,6 +22,7 @@ app.get('/', (req, res) => {
 });
 
 app.post('/generate-yaml', (req, res) => {
+    
     const {
         testName,
         suite,
@@ -32,10 +33,11 @@ app.post('/generate-yaml', (req, res) => {
     } = req.body;
 
     const steps = action.map((act, index) => {
-        if(input) {
+        const filteredInputs = input.filter(inp => Number.parseInt(inp.relatedStep) === index);
+        if(filteredInputs.length > 0) {
             return {
                 action: act.split('\r\n'),
-                input: { ... input.reduce((acc, inpt) => {
+                input: { ... filteredInputs.reduce((acc, inpt) => {
                     acc[inpt.name] = { description: inpt.description, value: inpt.value };
                     return acc;
                 }, {})},
@@ -46,9 +48,7 @@ app.post('/generate-yaml', (req, res) => {
             action: act.split('\r\n'),
             result: result[index].split('\r\n')
         }
-
     });
-
     const yamlData = {
         name: testName,
         suite: suite,

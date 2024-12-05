@@ -29,6 +29,7 @@
     </div>
     <script>
       let inputIndex = 0;
+      let stepIndex = -1;
       document
         .querySelector("div.container")
         .addEventListener("click", (event) => {
@@ -51,6 +52,7 @@
             <textarea name="result[]" required></textarea>
             `;
             container.appendChild(newStep);
+            stepIndex++;
           } else if (event.target.matches("button#add-input")) {
             const container = event.target.parentElement;
             const newInput = document.createElement("div");
@@ -59,7 +61,7 @@
             <button type="button" id="remove-input">Remove Input</button>
 
             <label>Input Name</label>
-            
+            <input type="hidden" name="input[${inputIndex}][relatedStep]" value="${stepIndex}"/>
             <input type="text" name="input[${inputIndex}][name]" required>
             
             <label>Input Description:</label>
