@@ -52,8 +52,12 @@
                                 <span class="expand-input">Show input</span>
                                 <div class="content">
                                     @foreach($step->input as $key => $input)
-                                        <!-- TODO copy to clipboard when attribute is added -->
-                                        <div><b>{{ $input['description'] }}</b>: {{ $input['value'] }}</div>
+                                        {{-- TODO copy to clipboard when attribute is added --}}
+                                        @if(is_array($input))
+                                            <div><b>{{ $input['description'] }}</b>: {{ $input['value'] }}</div>
+                                        @else
+                                            <div><b>{{ $key }}</b>: {{ $input }}</div>
+                                        @endif
                                     @endforeach
                                 </div>
                             </div>
