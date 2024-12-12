@@ -45,7 +45,7 @@
                             <div class="list-test list">
                                 @foreach ($suite as $test)
                                     <div class="test">
-                                        @if ($test['workflow_id'])
+                                        @if ($test['workflow_id'] ?? false)
                                             <label
                                                 for="selector-{{ Str::slug($repositoryTitle) }}-test-{{ $test['test_name'] }}"
                                                 class="checkbox">
