@@ -6,7 +6,6 @@
 @script
 <script type="text/javascript">
     document.addEventListener('click', function (e) {
-        console.log('hello');
         let content = e.target.nextElementSibling;
 
         if (e.target.classList.contains('expand-input') && !e.target.classList.contains('collapse-input')) {
