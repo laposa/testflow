@@ -1,27 +1,7 @@
 @php
     /** @var \App\Models\SessionServiceSuiteTest $test */
 @endphp
-
 <div class="manual-test">
-    @script
-    <script type="text/javascript">
-
-        document.addEventListener('click', function (e) {
-            let content = e.target.nextElementSibling;
-
-            if (e.target.classList.contains('expand-input') && !e.target.classList.contains('collapse-input')) {
-                content.style.maxHeight = content.scrollHeight + "px";
-                e.target.classList.add('collapse-input');
-                e.target.innerHTML = 'Hide input';
-            } else if (e.target.classList.contains('collapse-input')) {
-                content.style.maxHeight = null;
-                e.target.classList.remove('collapse-input');
-                e.target.innerHTML = 'Show input';
-            }
-        });
-
-    </script>
-    @endscript
     <div class="heading">
         <h2>{{ $test->getInstructions()->description }}</h2>
         <div class="description">
@@ -54,7 +34,7 @@
                                     @foreach($step->input as $key => $input)
                                         {{-- TODO copy to clipboard when attribute is added --}}
                                         @if(is_array($input))
-                                            <div><b>{{ $input['description'] }}</b>: {{ $input['value'] }}</div>
+                                            <div><b>{{ $input['description'] }}</b>{{ isset($input['value']) ? ': ' . $input['value'] : '' }}</div>
                                         @else
                                             <div><b>{{ $key }}</b>: {{ $input }}</div>
                                         @endif

@@ -3,7 +3,23 @@
     /** @var array $selectedServices */
     /** @var bool $pollingEnabled */
 @endphp
+@script
+<script type="text/javascript">
+    document.addEventListener('click', function (e) {
+        let content = e.target.nextElementSibling;
 
+        if (e.target.classList.contains('expand-input') && !e.target.classList.contains('collapse-input')) {
+            content.style.maxHeight = content.scrollHeight + "px";
+            e.target.classList.add('collapse-input');
+            e.target.innerHTML = 'Hide input';
+        } else if (e.target.classList.contains('collapse-input')) {
+            content.style.maxHeight = null;
+            e.target.classList.remove('collapse-input');
+            e.target.innerHTML = 'Show input';
+        }
+    });
+</script>
+@endscript
 <div
     @if ($pollingEnabled) wire:poll.30s="refreshSessionWorkflowRuns(false)" @endif
     x-data="{ expanded: [] }">
