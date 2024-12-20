@@ -25,8 +25,8 @@ class FetchSessionWorkflowRuns
     {
         $client = new GithubClient();
 
-        // if all runs have logs in the DB, skip fetching from github
-        if ($service->runs->every(fn($run) => $run->run_log)) {
+        // if all runs have logs in the DB, or the service is manual, skip fetching the results
+        if ($service->runs->every(fn($run) => $run->run_log) || $service->type === 'manual') {
             return;
         }
 
@@ -40,11 +40,6 @@ class FetchSessionWorkflowRuns
         )['workflow_runs'];
 
         foreach ($service->runs as $run) {
-
-            if($run->type === 'manual') {
-                continue;
-            }
-
             // find the workflow run based no the created_at timestamp +- 5 seconds
             $runData = collect($workflowRuns)->first(
                 fn($workflowRun) => $workflowRun['created_at'] >=
