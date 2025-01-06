@@ -83,13 +83,15 @@
                                 @else
                                     <span class="not-found">not found</span>
                                 @endif
-
-                                @if (array_key_exists("comment", $testCase ?? []) && $testCase['comment'])
-                                    <div>
-                                        <em>{{ $testCase['comment'] }}</em>
-                                    </div>
-                                @endif
                             </li>
+                            @if (array_key_exists("comment", $testCase ?? []) && $testCase['comment'])
+                                <div class="comment">
+                                    <div class="expand-content"></div>
+                                    <div class="expandable-content">
+                                        <i>{{ $testCase['comment'] }}</i>
+                                    </div>
+                                </div>
+                            @endif
                         @endforeach
                     </ul>
                 @endforeach

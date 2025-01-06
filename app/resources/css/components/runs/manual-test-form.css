@@ -1,5 +1,5 @@
 .manual-test {
-    
+
     .heading {
 
         h2 {
@@ -18,17 +18,12 @@
     }
 
     .input {
-
-        .collapse-input, .expand-input {
-            color: var(--primary);
-            cursor: pointer;
-            text-decoration: underline;            
+        .expand-content:before {
+            content: "Show input"
         }
 
-        .content {
-            max-height: 0; 
-            overflow: hidden; 
-            transition: max-height 0.3s ease;
+        .collapse-content:before {
+            content: "Hide input"
         }
     }
 
@@ -74,7 +69,7 @@
             display: none;
         }
 
-        input:checked + .radio {
+        input:checked+.radio {
 
             &:before {
                 color: inherit;

@@ -12,6 +12,7 @@
 :root {
     --primary: #5f9ea0;
     --primary-opaque: rgba(95, 158, 160, 0.5);
+    --light-gray: rgb(159, 159, 159);
     --error: #ca3131;
     --danger: #ff0000;
     --success: #10b981;
@@ -160,11 +161,11 @@ table {
         }
     }
 
-    > tbody {
+    >tbody {
         & tr {
             border-bottom: 1px solid var(--primary-opaque);
 
-            > td:not([colspan='*']) {
+            >td:not([colspan='*']) {
                 padding: 0.5rem;
             }
         }
@@ -288,12 +289,12 @@ ul {
     }
 
     & input:checked {
-        + .checkmark:before {
+        +.checkmark:before {
             width: 100%;
             height: 100%;
         }
 
-        + .checkmark:after {
+        +.checkmark:after {
             opacity: 1;
         }
     }
@@ -353,4 +354,15 @@ ul {
     }
 }
 
+.expand-content,
+.collapse-content {
+    color: var(--primary);
+    cursor: pointer;
+    text-decoration: underline;
+}
 
+.expandable-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+}
