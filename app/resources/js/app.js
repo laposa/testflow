@@ -4,6 +4,7 @@ import './bootstrap';
 window.AnsiUp = AnsiUp;
 
 document.body.addEventListener('click', function (e) {
+    // Expand for repositories
     if (e.target.classList.contains('expand') && !e.target.classList.contains('collapse')) {
         e.target.closest('.list').classList.add('expanded');
         e.target
@@ -23,8 +24,19 @@ document.body.addEventListener('click', function (e) {
                 child.style.display = 'none';
             });
     }
+
+    //General expand/collapse
+    let content = e.target.nextElementSibling;
+    if (e.target.classList.contains('expand-content') && !e.target.classList.contains('collapse-content')) {
+        content.style.maxHeight = content.scrollHeight + "px";
+        e.target.classList.add('collapse-content');
+    } else if (e.target.classList.contains('collapse-content')) {
+        content.style.maxHeight = null;
+        e.target.classList.remove('collapse-content');
+    }
 });
 
+// Selecting all children
 document.body.addEventListener('change', function (e) {
     if (e.target.closest('.list-interactive')) {
         //group select

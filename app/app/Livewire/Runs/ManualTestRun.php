@@ -105,12 +105,12 @@ class ManualTestRun extends Component
                     $testCase->addAttribute('status', $test['status']);
 
                     if ($result['comment']) {
-                        $testCase->addChild('system-out', $result['comment']);
+                        $testCase->addChild('system-out', htmlspecialchars($result['comment']));
                     }
 
                     if ($result['status'] === "fail") {
                         $failure = $testCase->addChild('failure', "Test failed");
-                        $failure->addAttribute('message', $result['comment']);
+                        $failure->addAttribute('message', htmlspecialchars($result['comment']));
                     }
                 });
             });

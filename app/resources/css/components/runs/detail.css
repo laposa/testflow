@@ -1,36 +1,48 @@
 pre {
-	overflow-x: scroll;
-	font-size: 10px;
+  overflow-x: scroll;
+  font-size: 10px;
 }
 
 dialog[open] {
-	display: flex;
+  display: flex;
 }
 
 dialog {
-	display: none;
-	position: relative;
-	width: 80vw;
-	height: 80vh;
-	border: none;
-	border-radius: 10px;
-	box-shadow: 0 0 16px rgba(0, 0, 0, 0.1);
-	flex-direction: column;
+  display: none;
+  position: relative;
+  width: 80vw;
+  height: 80vh;
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.1);
+  flex-direction: column;
 
-	.content {
-		height: 100%;
-	}
+  .content {
+    height: 100%;
+  }
 }
 
 .session-selected-suites {
-	display: inline-block;
+  display: inline-block;
 }
 
 .test-file {
-	cursor: pointer;
-	transition: 0.3s ease;
+  cursor: pointer;
+  transition: 0.3s ease;
 
-	&:hover {
-		color: var(--primary);
-	}
+  &:hover {
+    color: var(--primary);
+  }
+}
+
+.comment {
+  color: var(--light-gray);
+
+  .expand-content:before {
+    content: "Show comment";
+  }
+
+  .collapse-content:before {
+    content: "Hide comment";
+  }
 }

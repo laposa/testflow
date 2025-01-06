@@ -29,8 +29,8 @@
 
                         @if($step->input)
                             <div class="input">
-                                <span class="expand-input">Show input</span>
-                                <div class="content">
+                                <span class="expand-content"></span>
+                                <div class="expandable-content">
                                     @foreach($step->input as $key => $input)
                                         {{-- TODO copy to clipboard when attribute is added --}}
                                         @if(is_array($input))
