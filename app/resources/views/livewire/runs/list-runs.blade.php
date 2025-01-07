@@ -3,6 +3,46 @@
     /** @var array $selectedServices */
     /** @var bool $pollingEnabled */
 @endphp
+@script
+<script type="text/javascript">
+
+    document.addEventListener('change', function (e) {
+        //manual test fail/pass control
+        if(e.target.closest('.custom-radio')) {
+            let checks = [...document.querySelectorAll('.manual-test .custom-radio .radio-pass')];
+            let fails = [...document.querySelectorAll('.manual-test .custom-radio .radio-fail')];
+            
+            if(checks.length > 0 && checks.every(check => check.checked)) {
+                markTestAs('pass');
+            }
+    
+            if(fails.length > 0 && fails.some(fail => fail.checked)) {
+                markTestAs('fail');
+            }
+        }
+
+        if(e.target.closest('.test-status')) {
+            document.querySelector('.manual-test button[type="submit"]').disabled = false;
+        }
+    });
+
+    Livewire.on('manual-test-next', (event) => {
+        document.querySelector('.modal-content').scrollTop = 0;
+    });
+
+    function markTestAs(status) {
+        switch(status) {
+            case 'pass':
+                document.querySelector('.manual-test .test-status #pass').checked = true;
+                break;
+            case 'fail':
+                document.querySelector('.manual-test .test-status #fail').checked = true;
+                break;
+        }
+        document.querySelector('.manual-test button[type="submit"]').disabled = false;
+    }
+</script>
+@endscript
 <div
     @if ($pollingEnabled) wire:poll.30s="refreshSessionWorkflowRuns(false)" @endif
     x-data="{ expanded: [] }">

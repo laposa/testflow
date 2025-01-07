@@ -5,6 +5,28 @@
     src: url('/public/fonts/DMSans-VariableFont_opsz,wght.ttf');
 }
 
+@keyframes tooltip-appear-fadeout {
+    0% {
+        opacity: 0;
+        transform: translateY(0);
+    }
+
+    15% {
+        opacity: 1;
+        transform: translateY(-20px);
+    }
+
+    80% {
+        opacity: 1;
+
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
 [x-cloak] {
     display: none;
 }
@@ -12,7 +34,7 @@
 :root {
     --primary: #5f9ea0;
     --primary-opaque: rgba(95, 158, 160, 0.5);
-    --light-gray: rgb(159, 159, 159);
+    --light-gray: #ccc;
     --error: #ca3131;
     --danger: #ff0000;
     --success: #10b981;
@@ -79,6 +101,10 @@ section {
             display: none;
         }
     }
+}
+
+body.overflow-hidden {
+    overflow: hidden;
 }
 
 tr.collapsible {
@@ -197,6 +223,7 @@ ul {
 
     &.bullet-list {
         list-style: disc;
+        padding-left: 20px;
 
         li::marker {
             color: var(--primary);
@@ -365,4 +392,42 @@ ul {
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.3s ease;
+}
+
+.collapse-content~.expandable-content {
+    overflow: visible;
+}
+
+.copy-to-clipboard {
+    position: relative;
+    color: var(--primary);
+    cursor: pointer;
+}
+
+.copied-alert {
+    position: absolute;
+    z-index: 1000;
+    font-size: 0.8rem;
+    font-weight: bold;
+    color: var(--light-gray);
+    border: none;
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    opacity: 0;
+    background-color: white;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+    /* sync duration with js */
+    animation: 2s ease-in-out tooltip-appear-fadeout forwards;
+
+    &:after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-top: 5px solid white;
+    }
 }
