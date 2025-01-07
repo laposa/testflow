@@ -23,18 +23,23 @@
                 <tr>
                     <td>{{ $index + 1 }}</td>
                     <td>
-                        @foreach($step->action as $action)
-                            {{ $action }}
-                        @endforeach
+                        @if(count($step->action) > 1)
+                            <ul class="bullet-list">
+                                @foreach($step->action as $action)
+                                    <li>{{ $action }}</li>
+                                @endforeach
+                            </ul>
+                        @else
+                            {{ $step->action[0] ?? '' }}
+                        @endif
 
                         @if($step->input)
                             <div class="input">
                                 <span class="expand-content"></span>
                                 <div class="expandable-content">
                                     @foreach($step->input as $key => $input)
-                                        {{-- TODO copy to clipboard when attribute is added --}}
                                         @if(is_array($input))
-                                            <div><b>{{ $input['description'] }}</b>{{ isset($input['value']) ? ': ' . $input['value'] : '' }}</div>
+                                            <div><b>{{ $input['description'] }}: </b> <span class="copy-to-clipboard" title="Copy to clipboard">{{ isset($input['value']) ? $input['value'] : '' }}</span></div>
                                         @else
                                             <div><b>{{ $key }}</b>: {{ $input }}</div>
                                         @endif
@@ -53,13 +58,13 @@
                     <td>
                         <div class="radio-wrapper">
                             <label for="test-step-{{$index}}-pass" class="custom-radio" title="Mark as Passed">
-                                <input type="radio" name="test-step-{{$index}}" id="test-step-{{$index}}-pass" />
+                                <input type="radio" name="test-step-{{$index}}" id="test-step-{{$index}}-pass" class="radio-pass" />
                                 <div class="radio pass"></div>
                                 Pass
                             </label>
         
                             <label for="test-step-{{$index}}-fail" class="custom-radio" title="Mark as Failed">
-                                <input type="radio" name="test-step-{{$index}}" id="test-step-{{$index}}-fail" />
+                                <input type="radio" name="test-step-{{$index}}" id="test-step-{{$index}}-fail" class="radio-fail"  />
                                 <div class="radio fail"></div>
                                 Fail
                             </label>
@@ -71,31 +76,6 @@
     </table>
 
     <form wire:submit="save">
-        <fieldset>
-            <legend>Test Status:</legend>
-            <div>
-                <input type="radio"
-                       id="pass"
-                       name="result"
-                       value="pass"
-                       wire:model="result"
-                       required
-                />
-                <label for="pass">Pass</label>
-            </div>
-
-            <div>
-                <input
-                    type="radio"
-                    id="fail"
-                    value="fail"
-                    name="result"
-                    wire:model="result"
-                    required
-                />
-                <label for="fail">Fail</label>
-            </div>
-        </fieldset>
 
         <div>
             <label for="comment">Comment</label>
@@ -105,7 +85,37 @@
                 wire:model="comment"></textarea>
         </div>
 
-
-        <button type="submit">Submit</button>
+        <div class="test-status">
+            
+            <label for="pass">
+                <input 
+                    type="radio"
+                    id="pass"
+                    name="result"
+                    value="pass"
+                    wire:model="result"
+                    required
+                />
+                <div class="pass">
+                    Pass
+                </div>
+            </label>
+            
+            <label for="fail">
+                <input
+                    type="radio"
+                    id="fail"
+                    value="fail"
+                    name="result"
+                    wire:model="result"
+                    required
+                />
+                <div class="fail">
+                    Fail
+                </div>
+            </label>
+            
+            <button type="submit" disabled>Submit</button>
+        </div>
     </form>
 </div>

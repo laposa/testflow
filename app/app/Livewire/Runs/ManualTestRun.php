@@ -65,6 +65,7 @@ class ManualTestRun extends Component
 
         if ($this->index < $this->tests->count() - 1) {
             $this->next();
+            $this->dispatch('manual-test-next');
         } else {
             $this->submitTest();
         }
