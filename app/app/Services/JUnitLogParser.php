@@ -115,7 +115,7 @@ class JUnitLogParser
                     'name' => (string) $testCase['name'],
                     'class' => (string) $testCase['classname'],
                     'time' => (float) $testCase['time'],
-                    'status' => 'pass',
+                    'status' => (string) $testCase['status'],
                     'comment'=> $testCase->{"system-out"}
                 ];
 
@@ -123,7 +123,6 @@ class JUnitLogParser
                 $case['name'] = trim(str_replace($suite['name'], '', $case['name']));
 
                 if ($testCase->failure) {
-                    $case['status'] = 'fail';
                     $case['failureMessage'] = (string) $testCase->failure;
                 }
                 $testCases[] = $case;

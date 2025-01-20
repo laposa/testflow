@@ -17,6 +17,14 @@
         content: '\2716';
     }
 
+    .skipped::before {
+        content: '\21B7';
+        position: relative;
+        top: 5px;
+        font-size: 1.5rem;
+        line-height: 1rem;
+    }
+
     .not-found::before {
         content: '\1F6AB';
     }

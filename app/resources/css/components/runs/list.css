@@ -5,24 +5,31 @@
         background-color: #f9f9f9;
     }
 
-    .icon {
-        width: 22px;
+    .expand-icon {
         height: 22px;
-    }
+        display: block;
 
+        img {
+            width: 22px;
+            height: 22px;
+        }
+    }
 }
 
 
 @media print {
     .runs-list {
         tr {
-            td, th {
+
+            td,
+            th {
                 &:first-child {
                     display: none;
                 }
             }
         }
     }
+
     .list-runs-actions {
         display: none;
     }
