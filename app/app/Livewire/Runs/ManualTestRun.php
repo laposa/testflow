@@ -20,10 +20,7 @@ class ManualTestRun extends Component
 
     public array $result = [];
     public int $index = 0;
-
-    protected $listeners = [
-        'end-run' => 'submitTest'
-    ];
+    public int $page = 1;
 
     /**
      * Load the run and open the modal
@@ -32,8 +29,24 @@ class ManualTestRun extends Component
     #[On('manual-test-run.load-run')]
     public function loadRun(int $runId)
     {
-        $this->index = 0;
         $this->run = SessionServiceRun::findOrFail($runId);
+
+        if ($this->run) {
+            $this->service = $this->run->service;
+            $this->tests = $this->service->getManualTests();
+        }
+
+        $results = getResultsFromXML($this->run);
+        $this->result = $results ?? [];
+
+        foreach($this->tests as $index => $test) {
+            if(!isset($results[$test->id])) {
+                $this->index = $index;
+                break;
+            }
+        }
+
+        $this->page = $this->index + 1;
         $this->dispatch('open-modal', "manual-run");
     }
 
@@ -48,6 +61,7 @@ class ManualTestRun extends Component
     public function goToIndex(int $index) {
         if ($this->tests->has($index)) {
             $this->index = $index;
+            $this->page = $index + 1;
         }
     }
 
@@ -80,7 +94,8 @@ class ManualTestRun extends Component
         $this->run->update([
             'result_log' => $xml,
             'passed' => count(collect($results)->where('status', 'pass')),
-            'failed' => count($results->where('status', 'fail'))
+            'failed' => count($results->where('status', 'fail')) ,
+            'skipped' => count($results->where('status', 'skipped')) 
         ]);
     }
 
@@ -103,7 +118,7 @@ class ManualTestRun extends Component
                     $testCase->addAttribute('id', $test->id);
                     $testCase->addAttribute('name', explode('.', $test->name)[0]);
                     $testCase->addAttribute('classname', $test->name);
-                    $testCase->addAttribute('status', $test['status']);
+                    $testCase->addAttribute('status', $result['status']);
 
                     if ($result['comment']) {
                         $testCase->addChild('system-out', htmlspecialchars($result['comment']));
@@ -118,23 +133,21 @@ class ManualTestRun extends Component
 
         return $xml->asXML();
     }
-
-
-
+        
     public function submitTest()
     {
-            $this->run->update([
-                'status' => 'success',
-                'finished_at' => now(),
-            ]);
+        $this->run->update([
+            'status' => 'success',
+            'finished_at' => now(),
+        ]);
 
-            $body = "Finished run {$this->run->id} for {$this->run->service->displayName}  with <span class='pass'>{$this->run->passed} passed</span> and <span class='fail'>{$this->run->failed} failed</span> tests";
+        $body = "Finished run {$this->run->id} for {$this->run->service->displayName}  with <span class='pass'>{$this->run->passed} passed</span> and <span class='fail'>{$this->run->failed} failed</span> tests";
 
-            $this->run->service->session->activity()->create([
-                'user_id' => auth()->id(),
-                'type' => SessionActivityType::manual_run_finished,
-                'body' => $body
-            ]);
+        $this->run->service->session->activity()->create([
+            'user_id' => auth()->id(),
+            'type' => SessionActivityType::manual_run_finished,
+            'body' => $body
+        ]);
 
         $this->dispatch('list-runs.refresh');
 
@@ -158,20 +171,26 @@ class ManualTestRun extends Component
         return <<<'HTML'
         <x-dialog name="manual-run"
             x-on:close-modal.window="
-                if (confirm('Closing will finish the run, would you like to continue?')) {
-                    $dispatch('end-run');
-                    $event.detail == 'manual-run' ? close('manual-run') : null
-                }
+                $event.detail == 'manual-run' ? close('manual-run') : null
             "
             x-on:silent-close-modal.window="$event.detail == 'manual-run' ? close('manual-run') : null"
         >
             @if ($run)
                 <div>
-                    <div>Test {{ $index + 1}}/{{$tests->count()}}</div>
+                    <div class="test-pagination">
+                        <button class="prev" wire:click="prev"></button>
+                        <div class="pages">
+                            <input type="text" wire:model="page" class="test-pagination-input" wire:change="goToIndex($event.target.value - 1)" min="0" max="{{$tests->count()}}" />
+                            / {{$tests->count()}}
+                        </div>
+                        <button class="next" wire:click="next"></button>
+                    </div>
                     @if ($this->currentTest)
                         <livewire:runs.manual-test-form
                             key="{{$this->currentTest->id}}"
+                            :index="$this->index"
                             :test="$this->currentTest"
+                            :run="$this->run"
                             @updated="updateResults($event.detail.id, $event.detail.result, $event.detail.comment)"/>
                     @else
                         No test selected

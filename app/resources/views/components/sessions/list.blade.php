@@ -45,8 +45,11 @@
                 <td>
                     @if ($session->lastRuns && isset($session->lastRuns[0]))
                         @if (!$session->isRunning)
-                            <x-passed-failed passed="{{ $session->passed }}"
-                                failed="{{ $session->failed }}" />
+                            <x-passed-failed 
+                                passed="{{ $session->passed }}"
+                                failed="{{ $session->failed }}" 
+                                skipped="{{ $session->skipped }}"
+                            />
                         @else
                             <span>{{ $session->lastRuns[0]->status }}</span>
                         @endif

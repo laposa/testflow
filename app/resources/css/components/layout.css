@@ -34,6 +34,7 @@
 :root {
     --primary: #5f9ea0;
     --primary-opaque: rgba(95, 158, 160, 0.5);
+    --gray: #aaaaaa;
     --light-gray: #ccc;
     --error: #ca3131;
     --danger: #ff0000;
@@ -44,6 +45,7 @@
 
 * {
     box-sizing: border-box;
+    font-family: Lato, sans-serif;
 }
 
 html {
@@ -51,7 +53,6 @@ html {
 }
 
 body {
-    font-family: Lato, sans-serif;
     font-size: 1rem;
     line-height: 1.6;
     margin: 0;
@@ -245,6 +246,12 @@ ul {
 
 .pass {
     color: var(--primary);
+    font-weight: 600;
+}
+
+.skipped,
+.skip {
+    color: var(--gray);
     font-weight: 600;
 }
 

@@ -19,11 +19,13 @@ class SessionController extends Controller
             $session->isRunning = false;
             $session->passed = 0;
             $session->failed = 0;
+            $session->skipped = 0;
 
             foreach ($session->lastRuns as $run) {
                 if ($run->passed > 0 || $run->failed > 0 || $run->status == 'success') {
                     $session->passed += $run->passed;
                     $session->failed += $run->failed;
+                    $session->skipped += $run->skipped;
                 } else {
                     $session->isRunning = true;
                 }

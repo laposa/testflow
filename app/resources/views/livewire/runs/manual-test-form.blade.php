@@ -1,6 +1,14 @@
 @php
     /** @var \App\Models\SessionServiceSuiteTest $test */
+    /** @var \App\Models\SessionServiceRun $run */
 @endphp
+@script
+<script type="text/javascript">
+    if('{{$result}}' != "") {
+        document.querySelector('button.submit').disabled = false;
+    }
+</script>
+@endscript
 <div class="manual-test">
     <div class="heading">
         <h2>{{ $test->getInstructions()->description }}</h2>
@@ -75,18 +83,17 @@
         </tbody>
     </table>
 
-    <form wire:submit="save">
+    <div>
+        <textarea
+            placeholder="Additional information"
+            id="comment"
+            name="comment"
+            wire:model="comment">
+        </textarea>
+    </div>
 
-        <div>
-            <label for="comment">Comment</label>
-            <textarea
-                id="comment"
-                name="comment"
-                wire:model="comment"></textarea>
-        </div>
-
-        <div class="test-status">
-            
+    <div class="test-status">
+        <div class="statuses">
             <label for="pass">
                 <input 
                     type="radio"
@@ -114,8 +121,11 @@
                     Fail
                 </div>
             </label>
-            
-            <button type="submit" disabled>Submit</button>
         </div>
-    </form>
+
+        <div class="actions">
+            <button class="skip" wire:click="skip">Skip</button>
+            <button class="submit" disabled wire:click="save">Submit</button>
+        </div>
+    </div>
 </div>

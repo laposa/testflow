@@ -62,8 +62,12 @@
             <p>Started at {{ $run->created_at }} and is still running ...</p>
         @endif
         <p>
-            <x-passed-failed passed="{{ $run->passed }}" failed="{{ $run->failed }}"
-                show-zero="true" />
+            <x-passed-failed 
+                passed="{{ $run->passed }}" 
+                failed="{{ $run->failed }}"
+                skipped="{{ $run->skipped }}"
+                show-zero="true" 
+            />
         </p>
         <section>
             <ul class="session-selected-suites">

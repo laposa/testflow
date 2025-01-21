@@ -73,6 +73,7 @@ class ListRuns extends Component
                     (new CreateManualSessionRun())->handle($service);
                 }
             });
+        $this->selectedServices = [];
     }
 
 

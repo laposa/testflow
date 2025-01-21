@@ -22,7 +22,7 @@
         }
 
         if(e.target.closest('.test-status')) {
-            document.querySelector('.manual-test button[type="submit"]').disabled = false;
+            document.querySelector('.manual-test button.submit').disabled = false;
         }
     });
 
@@ -39,7 +39,7 @@
                 document.querySelector('.manual-test .test-status #fail').checked = true;
                 break;
         }
-        document.querySelector('.manual-test button[type="submit"]').disabled = false;
+        document.querySelector('.manual-test button.submit').disabled = false;
     }
 </script>
 @endscript
@@ -66,8 +66,7 @@
                         ->latest()
                         ->first();
 
-                    $relatedRuns = $run ? $run->service->runs()->where('type', $run->type)->where('id', '!=', $run->id)->get() : null;
-
+                    $relatedRuns = $run ? $run->service->runs()->where('type', $run->type)->where('id', '!=', $run->id)->latest()->get() : null;
                 @endphp
                 <tr>
                     <td>
@@ -102,9 +101,12 @@
                             @endif
                         </td>
                         <td>
-                            @if ($run->result_log)
-                                <x-passed-failed passed="{{ $run->passed }}"
-                                                 failed="{{ $run->failed }}" />
+                            @if ($run->result_log && $run->finished_at)
+                                <x-passed-failed 
+                                    passed="{{ $run->passed }}"
+                                    failed="{{ $run->failed }}" 
+                                    skipped="{{ $run->skipped }}"
+                                />
                             @elseif ($run->type === 'manual')
                                 <button type="button" class="filled"
                                         x-on:click.prevent="$dispatch('manual-test-run.load-run', { runId: {{ $run->id }}})"
@@ -115,7 +117,7 @@
                         </td>
                         <td>
                             @if (count($relatedRuns) > 0)
-                                <a href="#"
+                                <a href="#" class="expand-icon"
                                    x-on:click.prevent="expanded.includes('{{ $run->type }}-{{ $service->id }}') ? expanded = expanded.filter(id => id !== '{{ $run->type }}-{{ $service->id }}') : expanded.push('{{ $run->type }}-{{ $service->id }}')">
 
                                     <img src="/images/icons/plus.svg" alt="Show more runs"
@@ -153,8 +155,11 @@
                             </td>
                             <td>
                                 @if ($relatedRun->result_log)
-                                    <x-passed-failed passed="{{ $relatedRun->passed }}"
-                                                     failed="{{ $relatedRun->failed }}" />
+                                    <x-passed-failed 
+                                        passed="{{ $relatedRun->passed }}"
+                                        failed="{{ $relatedRun->failed }}" 
+                                        skipped="{{ $relatedRun->skipped }}"
+                                    />
                                 @endif
                             </td>
                             <td></td>
