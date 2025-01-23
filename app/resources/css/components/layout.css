@@ -46,6 +46,8 @@
 * {
     box-sizing: border-box;
     font-family: Lato, sans-serif;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
 }
 
 html {
