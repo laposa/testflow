@@ -127,6 +127,7 @@ button,
     text-decoration: none;
     align-items: center;
     position: relative;
+    background-color: white;
 
     &:hover {
         background-color: var(--primary);

@@ -50,6 +50,41 @@ class ManualTestRun extends Component
         $this->dispatch('open-modal', "manual-run");
     }
 
+    /**
+     * Mark run as finished and submit the results with unfilled tests marked as skipped
+     * To load a run call `$dispatch('manual-test-run.mark-as-finished', runId)` from a front-end component
+     */
+    #[On('manual-test-run.mark-as-finished')]
+    public function markRunAsFinished(int $runId)
+    {
+        $this->run = SessionServiceRun::findOrFail($runId);
+
+        if ($this->run) {
+            $this->service = $this->run->service;
+            $this->tests = $this->service->getManualTests();
+        }
+
+        $results = getResultsFromXML($this->run);
+        $this->result = $results ?? [];
+
+        //fill in remaining results and mark them as skipped
+        foreach($this->tests as $test) {
+            if(!isset($results[$test->id])) {
+                $this->result[$test->id] = [
+                    'test_id' => $test->id,
+                    'service_id' => $test->suite->service->id,
+                    'suite_id' => $test->suite->id,
+                    'status' => 'skipped',
+                    'comment' => '',
+                ];
+            }
+        }
+
+        $this->updateResultLog();
+
+        $this->submitTest();
+    }
+
     public function next() {
         $this->goToIndex($this->index + 1);
     }

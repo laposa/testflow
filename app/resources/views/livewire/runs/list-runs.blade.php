@@ -34,9 +34,11 @@
         switch(status) {
             case 'pass':
                 document.querySelector('.manual-test .test-status #pass').checked = true;
+                document.querySelector('.manual-test .test-status #pass').dispatchEvent(new Event('change'));
                 break;
             case 'fail':
                 document.querySelector('.manual-test .test-status #fail').checked = true;
+                document.querySelector('.manual-test .test-status #fail').dispatchEvent(new Event('change'));
                 break;
         }
         document.querySelector('.manual-test button.submit').disabled = false;
@@ -111,7 +113,12 @@
                                 <button type="button" class="filled"
                                         x-on:click.prevent="$dispatch('manual-test-run.load-run', { runId: {{ $run->id }}})"
                                 >
-                                    Complete Manual Tests
+                                    Complete manual tests
+                                </button>
+                                <button type="button"
+                                        x-on:click.prevent="$dispatch('manual-test-run.mark-as-finished', { runId: {{ $run->id }}})"
+                                >
+                                    Mark run as finished
                                 </button>
                             @endif
                         </td>
