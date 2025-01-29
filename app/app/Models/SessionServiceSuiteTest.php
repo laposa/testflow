@@ -21,7 +21,7 @@ class SessionServiceSuiteTest extends Model
 
     public function isManualTest(): Attribute
     {
-        return new Attribute(get: fn() => \Str::contains($this->name, "manual"));
+        return new Attribute(get: fn() => \Str::contains($this->name, ".manual."));
     }
 
     public function getInstructions(): ManualTestData | null

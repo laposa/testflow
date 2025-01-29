@@ -70,6 +70,11 @@ class ListRuns extends Component
                 if ($service->type === 'automated') {
                     (new DispatchSessionRun())->handle($this->session, [$service->id]);
                 } else if ( $service->type === 'manual') {
+                    //look for previous run and if it exists and is running, mark it as finished
+                    $last_manual_test_run = $this->session->runs->filter(fn ($run) => $run->service_id === $service->id)->last();
+                    if($last_manual_test_run && $last_manual_test_run->status === "In Progress") {
+                        $this->dispatch('manual-test-run.mark-as-finished', $last_manual_test_run->id);
+                    }
                     (new CreateManualSessionRun())->handle($service);
                 }
             });
