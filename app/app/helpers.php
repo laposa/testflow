@@ -21,33 +21,20 @@ if (!function_exists('getResultsFromXML')) {
     {
         $tests = [];
 
-        //decode to php array
         $xml = simplexml_load_string($run->result_log ?? "");
-        $json = json_encode($xml);
-        $results = json_decode($json,TRUE);
+        if (!$xml || $run->result_log == "") {
+            return $tests;
+        }
 
-        //transform to array we build xml from
-        if(!empty($results["testsuite"]["testcase"])) {
-            //workaround for single test case - returns its own content instead of an array with one test inside
-            if($results["testsuite"]["@attributes"]["tests"] == "1") {
-                $test = $results["testsuite"]["testcase"];
-                $tests[$test["@attributes"]["id"]] = [
-                    'test_id' => $test["@attributes"]["id"],
+        foreach ($xml->testsuite as $suite) {
+            foreach ($suite->testcase as $test) {
+                $tests[(int) $test['id']] = [
+                    'test_id' => (int) $test['id'],
                     'service_id' => $run->service_id,
                     'suite_id' => $run->service->suites->first()->id,
-                    'status' => $test["@attributes"]["status"],
-                    'comment' => $test["system-out"] ?? "",
+                    'status' => (string) $test['status'],
+                    'comment' => (string) $test->{'system-out'} ?? "",
                 ];
-            } else {
-                foreach($results["testsuite"]["testcase"] as $test) {
-                    $tests[$test["@attributes"]["id"]] = [
-                        'test_id' => $test["@attributes"]["id"],
-                        'service_id' => $run->service_id,
-                        'suite_id' => $run->service->suites->first()->id,
-                        'status' => $test["@attributes"]["status"],
-                        'comment' => $test["system-out"] ?? "",
-                    ];
-                }
             }
         }
 
