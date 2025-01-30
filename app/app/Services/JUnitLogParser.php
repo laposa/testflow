@@ -101,7 +101,6 @@ class JUnitLogParser
 
         $testSuites = [];
         foreach ($this->xmlContent->testsuite as $testSuite) {
-
             $suite = [
                 'name' => (string) $testSuite['name'],
                 'tests' => (int) $testSuite['tests'],
@@ -110,17 +109,13 @@ class JUnitLogParser
             ];
             $testCases = [];
             foreach ($testSuite->testcase as $testCase) {
-
                 $case = [
                     'name' => (string) $testCase['name'],
                     'class' => (string) $testCase['classname'],
                     'time' => (float) $testCase['time'],
                     'status' => (string) $testCase['status'],
-                    'comment'=> $testCase->{"system-out"}
+                    'comment' => $testCase->{"system-out"},
                 ];
-
-                // remove suite name from the testCase name
-                $case['name'] = trim(str_replace($suite['name'], '', $case['name']));
 
                 if ($testCase->failure) {
                     $case['failureMessage'] = (string) $testCase->failure;
