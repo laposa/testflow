@@ -31,9 +31,9 @@ if (!function_exists('getResultsFromXML')) {
                 $tests[(int) $test['id']] = [
                     'test_id' => (int) $test['id'],
                     'service_id' => $run->service_id,
-                    'suite_id' => $run->service->suites->first()->id,
+                    'suite_id' => (int) $suite['id'],
                     'status' => (string) $test['status'],
-                    'comment' => (string) $test->{'system-out'} ?? "",
+                    'comment' => (string) $test['system-out'] ?? "",
                 ];
             }
         }
