@@ -14,6 +14,12 @@
         <h2>{{ $test->getInstructions()->description }}</h2>
         <div class="description">
             {{ $test->getInstructions()->suite }}
+            @if($error != "")
+                <div class="error">
+                    This test contains following errors which may negatively impact result of the run:
+                    <ul>{!! $error !!}</ul>
+                </div>
+            @endif
         </div>
     </div>
 

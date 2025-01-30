@@ -110,16 +110,18 @@
                                     skipped="{{ $run->skipped }}"
                                 />
                             @elseif ($run->type === 'manual')
-                                <button type="button" class="filled"
-                                        x-on:click.prevent="$dispatch('manual-test-run.load-run', { runId: {{ $run->id }}})"
-                                >
-                                    Complete manual tests
-                                </button>
-                                <button type="button"
-                                        x-on:click.prevent="$dispatch('manual-test-run.mark-as-finished', { runId: {{ $run->id }}})"
-                                >
-                                    Mark run as finished
-                                </button>
+                                <div class="actions">
+                                    <button type="button" class="filled"
+                                            x-on:click.prevent="$dispatch('manual-test-run.load-run', { runId: {{ $run->id }}})"
+                                    >
+                                        Complete manual tests
+                                    </button>
+                                    <button type="button"
+                                            x-on:click.prevent="$dispatch('manual-test-run.mark-as-finished', { runId: {{ $run->id }}})"
+                                    >
+                                        Mark run as finished
+                                    </button>
+                                </div>
                             @endif
                         </td>
                         <td>

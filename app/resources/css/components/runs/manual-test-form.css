@@ -226,6 +226,19 @@
             margin-left: 20px;
         }
     }
+
+    .error {
+        border: 2px solid var(--error);
+        color: var(--error);
+        padding: 10px;
+        margin-top: 10px;
+
+        ul {
+            margin: 0 0 0 10px;
+            list-style: disc;
+            list-style-position: inside;
+        }
+    }
 }
 
 .test-pagination {
