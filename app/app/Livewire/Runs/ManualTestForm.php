@@ -19,6 +19,7 @@ class ManualTestForm extends Component
 
     public string $result = '';
     public string $comment = "";
+    public string $error = "";
 
     public function save()
     {
@@ -41,7 +42,8 @@ class ManualTestForm extends Component
     public function initializeValues()
     {
         $results = getResultsFromXML($this->run);
-        
+
+        $this->error = validateManualTest($this->test);
         $this->comment = $results[$this->test->id]["comment"] ?? "";
         $this->result = $results[$this->test->id]["status"] ?? "";
     }
