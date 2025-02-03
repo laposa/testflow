@@ -19,7 +19,7 @@
 @endif
 
 @if ($skipped > 0 || $showZero)
-    <span class="skip">{{ $skipped }} skipped</span>
+    <span class="skip">{{ $skipped ? $skipped : 0 }} skipped</span>
 @endif
 
 @if ($passed == 0 && $failed == 0 && $skipped == 0 && !$showZero)

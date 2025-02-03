@@ -117,7 +117,13 @@ class JUnitLogParser
                     'comment' => $testCase->{"system-out"},
                 ];
 
+                // If status is empty, it means the test passed (automated tests)
+                if ($case['status'] == '') {
+                    $case['status'] = 'pass';
+                }
+
                 if ($testCase->failure) {
+                    $case['status'] = 'fail';
                     $case['failureMessage'] = (string) $testCase->failure;
                 }
                 $testCases[] = $case;
