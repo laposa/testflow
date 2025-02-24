@@ -68,7 +68,7 @@ function selectChildElements(event) {
 
 function copyValueToClipboard(event) {
     if (event.target.classList.contains('copy-to-clipboard')) {
-        const value = event.target.previousElementSibling.innerText;
+        const value = event.target.innerText;
 
         const alert = document.createElement('div');
         alert.classList.add('copied-alert');
