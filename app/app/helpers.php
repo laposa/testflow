@@ -33,7 +33,7 @@ if (!function_exists('getResultsFromXML')) {
                     'service_id' => $run->service_id,
                     'suite_id' => (int) $suite['id'],
                     'status' => (string) $test['status'],
-                    'comment' => (string) $test['system-out'] ?? "",
+                    'comment' => (string) $test->{"system-out"} ?? "",
                 ];
             }
         }
