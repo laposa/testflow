@@ -43,9 +43,9 @@ class FetchSessionWorkflowRuns
             // find the workflow run based no the created_at timestamp +- 5 seconds
             $runData = collect($workflowRuns)->first(
                 fn($workflowRun) => $workflowRun['created_at'] >=
-                    $run->created_at->subSeconds(5)->toIso8601String() &&
-                    $workflowRun['created_at'] <=
-                        $run->created_at->addSeconds(5)->toIso8601String(),
+                $run->created_at->subSeconds(5)->toIso8601String() &&
+                $workflowRun['created_at'] <=
+                $run->created_at->addSeconds(5)->toIso8601String(),
             );
 
             if ($runData) {
@@ -190,8 +190,15 @@ class FetchSessionWorkflowRuns
         // unzip the zipFile and get the first file in the zip
         $zip = new \ZipArchive();
         $zip->open(storage_path('app/' . $tmpFileName));
+        $log = null;
 
-        $log = $zip->getFromIndex(0);
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $file = $zip->statIndex($i);
+            if (preg_match('/.*\.xml$/', $file['name'])) {
+                $log = $zip->getFromIndex($i);
+                break;
+            }
+        }
 
         Storage::delete($tmpFileName);
 
