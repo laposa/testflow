@@ -28,11 +28,10 @@ class GithubClient
 
     public function withHeaders(): PendingRequest
     {
-
         return Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->githubApp->access_token,
             'Accept' => 'application/vnd.github.v3+json',
-        ])->baseUrl($this->baseUrl);
+        ])->timeout(300)->baseUrl($this->baseUrl);
     }
 
     public static function getAccessToken(string $installationId, $JWTWebToken)
@@ -56,15 +55,15 @@ class GithubClient
             'Authorization' => 'Bearer ' . $this->generateJWTWebToken(),
             'Accept' => 'application/vnd.github.v3+json',
         ])->post(
-            "https://api.github.com/app/installations/{$this->githubAppInstallationId}/access_tokens",
-        );
+                "https://api.github.com/app/installations/{$this->githubAppInstallationId}/access_tokens",
+            );
 
         $data = $response->json();
 
         GithubAppAuth::update([
-                'token' => $data['token'],
-                'expires_at' => $data['expires_at'],
-                'repository_selection' => $data['repository_selection'],
+            'token' => $data['token'],
+            'expires_at' => $data['expires_at'],
+            'repository_selection' => $data['repository_selection'],
         ]);
     }
 
@@ -201,7 +200,7 @@ class GithubClient
 
     public function fetchFileContents(string $path)
     {
-//        dd("/repos/contents$path");
+        //        dd("/repos/contents$path");
         $response = $this->withHeaders()->get("/repos/contents$path");
         return $response->json();
     }
