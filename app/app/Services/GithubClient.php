@@ -28,11 +28,10 @@ class GithubClient
 
     public function withHeaders(): PendingRequest
     {
-
         return Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->githubApp->access_token,
             'Accept' => 'application/vnd.github.v3+json',
-        ])->baseUrl($this->baseUrl);
+        ])->timeout(300)->baseUrl($this->baseUrl);
     }
 
     public static function getAccessToken(string $installationId, $JWTWebToken)
@@ -62,9 +61,9 @@ class GithubClient
         $data = $response->json();
 
         GithubAppAuth::update([
-                'token' => $data['token'],
-                'expires_at' => $data['expires_at'],
-                'repository_selection' => $data['repository_selection'],
+            'token' => $data['token'],
+            'expires_at' => $data['expires_at'],
+            'repository_selection' => $data['repository_selection'],
         ]);
     }
 
@@ -185,6 +184,8 @@ class GithubClient
 
     public function fetchWorkflowRunArtifactsDownload(string $repository, string $artifactId)
     {
+        set_time_limit(0);
+
         $response = $this->withHeaders()->get(
             "/repos/{$repository}/actions/artifacts/{$artifactId}/zip",
         );
@@ -201,7 +202,7 @@ class GithubClient
 
     public function fetchFileContents(string $path)
     {
-//        dd("/repos/contents$path");
+        //        dd("/repos/contents$path");
         $response = $this->withHeaders()->get("/repos/contents$path");
         return $response->json();
     }
