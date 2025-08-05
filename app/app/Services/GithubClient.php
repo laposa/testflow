@@ -55,8 +55,8 @@ class GithubClient
             'Authorization' => 'Bearer ' . $this->generateJWTWebToken(),
             'Accept' => 'application/vnd.github.v3+json',
         ])->post(
-            "https://api.github.com/app/installations/{$this->githubAppInstallationId}/access_tokens",
-        );
+                "https://api.github.com/app/installations/{$this->githubAppInstallationId}/access_tokens",
+            );
 
         $data = $response->json();
 
@@ -184,8 +184,6 @@ class GithubClient
 
     public function fetchWorkflowRunArtifactsDownload(string $repository, string $artifactId)
     {
-        set_time_limit(0);
-
         $response = $this->withHeaders()->get(
             "/repos/{$repository}/actions/artifacts/{$artifactId}/zip",
         );
