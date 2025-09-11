@@ -40,7 +40,7 @@ RUN cd /tmp && \
 
 RUN composer install --no-interaction
 
-RUN npm install && npm run build
+RUN npm ci && npm run build
 
 # fix permissions
 RUN adduser www-data tty \
