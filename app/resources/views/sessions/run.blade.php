@@ -90,10 +90,7 @@
                             </li>
                             @if (array_key_exists("comment", $testCase ?? []) && $testCase['comment'])
                                 <div class="comment">
-                                    <div class="expand-content"></div>
-                                    <div class="expandable-content">
-                                        <i>{{ $testCase['comment'] }}</i>
-                                    </div>
+                                    <i>{{ $testCase['comment'] }}</i>
                                 </div>
                             @endif
                         @endforeach

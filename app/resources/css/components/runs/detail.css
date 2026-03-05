@@ -36,7 +36,7 @@ dialog {
 }
 
 .comment {
-  color: var(--light-gray);
+  color: var(--gray);
 
   .expand-content:before {
     content: "Show comment";

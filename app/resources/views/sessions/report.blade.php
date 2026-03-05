@@ -37,7 +37,7 @@
                             {{ $test->name }}
                             @if ($testCase)
                                 <span title="Execution time {{ round($testCase['time'], 1) }}s"
-                                      class="{{ $testCase['status'] }}"></span>
+                                      class="{{ $testCase['status'] }}"></span><br/><i class="comment">{{ $testCase['comment'] }}</i>
                             @else
                                 <span class="not-found">not found</span>
                             @endif
