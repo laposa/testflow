@@ -52,20 +52,17 @@
 
                         @if ($step->input)
                             <div class="input">
-                                <span class="expand-content"></span>
-                                <div class="expandable-content">
-                                    @foreach ($step->input as $key => $input)
-                                        @if (is_array($input))
-                                            <div><b>{{ $input['description'] }}: </b> <span
-                                                    class="copy-to-clipboard"
-                                                    title="Copy to clipboard">{{ isset($input['value']) ? $input['value'] : '' }}</span>
-                                            </div>
-                                        @else
-                                            <div><b>{{ $key }}</b>: {{ $input }}
-                                            </div>
-                                        @endif
-                                    @endforeach
-                                </div>
+                                @foreach ($step->input as $key => $input)
+                                    @if (is_array($input))
+                                        <div>{{ $key }}: {{ $input['description'] }}: <span
+                                                class="copy-to-clipboard"
+                                                title="Copy to clipboard">{{ isset($input['value']) ? $input['value'] : '' }}</span>
+                                        </div>
+                                    @else
+                                        <div>{{ $key }}: {{ $input }}
+                                        </div>
+                                    @endif
+                                @endforeach
                             </div>
                         @endif
                     </td>
