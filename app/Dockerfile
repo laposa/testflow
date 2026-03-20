@@ -20,7 +20,7 @@ RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-av
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
 # PHP configuration
-RUN sed -i 's/memory_limit = 128M/memory_limit = 1024M/' /etc/php/8.2/apache2/php.ini
+RUN sed -i 's/memory_limit = 128M/memory_limit = 1024M/' /etc/php/8.4/apache2/php.ini
 
 # logs should go to stdout / stderr
 RUN ln -sfT /dev/stderr /var/log/apache2/error.log \
