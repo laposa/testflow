@@ -45,7 +45,17 @@ class JUnitLogParser
 
     public function getTotalPassed()
     {
-        return $this->getTotalTests() - $this->getTotalFailures();
+        return $this->getTotalTests() - $this->getTotalFailures() - $this->getTotalSkipped();
+    }
+
+    public function getTotalSkipped()
+    {
+        $total = 0;
+        foreach ($this->getTestSuites() as $testSuite) {
+            $total += $testSuite['skipped'] ?? 0;
+        }
+
+        return $total;
     }
 
     public function getTestCase(string $name)
@@ -105,6 +115,7 @@ class JUnitLogParser
                 'name' => (string) $testSuite['name'],
                 'tests' => (int) $testSuite['tests'],
                 'failures' => (int) $testSuite['failures'],
+                'skipped' => (int) ($testSuite['skipped'] ?? 0),
                 'time' => (float) $testSuite['time'],
             ];
             $testCases = [];
@@ -126,6 +137,11 @@ class JUnitLogParser
                     $case['status'] = 'fail';
                     $case['failureMessage'] = (string) $testCase->failure;
                 }
+
+                if (isset($testCase['skipped']) && $testCase['skipped'] > 0) {
+                    $case['status'] = 'skipped';
+                }
+
                 $testCases[] = $case;
             }
             $suite['testCases'] = $testCases;
