@@ -83,6 +83,7 @@ class FetchSessionWorkflowRuns
 
                         $run->passed = $run->parsedResults->getTotalPassed();
                         $run->failed = $run->parsedResults->getTotalFailures();
+                        $run->skipped = $run->parsedResults->getTotalSkipped();
                         $run->duration = $run->parsedResults->getTotalDuration();
                     }
 
