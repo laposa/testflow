@@ -110,6 +110,21 @@ class ManualTestRun extends Component
             'comment' => $comment,
         ];
 
+        // when submitting the last test, if there are any unfilled tests mark them as skipped before submitting
+        if ($this->index >= $this->tests->count() - 1) {
+            foreach($this->tests as $test) {
+                if(!isset($this->result[$test->id])) {
+                    $this->result[$test->id] = [
+                        'test_id' => $test->id,
+                        'service_id' => $test->suite->service->id,
+                        'suite_id' => $test->suite->id,
+                        'status' => 'skipped',
+                        'comment' => '',
+                    ];
+                }
+            } 
+        }
+
         $this->updateResultLog();
 
         if ($this->index < $this->tests->count() - 1) {
