@@ -8,9 +8,9 @@
   },
   "license": "ISC",
   "dependencies": {
-    "body-parser": "^1.20.3",
+    "body-parser": "^1.20.6",
     "ejs": "^3.1.10",
-    "express": "^4.21.1",
+    "express": "^4.22.2",
     "js-yaml": "^4.2.0"
   }
 }
