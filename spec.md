@@ -17,8 +17,8 @@
 |----|----------|--------|
 | D1 | Go, latest stable (1.27.x at time of writing). `go.mod` sets the minimum. | Accepted |
 | D2 | HTTP via `net/http` with the `ServeMux` method and wildcard patterns (`GET /sessions/{id}`). No router library. | Accepted |
-| D3 | HTML via `maragu.dev/gomponents`. htmx attributes are written with a small local helper, not `gomponents-htmx`. | Accepted |
-| D4 | htmx 2.x, vendored as a static file and embedded with `embed`. No CDN, no npm. | Accepted |
+| D3 | HTML via `maragu.dev/gomponents`. htmx attributes are written with a small local helper (`internal/web/views/hx.go`: one generic `hx.Attr(name, value)` plus named helpers for the attributes we use), not `gomponents-htmx`. Reason: `gomponents-htmx` (v0.6.1, last released Oct 2024) was built for htmx 2, so its helpers would trail htmx 4 (D4). A local helper of about 30 lines works with any htmx version and adds no module. As of Nov 2026 the repo has had no commits since Oct 2024; htmx 4 support exists only as open issues. **Revisit** once `gomponents-htmx` releases htmx 4 support. Only the helper file would change. | Accepted |
+| D4 | htmx **4.0.1**, pinned exactly, vendored as a static file and embedded with `embed`. No CDN, no npm. Upgrades are manual (§12). | Accepted |
 | D5 | PostgreSQL via `github.com/jackc/pgx/v5` (`pgxpool`), using pgx directly, not `database/sql`. | Accepted |
 | D6 | Migrations: plain `.sql` files, embedded, applied by a small runner of our own. No migration library. | Accepted |
 | D7 | Logging: `log/slog` JSON to stdout, using OpenTelemetry log data model field names. An OTel Collector reads stdout and exports over OTLP. No OTel SDK in the binary. | Accepted |
@@ -42,8 +42,12 @@ table in the same PR.
 | `github.com/jackc/pgx/v5` | Postgres driver and pool (D5) | `jackc/pgpassfile`, `jackc/pgservicefile`, `jackc/puddle/v2`, `golang.org/x/sync`, `golang.org/x/text` |
 | `go.yaml.in/yaml/v3` | Parse and emit `*.manual.yaml` (D8) | none |
 
-Static assets (not Go modules): `htmx.min.js` (2.x), DM Sans font files (copied from
-`legacy:app/public/fonts/`).
+Static assets (not Go modules), pinned and upgraded by hand:
+
+| Asset | Version | Source |
+|-------|---------|--------|
+| `internal/web/static/htmx-4.0.1.min.js` | 4.0.1 | npm package `htmx.org@4.0.1`, `dist/htmx.min.js` |
+| DM Sans font files | as in legacy | `legacy:app/public/fonts/` |
 
 Everything else comes from the standard library, including: OAuth2 (`net/http`),
 the RS256 JWT for the GitHub App (`crypto/rsa`, `crypto/x509`, `encoding/pem`), CSRF
@@ -462,7 +466,9 @@ Legacy: `resources/views/sessions/report.blade.php`.
   ported from `legacy:app/resources/views/components/*`.
 - CSS: one hand-written stylesheet ported from `legacy:app/resources/css/app.css`
   (no build step), plus a `print` media block. Font: DM Sans (self-hosted).
-- htmx: used for the run-list polling, the manual run wizard (in a `<dialog>`),
+- htmx 4 (D4): the version is in the file name, which also busts the browser cache on
+  upgrade. The layout loads it with a Subresource Integrity (`integrity`) hash.
+  Used for the run-list polling, the manual run wizard (in a `<dialog>`),
   comment/review forms, the test tree "select all" interactions and the generator's
   dynamic steps. Tiny vanilla JS is allowed for `<dialog>` open/close. Nothing else.
 - Handlers check the `HX-Request` header. htmx requests get the fragment, normal
@@ -491,7 +497,14 @@ Legacy: `resources/views/sessions/report.blade.php`.
 ## 12. Build, run, deploy
 
 - `Makefile` targets: `run`, `test`, `test-integration`, `lint` (`go vet`, `gofmt -l`),
-  `build`, `docker`.
+  `build`, `docker`, `update-htmx`.
+- **Upgrading htmx is a manual, deliberate change.** Run
+  `make update-htmx HTMX_VERSION=x.y.z`. It downloads `dist/htmx.min.js` for that
+  exact version from the npm registry tarball, saves it as `htmx-x.y.z.min.js`,
+  removes the old file and prints the new SRI hash. In the same PR, update the
+  version constant and hash in the layout and the §2 table, then run through the
+  htmx-driven screens (§10) before merging. Nothing upgrades htmx automatically
+  (Dependabot does not track vendored files).
 - `deploy/docker-compose.yaml` for development: `postgres:17`, the app, and the OTel
   Collector (with the `debug` exporter).
 - `Dockerfile`: multi-stage. `golang:1.27` builds with `CGO_ENABLED=0`, `-trimpath`,
