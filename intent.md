@@ -43,8 +43,7 @@ operate for years.
 
 ## Goals
 
-1. **Feature parity** with the legacy implementation (`~/LaposaDev/testflow_legacy`,
-   commit `b33dbec`), including the test-case validator and generator tools.
+1. **Feature parity** with the legacy implementation [app](app/), including the test-case validator and generator tools.
 2. **Minimal dependencies.** Prefer the Go standard library. Add a third-party module only
    when the standard library has no reasonable equivalent, and record why in `spec.md`.
 3. **One binary** that serves the web UI and also provides the CLI tools.
