@@ -33,12 +33,13 @@
 | D8 | YAML via `go.yaml.in/yaml/v3`. | Accepted |
 | D9 | No Markdown rendering. | Accepted |
 | D10 | One binary with subcommands (`serve`, `migrate`). The Node.js tools `generate-yaml/` and `tests-validator/` are **not** part of the rewrite and stay unchanged. | Accepted |
-| D15 | The Go app is a separate Go module in `app-go/` (`module github.com/laposa/testflow/app-go`). Nothing outside `app-go/` changes during the rewrite except the project docs. `app/` keeps building and deploying as today until cut-over (§14, iteration 13). | Accepted |
-| D16 | No GitHub workflow changes during the rewrite. `.github/workflows/` stays as it is, and `app-go` is built, tested and checked **manually** with `make` (§12). The workflows are switched to the Go app at cut-over (iteration 13). | Accepted |
 | D11 | Tests use the standard `testing` package only (no testify). DB tests run against a real Postgres. | Accepted |
 | D12 | Manual and automated per-test results are stored in one table (`run_test_results`) instead of keeping manual results as JUnit XML (the legacy approach). | **Proposed** |
 | D13 | Activity entries store plain text and structured `metadata`. HTML is produced only by Gomponents views. (Legacy stored HTML in `body`, an XSS risk.) | **Proposed** |
 | D14 | GitHub user OAuth tokens are **not** stored. Legacy saved them but never used them. All GitHub API access uses the GitHub App installation token. | **Proposed** |
+| D15 | The Go app is a separate Go module in `app-go/` (`module github.com/laposa/testflow/app-go`). Nothing outside `app-go/` changes during the rewrite except the project docs. `app/` keeps building and deploying as today until cut-over (§14, iteration 13). | Accepted |
+| D16 | No GitHub workflow changes during the rewrite. `.github/workflows/` stays as it is, and `app-go` is built, tested and checked **manually** with `make` (§12). The workflows are switched to the Go app at cut-over (iteration 13). | Accepted |
+| D17 | **No Alpine.js** (or any other client-side framework). Client behaviour uses native HTML first (`<details>/<summary>` for show/hide, `<dialog>` + `showModal()` for modals), then htmx for anything that needs the server, then a few lines of plain JS. Reasons: (1) In legacy, Alpine came bundled with Livewire 3 and did three things, all covered natively or by htmx: show/hide toggles (`app/resources/views/sessions/show.blade.php`, `run.blade.php`), the modal (`components/dialog.blade.php`), and sending events between Livewire components (`livewire/runs/list-runs.blade.php`), which htmx makes unnecessary. (2) Alpine's standard build turns expressions into code at runtime (`new Function`), which needs CSP `'unsafe-eval'` and conflicts with §9. Its CSP build gives up inline expressions, the main reason to use it. (3) The run list is replaced by htmx polling every 30 s, which resets Alpine state unless a morph extension is added: two libraries managing the same DOM. (4) Another vendored asset to pin and upgrade by hand (§12), against the minimal-dependency goal. (5) Logic in `x-data` strings is untyped and not covered by `go test`, while htmx keeps behaviour in handlers the §13 tests cover. **Revisit** if the app gains substantial in-browser state that plain JS can't handle cleanly, such as live search or nested "select all" with counts in the test picker. | Accepted |
 
 ## 2. Dependency policy
 
@@ -479,7 +480,16 @@ Legacy: `resources/views/sessions/report.blade.php`.
 - htmx 4 (D4): the version is in the file name, which also busts the browser cache on
   upgrade. The layout loads it with a Subresource Integrity (`integrity`) hash.
   Used for the run-list polling, the manual run wizard (in a `<dialog>`),
-  comment/review forms, and the test tree "select all" interactions. Tiny vanilla JS is allowed for `<dialog>` open/close. Nothing else.
+  comment/review forms, expanding older runs per service (`hx-get` loads them), and
+  the test tree "select all" interactions.
+- No Alpine.js or other client framework (D17). Prefer, in this order:
+  1. native HTML: `<details>/<summary>` for show/hide sections (selected tests,
+     JUnit results, run log), `<dialog>` + `showModal()` for the manual run wizard
+     (Escape, focus trap and backdrop come from the browser);
+  2. htmx for anything that needs the server;
+  3. a small plain-JS file (`internal/web/static/app.js`, no inline scripts, so it
+     fits the CSP in §9) for what's left: opening/closing the dialog, closing it on
+     a click outside, and "select all" checkboxes in the test tree.
 - Handlers check the `HX-Request` header. htmx requests get the fragment, normal
   requests get the full page from the same components.
 
