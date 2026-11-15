@@ -6,8 +6,16 @@
 > behaviour described here updates this file in the same PR. GitHub issues refer to
 > sections by their anchor (e.g. "implements §6.3").
 >
-> **Legacy reference:** `~/LaposaDev/testflow_legacy` at commit `b33dbec` (read-only).
-> Paths below starting with `legacy:` are relative to that folder.
+> **Where things live:**
+> - **Legacy reference:** [app/](app/), the Laravel web app. Read-only during the rewrite.
+>   Legacy paths in this document (with or without a `legacy:` prefix) are
+>   relative to `app/`. For example, `app/Services/GithubClient.php` is
+>   `app/app/Services/GithubClient.php` in the repo, and short names such as
+>   `Livewire/Runs/ListRuns` live under `app/app/`.
+> - **New code:** [app-go/](app-go/). Go paths in this document (`cmd/…`,
+>   `internal/…`, `deploy/…`, `Makefile`) are relative to `app-go/`.
+> - **Out of scope:** [generate-yaml/](generate-yaml/) and
+>   [tests-validator/](tests-validator/) stay as Node.js tools and are not rewritten.
 
 ---
 
@@ -24,7 +32,9 @@
 | D7 | Logging: `log/slog` JSON to stdout, using OpenTelemetry log data model field names. An OTel Collector reads stdout and exports over OTLP. No OTel SDK in the binary. | Accepted |
 | D8 | YAML via `go.yaml.in/yaml/v3`. | Accepted |
 | D9 | No Markdown rendering. | Accepted |
-| D10 | One binary with subcommands (`serve`, `migrate`, `validate`). The legacy Node tools become part of it. | Accepted |
+| D10 | One binary with subcommands (`serve`, `migrate`). The Node.js tools `generate-yaml/` and `tests-validator/` are **not** part of the rewrite and stay unchanged. | Accepted |
+| D15 | The Go app is a separate Go module in `app-go/` (`module github.com/laposa/testflow/app-go`). Nothing outside `app-go/` changes during the rewrite except the project docs. `app/` keeps building and deploying as today until cut-over (§14, iteration 13). | Accepted |
+| D16 | No GitHub workflow changes during the rewrite. `.github/workflows/` stays as it is, and `app-go` is built, tested and checked **manually** with `make` (§12). The workflows are switched to the Go app at cut-over (iteration 13). | Accepted |
 | D11 | Tests use the standard `testing` package only (no testify). DB tests run against a real Postgres. | Accepted |
 | D12 | Manual and automated per-test results are stored in one table (`run_test_results`) instead of keeping manual results as JUnit XML (the legacy approach). | **Proposed** |
 | D13 | Activity entries store plain text and structured `metadata`. HTML is produced only by Gomponents views. (Legacy stored HTML in `body`, an XSS risk.) | **Proposed** |
@@ -40,14 +50,14 @@ table in the same PR.
 |--------|-----|-----------------|
 | `maragu.dev/gomponents` | Type-safe HTML components (D3) | none |
 | `github.com/jackc/pgx/v5` | Postgres driver and pool (D5) | `jackc/pgpassfile`, `jackc/pgservicefile`, `jackc/puddle/v2`, `golang.org/x/sync`, `golang.org/x/text` |
-| `go.yaml.in/yaml/v3` | Parse and emit `*.manual.yaml` (D8) | none |
+| `go.yaml.in/yaml/v3` | Parse `*.manual.yaml` test cases shown in manual runs (D8, §8.8) | none |
 
 Static assets (not Go modules), pinned and upgraded by hand:
 
 | Asset | Version | Source |
 |-------|---------|--------|
 | `internal/web/static/htmx-4.0.1.min.js` | 4.0.1 | npm package `htmx.org@4.0.1`, `dist/htmx.min.js` |
-| DM Sans font files | as in legacy | `legacy:app/public/fonts/` |
+| DM Sans font files | as in legacy | `app/public/fonts/` |
 
 Everything else comes from the standard library, including: OAuth2 (`net/http`),
 the RS256 JWT for the GitHub App (`crypto/rsa`, `crypto/x509`, `encoding/pem`), CSRF
@@ -82,8 +92,23 @@ and embedding (`embed`).
 
 ## 4. Repository layout
 
+Repository root (only `app-go/` is touched by the rewrite):
+
 ```
-cmd/testflow/            main.go: subcommand dispatch (serve | migrate | validate)
+app/                     legacy Laravel app (read-only reference, still deployed)
+app-go/                  the Go rewrite (see below)
+generate-yaml/           Node.js tool, out of scope, unchanged
+tests-validator/         Node.js tool, out of scope, unchanged
+.github/workflows/       build-app.yaml (legacy, unchanged until cut-over, D16)
+intent.md, spec.md, README.md
+```
+
+Inside `app-go/`:
+
+```
+go.mod                   module github.com/laposa/testflow/app-go
+Makefile
+cmd/testflow/            main.go: subcommand dispatch (serve | migrate)
 internal/config/         env parsing and validation
 internal/telemetry/      slog handler (OTel field names), trace context, HTTP middleware
 internal/db/             pgxpool setup, migration runner
@@ -91,7 +116,7 @@ internal/db/migrations/  0001_init.sql, ... (embedded)
 internal/store/          SQL queries, one file per aggregate (users.go, sessions.go, ...)
 internal/github/         App JWT, installation token cache, REST client
 internal/auth/           OAuth login flow, web sessions, middleware
-internal/testcase/       manual test-case model, YAML parse/emit, validation
+internal/testcase/       manual test-case model, YAML parsing, file-name check
 internal/junit/          JUnit XML parsing and test-name matching
 internal/discovery/      repository → service/suite/test tree
 internal/runs/           dispatch automated runs, manual run lifecycle, syncer
@@ -101,7 +126,6 @@ internal/web/            handlers, routes, htmx helpers
 internal/web/views/      Gomponents layouts, components, pages
 internal/web/static/     css, fonts, htmx.min.js (embedded)
 deploy/                  Dockerfile, docker-compose.yaml, otel-collector.yaml
-.github/workflows/       ci.yaml, build-image.yaml
 ```
 
 Rules:
@@ -246,8 +270,6 @@ the `HX-Redirect` header for htmx requests.
 | `POST /sessions/{id}/reviews/{review}/revoke` | delete pending request | `RevokeReviewForm::delete` |
 | `GET /sessions/{id}/report/executive` | summary report | `SessionReportController::executive` |
 | `GET /sessions/{id}/report/full` | full report | `SessionReportController::full` |
-| `GET /tools/test-case` | manual test-case generator form | `legacy:generate-yaml` |
-| `POST /tools/test-case` | returns generated YAML as a download | `legacy:generate-yaml` |
 
 Dropped: `GET /github/callback` (points to a controller that does not exist in legacy).
 
@@ -372,7 +394,10 @@ Legacy: `app/Actions/Session/CreateManualSessionRun.php`, `Livewire/Runs/*`.
   "Finished run {id} for {service} with {p} passed and {f} failed tests".
 
 ### 8.8 Manual test-case format
-Legacy: `legacy:tests-validator/validate-test-cases.js`, `app/Data/ManualTest*.php`.
+Legacy: `app/Data/ManualTest*.php`, `app/Actions/Github/FetchManualTestContent.php`,
+`app/helpers.php::validateManualTest`. The schema itself is defined by the Node.js
+`tests-validator/validate-test-cases.js` (repo root, out of scope), which remains
+the authoritative validator used in the tested repositories' CI.
 
 ```yaml
 name: login_with_valid_credentials   # must equal the file name without .manual.yaml
@@ -385,9 +410,11 @@ steps:
     result: [ "Login form is shown" ]           # list of strings, required, ≥1
 ```
 
-The `internal/testcase` package owns this type, parsing, emitting and validation,
-shared by the UI (§8.7), the validator CLI (§8.11) and the generator (§8.12).
-Validation errors carry file, field path and message.
+The `internal/testcase` package owns this type and its parsing, for display in the
+manual run wizard (§8.7). Like legacy, the app only checks that `name` matches the
+file name and shows a warning if not. A file that fails to parse shows its raw
+content with the parse error instead of blocking the run. Full schema validation
+is left to `tests-validator`.
 
 ### 8.9 Activity, comments and reviews
 - Activity list on the session page, newest first, with user name and relative time.
@@ -409,24 +436,7 @@ STARTTLS) and `log` (writes the message to slog, the default for development). T
 review request email says "{requester} has requested a review from you." and links to
 the session. A failed send is logged and does not fail the request.
 
-### 8.11 `testflow validate` (replaces `legacy:tests-validator`)
-```
-testflow validate [-ext .manual.yaml] DIR [DIR...]
-```
-Walks each directory recursively, validates every file ending in `-ext` against
-§8.8, prints `checking <file>` for each, then a list of errors and a summary
-"files checked: N, files with errors: M". Exit code `0` if there are no errors, `1`
-otherwise (legacy exited with the error count). Usable as-is in CI of the tested
-repositories.
-
-### 8.12 Test-case generator (replaces `legacy:generate-yaml`)
-An authenticated page in the main app (`/tools/test-case`). The form has name, suite,
-description and a dynamic list of steps. Each step has action and result (one line
-per entry) and optional inputs (name, description, value), added and removed with
-htmx. Submitting validates (§8.8) and returns the YAML as a download named
-`{name}.manual.yaml`. Nothing is written to the server disk.
-
-### 8.13 Reports
+### 8.11 Reports
 Legacy: `resources/views/sessions/report.blade.php`.
 
 - **Executive:** session name, environment, run list with counts, and a "Print"
@@ -463,14 +473,13 @@ Legacy: `resources/views/sessions/report.blade.php`.
 
 - Gomponents components in `internal/web/views`: `Layout` (header with user and
   logout, footer), `Section`, `Dialog`, `PassedFailed`, `SessionList`, `TestTree`, etc.,
-  ported from `legacy:app/resources/views/components/*`.
-- CSS: one hand-written stylesheet ported from `legacy:app/resources/css/app.css`
+  ported from `app/resources/views/components/*`.
+- CSS: one hand-written stylesheet ported from `app/resources/css/app.css`
   (no build step), plus a `print` media block. Font: DM Sans (self-hosted).
 - htmx 4 (D4): the version is in the file name, which also busts the browser cache on
   upgrade. The layout loads it with a Subresource Integrity (`integrity`) hash.
   Used for the run-list polling, the manual run wizard (in a `<dialog>`),
-  comment/review forms, the test tree "select all" interactions and the generator's
-  dynamic steps. Tiny vanilla JS is allowed for `<dialog>` open/close. Nothing else.
+  comment/review forms, and the test tree "select all" interactions. Tiny vanilla JS is allowed for `<dialog>` open/close. Nothing else.
 - Handlers check the `HX-Request` header. htmx requests get the fragment, normal
   requests get the full page from the same components.
 
@@ -496,8 +505,14 @@ Legacy: `resources/views/sessions/report.blade.php`.
 
 ## 12. Build, run, deploy
 
-- `Makefile` targets: `run`, `test`, `test-integration`, `lint` (`go vet`, `gofmt -l`),
-  `build`, `docker`, `update-htmx`.
+- All Go tooling runs from `app-go/`. `app-go/Makefile` targets: `run`, `test`,
+  `test-integration`, `lint` (`go vet`, `gofmt -l`), `check`, `build`, `docker`,
+  `update-htmx`.
+- **Manual checks and builds during the rewrite (D16).** No workflow runs for
+  `app-go`. `make check` runs everything a CI job would, in order: `gofmt -l`
+  (fails on output), `go vet ./...`, `go test ./...`, and `test-integration`
+  against the compose Postgres. It must pass locally before a PR is opened. The
+  PR description says that it did.
 - **Upgrading htmx is a manual, deliberate change.** Run
   `make update-htmx HTMX_VERSION=x.y.z`. It downloads `dist/htmx.min.js` for that
   exact version from the npm registry tarball, saves it as `htmx-x.y.z.min.js`,
@@ -507,28 +522,32 @@ Legacy: `resources/views/sessions/report.blade.php`.
   (Dependabot does not track vendored files).
 - `deploy/docker-compose.yaml` for development: `postgres:17`, the app, and the OTel
   Collector (with the `debug` exporter).
-- `Dockerfile`: multi-stage. `golang:1.27` builds with `CGO_ENABLED=0`, `-trimpath`,
-  and version ldflags. The final image is `gcr.io/distroless/static` and runs as a
-  non-root user.
-- CI (`.github/workflows/ci.yaml`) on every push and PR: `gofmt` check, `go vet`,
-  `go test ./...`, and integration tests with a Postgres service container.
-- Image build (`build-image.yaml`) on push to `master`: tags `laposa/testflow:latest`
-  and `laposa/testflow:master-YYMMDD.<sha>` (same scheme as legacy
-  `.github/workflows/build-app.yaml`).
+- `deploy/Dockerfile`: multi-stage, build context `app-go/`. `golang:1.27` builds
+  with `CGO_ENABLED=0`, `-trimpath`, and version ldflags. The final image is
+  `gcr.io/distroless/static` and runs as a non-root user.
+- `make build` produces `bin/testflow`. `make docker` builds the image locally
+  as `laposa/testflow-go:<version>`. Pushing it anywhere is a manual decision. The
+  separate name keeps it from clashing with `laposa/testflow`, which the legacy
+  `build-app.yaml` keeps publishing from `app/`.
+- **At cut-over (iteration 13)** the GitHub workflows are replaced:
+  - CI on every push and PR (`working-directory: app-go`) runs the same steps as
+    `make check`, with a Postgres service container;
+  - the image build on push to `master` publishes `laposa/testflow:latest` and
+    `laposa/testflow:master-YYMMDD.<sha>` from `app-go/` (same tag scheme as the
+    legacy `build-app.yaml`, which is retired).
 
 ## 13. Testing
 
 - Unit tests next to the code with the standard `testing` package. Table-driven where
   it fits.
-- Golden files in `testdata/` for JUnit parsing, YAML parse/emit, and validator
-  output.
+- Golden files in `testdata/` for JUnit parsing and test-case YAML parsing.
 - GitHub client tested against `httptest.Server` fixtures (real API response
   shapes saved as JSON). Domain packages use a fake `github` interface.
 - Store and integration tests need `TEST_DATABASE_URL` and are skipped when it is
   unset. Each test uses its own schema or transaction.
 - Handler tests use `httptest` and check status codes plus key HTML fragments.
 - Every iteration's issue lists its acceptance tests. An issue is closed only when
-  CI is green.
+  `make check` passes (run locally until cut-over, D16).
 
 ## 14. Iterations
 
@@ -537,23 +556,26 @@ in §15.
 
 | # | Iteration | Spec | Legacy reference |
 |---|-----------|------|------------------|
-| 1 | **Scaffold**: `go.mod`, `cmd/testflow`, config, telemetry handler and middleware, `/healthz`, Gomponents layout, static embed, Makefile, Dockerfile, compose, CI | §3–5, §10–12 | `app/resources/views/components/layout.blade.php`, `app/public/fonts/`, `.github/workflows/build-app.yaml` |
-| 2 | **Database**: pgxpool, migration runner, `0001_init.sql` (all tables in §6), `testflow migrate`, store test harness | §6 | `app/database/migrations/` |
-| 3 | **Login**: GitHub OAuth, users, web sessions, auth middleware, CSRF, login page, logout | §7, §9 | `AuthController.php`, `views/auth/login.blade.php` |
-| 4 | **GitHub App client**: JWT, token cache, REST client with all endpoints used later | §9 | `Services/GithubAppAuth.php`, `Services/GithubClient.php` |
-| 5 | **Test-case package and validator CLI**: model, parse, validate, `testflow validate` | §8.8, §8.11 | `tests-validator/`, `helpers.php::validateManualTest` |
-| 6 | **Discovery and session creation**: test tree page, create session, session detail (read-only) | §8.1, §8.2 | `Actions/Github/FetchTests.php`, `Actions/Session/CreateSession.php`, `views/sessions/create.blade.php`, `components/tests/list-interactive.blade.php` |
-| 7 | **Session list / dashboard** | §8.3 | `SessionController::index`, `views/sessions/index.blade.php`, `components/sessions/list.blade.php` |
-| 8 | **Activity log and comments** | §6.9, §8.9 | `Livewire/Activity`, `Livewire/Comments` |
-| 9 | **JUnit package** | §8.6 | `Services/JUnitLogParser.php` |
-| 10 | **Automated runs**: dispatch, syncer, run list fragment and polling, run detail, raw test file | §8.4, §8.5 | `Actions/Github/DispatchSessionRun.php`, `FetchSessionWorkflowRuns.php`, `Console/Commands/SyncGithubRuns.php`, `Livewire/Runs/ListRuns.php`, `views/sessions/run.blade.php` |
-| 11 | **Manual runs**: wizard | §8.7 | `Actions/Session/CreateManualSessionRun.php`, `Livewire/Runs/ManualTestRun.php`, `ManualTestForm.php` |
-| 12 | **Reviews and email** | §8.9, §8.10 | `Livewire/Reviews/*`, `Notifications/ReviewRequestNotification.php` |
-| 13 | **Reports** | §8.13 | `SessionReportController.php`, `views/sessions/report.blade.php` |
-| 14 | **Test-case generator** | §8.12 | `generate-yaml/` |
-| 15 | **Parity check and cut-over**: walk through the legacy UI side by side, close gaps, deployment docs, README | intent.md "Definition of done" | whole legacy app |
+Legacy paths are relative to `app/` (see the note at the top).
 
-Issues 5 and 9 depend on nothing but the scaffold and can be picked up in parallel.
+| # | Iteration | Spec | Legacy reference |
+|---|-----------|------|------------------|
+| 1 | **Scaffold** in `app-go/`: `go.mod`, `cmd/testflow`, config, telemetry handler and middleware, `/healthz`, Gomponents layout, static embed, Makefile (incl. `check`), Dockerfile, compose. No workflows (D16) | §3–5, §10–12 | `resources/views/components/layout.blade.php`, `public/fonts/` |
+| 2 | **Database**: pgxpool, migration runner, `0001_init.sql` (all tables in §6), `testflow migrate`, store test harness | §6 | `database/migrations/` |
+| 3 | **Login**: GitHub OAuth, users, web sessions, auth middleware, CSRF, login page, logout | §7, §9 | `Http/Controllers/AuthController.php`, `resources/views/auth/login.blade.php` |
+| 4 | **GitHub App client**: JWT, token cache, REST client with all endpoints used later | §9 | `Services/GithubAppAuth.php`, `Services/GithubClient.php` |
+| 5 | **Discovery and session creation**: test tree page, create session, session detail (read-only) | §8.1, §8.2 | `Actions/Github/FetchTests.php`, `Actions/Session/CreateSession.php`, `resources/views/sessions/create.blade.php`, `resources/views/components/tests/list-interactive.blade.php` |
+| 6 | **Session list / dashboard** | §8.3 | `SessionController::index`, `resources/views/sessions/index.blade.php`, `resources/views/components/sessions/list.blade.php` |
+| 7 | **Activity log and comments** | §6.9, §8.9 | `Livewire/Activity`, `Livewire/Comments` |
+| 8 | **JUnit package** | §8.6 | `Services/JUnitLogParser.php` |
+| 9 | **Automated runs**: dispatch, syncer, run list fragment and polling, run detail, raw test file | §8.4, §8.5 | `Actions/Github/DispatchSessionRun.php`, `Actions/Github/FetchSessionWorkflowRuns.php`, `Console/Commands/SyncGithubRuns.php`, `Livewire/Runs/ListRuns.php`, `resources/views/sessions/run.blade.php` |
+| 10 | **Manual runs**: test-case package (§8.8) and wizard | §8.7, §8.8 | `Actions/Session/CreateManualSessionRun.php`, `Actions/Github/FetchManualTestContent.php`, `Data/ManualTest*.php`, `Livewire/Runs/ManualTestRun.php`, `Livewire/Runs/ManualTestForm.php` |
+| 11 | **Reviews and email** | §8.9, §8.10 | `Livewire/Reviews/*`, `Notifications/ReviewRequestNotification.php` |
+| 12 | **Reports** | §8.11 | `Http/Controllers/SessionReportController.php`, `resources/views/sessions/report.blade.php` |
+| 13 | **Parity check and cut-over**: walk through the legacy UI side by side, close gaps, deployment docs, README, replace the GitHub workflows with Go CI and image build (retire `build-app.yaml`) | intent.md "Definition of done", §12 | the whole of `app/`, repo-root `.github/workflows/build-app.yaml` |
+
+Iteration 8 (JUnit) depends only on the scaffold and can be picked up in parallel
+with 2–7.
 
 ## 15. Issue template
 
@@ -564,8 +586,11 @@ Issues 5 and 9 depend on nothing but the scaffold and can be picked up in parall
 ## Spec
 Implements spec.md §X.Y (and §…). Any change to the spec is part of this PR.
 
-## Legacy reference (read-only)
-- legacy:app/...
+## Legacy reference (read-only, do not modify)
+- app/app/...        (repo-relative path)
+
+## Where the code goes
+All new code goes in app-go/. Nothing outside app-go/ changes (no workflow changes, D16).
 
 ## Scope
 - [ ] ...
@@ -574,7 +599,7 @@ Out of scope: ...
 ## Acceptance criteria
 - [ ] <observable behaviour>
 - [ ] Tests: <unit / integration / handler tests that prove it>
-- [ ] `make lint test` green in CI
+- [ ] `make check` passes locally (stated in the PR)
 - [ ] No new dependency (or §2 updated with justification)
 ```
 

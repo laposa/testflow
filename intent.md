@@ -29,13 +29,11 @@ TestFlow is one place where a QA team can:
 
 ## Why rewrite
 
-The current implementation (PHP / Laravel / Livewire, plus two Node.js tools) works,
-but:
+The current web app (PHP / Laravel / Livewire, in [app](app/)) works, but:
 
 - it carries a large dependency tree (Laravel, Livewire, Spatie packages, npm
   toolchains) that has to be patched constantly (see the Dependabot history);
-- runtime, build and deployment are heavier than the problem requires;
-- the logic is spread across three projects in two languages.
+- runtime, build and deployment are heavier than the problem requires.
 
 We are rewriting TestFlow in **Go** to get a single, small, statically compiled
 binary with an almost empty dependency list. It should be easy to read, test and
@@ -43,10 +41,11 @@ operate for years.
 
 ## Goals
 
-1. **Feature parity** with the legacy implementation [app](app/), including the test-case validator and generator tools.
+1. **Feature parity** with the legacy web app in [app](app/).
 2. **Minimal dependencies.** Prefer the Go standard library. Add a third-party module only
    when the standard library has no reasonable equivalent, and record why in `spec.md`.
-3. **One binary** that serves the web UI and also provides the CLI tools.
+3. **One binary** that serves the web UI and runs its own maintenance commands
+   (database migrations).
 4. **Observable**: structured logs in the OpenTelemetry data model, collected by an
    OpenTelemetry Collector.
 5. **Incremental delivery**: the rewrite lands in small, reviewable GitHub issues, one
@@ -55,6 +54,8 @@ operate for years.
 ## Non-goals
 
 - New features beyond legacy parity. They can come after parity, as separate issues.
+- Rewriting the Node.js tools [generate-yaml](generate-yaml/) and
+  [tests-validator](tests-validator/). They stay as they are, outside the Go app.
 - A JavaScript SPA or a frontend build toolchain. Interactivity comes from htmx.
 - Supporting Git hosts other than GitHub.
 - Migrating data from the legacy database. TestFlow starts with an empty database.
@@ -70,15 +71,20 @@ operate for years.
 - **Database:** PostgreSQL through `jackc/pgx/v5`.
 - **Logging:** `log/slog` JSON in the OpenTelemetry log data model, sent on by an
   OpenTelemetry Collector. No OTel SDK inside the app.
-- **Legacy code is read-only.** `~/LaposaDev/testflow_legacy` is the reference for
-  behaviour and is never modified.
+- **Legacy code is read-only.** [app](app/) is the reference for behaviour and is not
+  modified during the rewrite.
+- **New code lives in [app-go](app-go/).** The rewrite does not add or change anything
+  outside `app-go/`, except the project docs (`README.md`, `intent.md`, `spec.md`).
+- **GitHub workflows stay unchanged until the rewrite is complete.** Until then,
+  `app-go` is built and checked manually (`make` targets in `app-go/`).
 
 ## Definition of done (for the rewrite)
 
-- Every feature in the *Legacy → Go map* in `spec.md` is implemented and its
-  issue is closed.
+- Every iteration in `spec.md` §14 is implemented and its issue is closed.
 - A QA engineer can do a full cycle (log in, create a session, run automated and
   manual tests, comment, request and receive a review, print a report) without
   touching the legacy app.
-- CI builds the binary and container image and runs all tests on every push.
-- The legacy deployment can be switched off.
+- After the rewrite, the GitHub workflows are switched to build the Go binary and
+  container image and to run all tests on every push.
+- The legacy deployment can be switched off. Removing `app/` from the repository is a
+  separate decision after cut-over.
