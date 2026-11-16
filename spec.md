@@ -528,7 +528,8 @@ Legacy: `resources/views/sessions/report.blade.php`.
 - All Go tooling runs from `app-go/`. `app-go/Makefile` targets: `run`, `test`,
   `test-integration`, `lint` (`go vet`, `gofmt -l`), `check`, `build`, `docker`,
   `docker-up`/`docker-down` (compose stack), `update-htmx`. `GO` and `GOFMT` can
-  be overridden, e.g. to run the toolchain in a `golang:1.27` container.
+  be overridden. Without a local `go`, the Makefile runs the toolchain in the same
+  hardened image as the Dockerfile build stage (`GO_IMAGE`).
 - **Manual checks and builds during the rewrite (D16).** No workflow runs for
   `app-go`. `make check` runs everything a CI job would, in order: `gofmt -l`
   (fails on output), `go vet ./...`, `go test ./...`, and `test-integration`
@@ -544,7 +545,8 @@ Legacy: `resources/views/sessions/report.blade.php`.
 - `deploy/docker-compose.yaml` for development: `postgres:17-alpine`, the app, and the OTel
   Collector (`otel/opentelemetry-collector-contrib`, pinned, with the `debug` exporter
   selected by extra `--config` overrides on top of `deploy/otel-collector.yaml`).
-- `deploy/Dockerfile`: multi-stage, build context `app-go/`. `golang:1.27` builds
+- `deploy/Dockerfile`: multi-stage, build context `app-go/`. The Docker Hardened Image
+  `dhi.io/golang:1.27.x-debian13-dev`, pinned by digest (needs `docker login dhi.io`), builds
   with `CGO_ENABLED=0`, `-trimpath`, and version ldflags. The final image is
   `gcr.io/distroless/static` and runs as a non-root user.
 - `make build` produces `bin/testflow`. `make docker` builds the image locally

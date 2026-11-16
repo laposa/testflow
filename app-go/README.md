@@ -9,6 +9,10 @@ stays the deployed version until cut-over (spec §14, iteration 13).
 - Go 1.27+
 - Docker with Compose (for Postgres in `make test-integration` / `make check`,
   and for `make docker`)
+- `docker login dhi.io` with a Docker Hub account: the Go build image is a
+  [Docker Hardened Image](https://docs.docker.com/dhi/) (free). Only the Go
+  image comes from `dhi.io`; Postgres, the Collector and the runtime base
+  image don't
 
 ### Installing Go
 
@@ -46,8 +50,8 @@ extension offers to install it on first use.
 
 ### Without a local Go
 
-If `go` is not on the PATH, the Makefile runs the Go commands in the
-`golang:1.27` Docker image instead, as your user, with caches in
+If `go` is not on the PATH, the Makefile runs the Go commands in the Docker
+Hardened Image `dhi.io/golang:1.27.4-debian13-dev` instead, as your user, with caches in
 `~/.cache/testflow-go`. This is slower and doesn't help the editor, so
 installing Go is recommended. `GO` and `GOFMT` can also be overridden to point
 at any other toolchain.

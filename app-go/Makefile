@@ -4,7 +4,9 @@
 # instead (as your user, with module/build caches in $(GO_CACHE)). Override GO
 # and GOFMT to use another toolchain.
 
-GO_IMAGE ?= golang:1.27
+# Docker Hardened Image for Go (needs `docker login dhi.io`); keep in sync with
+# deploy/Dockerfile.
+GO_IMAGE ?= dhi.io/golang:1.27.4-debian13-dev@sha256:28720f1bd4ab3b1963137f78285af22a050c382ef7e5b901397ec84798a3a359
 GO_CACHE ?= $(HOME)/.cache/testflow-go
 
 ifeq ($(shell command -v go 2>/dev/null),)
