@@ -1,0 +1,464 @@
+/*
+ * TestFlow stylesheet, hand-written, no build step (spec §10).
+ * Ported from legacy app/resources/css/components/{layout,header,footer}.css.
+ * Later iterations port the remaining component styles into this file.
+ */
+
+@font-face {
+    font-family: 'DM Sans';
+    src: url('fonts/DMSans-VariableFont.ttf') format('truetype');
+    font-weight: 100 1000;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'DM Sans';
+    src: url('fonts/DMSans-Italic-VariableFont.ttf') format('truetype');
+    font-weight: 100 1000;
+    font-style: italic;
+    font-display: swap;
+}
+
+:root {
+    --primary: #5f9ea0;
+    --primary-opaque: rgba(95, 158, 160, 0.5);
+    --gray: #aaaaaa;
+    --light-gray: #ccc;
+    --error: #ca3131;
+    --danger: #ff0000;
+    --success: #10b981;
+    --info: #3b82f6;
+    --body: #000000;
+}
+
+/* ---- layout ---- */
+
+* {
+    box-sizing: border-box;
+    font-family: 'DM Sans', sans-serif;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin: 0;
+    max-width: 100vw;
+    width: 100%;
+    overflow-x: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    color: var(--body);
+}
+
+img {
+    object-fit: cover;
+    width: 100%;
+}
+
+a {
+    color: var(--primary);
+}
+
+h1 {
+    font-size: 2rem;
+}
+
+h1,
+h2,
+h3 {
+    color: var(--primary);
+    font-weight: normal;
+}
+
+section {
+    position: relative;
+    background-color: white;
+    align-self: start;
+    width: 100%;
+    margin-bottom: 2rem;
+
+    hr {
+        border: 0;
+        border-top: 1px solid var(--primary-opaque);
+        margin: 1rem 0;
+    }
+
+    &.no-border hr {
+        display: none;
+    }
+}
+
+body.overflow-hidden {
+    overflow: hidden;
+}
+
+button,
+.button {
+    padding: 0.25rem 1rem;
+    outline: none;
+    transition: 0.25s ease;
+    cursor: pointer;
+    text-decoration: none;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+    align-items: center;
+    position: relative;
+    background-color: white;
+
+    &:hover {
+        background-color: var(--primary);
+        color: white;
+    }
+
+    &:focus-visible {
+        outline: 2px solid var(--primary-opaque);
+        outline-offset: 2px;
+    }
+
+    &.filled {
+        background-color: var(--primary);
+        color: white;
+
+        &:hover {
+            background-color: white;
+            color: var(--primary);
+        }
+    }
+
+    &.danger {
+        background-color: var(--danger);
+        color: white;
+        border-color: var(--danger);
+
+        &:hover {
+            background-color: white;
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+    }
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+}
+
+textarea {
+    padding: 0.5rem;
+    border: 1px solid hsl(0, 0%, 50%);
+    width: 100%;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+
+    & td {
+        text-align: left;
+    }
+
+    & thead {
+        text-align: left;
+
+        & th {
+            font-weight: normal;
+            padding: 0.5rem;
+            border-bottom: 1px solid hsl(0, 0%, 50%);
+        }
+    }
+
+    > tbody {
+        & tr {
+            border-bottom: 1px solid var(--primary-opaque);
+
+            > td:not([colspan='*']) {
+                padding: 0.5rem;
+            }
+        }
+    }
+
+    & table {
+        & tr:last-of-type {
+            border-bottom: none;
+        }
+    }
+
+    &.select {
+        & tr td:first-of-type {
+            width: 20px;
+        }
+    }
+}
+
+input,
+select {
+    border: none;
+    background-color: #f7f7f7;
+    padding: 0.5rem;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+
+    &.bullet-list {
+        list-style: disc;
+        padding-left: 20px;
+
+        li::marker {
+            color: var(--primary);
+        }
+    }
+}
+
+.online {
+    color: rgb(21, 193, 21);
+}
+
+.alert {
+    color: orange;
+}
+
+.center {
+    text-align: center;
+}
+
+.pass {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.skipped,
+.skip {
+    color: var(--gray);
+    font-weight: 600;
+}
+
+.fail,
+.offline,
+.not-found {
+    color: var(--error);
+    font-weight: 600;
+}
+
+.fresh {
+    color: gray;
+    font-weight: 600;
+}
+
+.align-right {
+    margin-left: auto;
+}
+
+.checkbox {
+    & input[type='checkbox'] {
+        display: none;
+    }
+
+    & .checkmark {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        transition: 0.3s ease;
+        border: 2px solid var(--primary);
+        z-index: 2;
+
+        &:after {
+            position: relative;
+            z-index: 2;
+            content: '✔';
+            color: white;
+            font-size: 0.9rem;
+            top: 0;
+            opacity: 0;
+            transform: rotate(10deg);
+            font-weight: normal !important;
+        }
+
+        &:before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            background-color: var(--primary);
+            transition: 0.3s ease;
+            z-index: 1;
+        }
+    }
+
+    & input:checked {
+        + .checkmark:before {
+            width: 100%;
+            height: 100%;
+        }
+
+        + .checkmark:after {
+            opacity: 1;
+        }
+    }
+}
+
+.container {
+    padding: 0 2rem;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.alert-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: rgb(255, 200, 0);
+
+    &.error {
+        background-color: red;
+    }
+
+    &:before {
+        content: '!';
+        color: white;
+        font-size: 1rem;
+        position: relative;
+        top: 1px;
+    }
+}
+
+/* <details>/<summary> replace the legacy Alpine show/hide toggles (D17). */
+details > summary {
+    color: var(--primary);
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+/* ---- htmx request indicators ----
+ * htmx 4 normally injects these rules at runtime. That is switched off in the
+ * layout (includeIndicatorCSS:false) so the CSP can stay self-only (§9).
+ */
+.htmx-indicator {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 200ms ease-in;
+}
+
+/* ---- header ---- */
+
+header {
+    position: relative;
+    background-color: white;
+    width: 100%;
+    z-index: 100;
+    padding: 5px 0;
+    box-shadow: 0px 0px 14px rgba(95, 158, 160, 0.131);
+
+    .header {
+        max-width: 1200px;
+        padding: 0 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 0 auto;
+    }
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    font-size: 2rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 5px;
+
+    img {
+        width: 1em;
+        margin-right: 10px;
+    }
+}
+
+.account {
+    display: flex;
+    position: relative;
+    align-items: center;
+    gap: 10px;
+
+    span {
+        font-weight: bold;
+    }
+
+    img {
+        max-width: 25px;
+    }
+
+    form {
+        display: flex;
+        margin: 0;
+    }
+
+    /* The logout control is a POST form (§7); show it as the legacy icon link. */
+    .logout {
+        display: flex;
+        padding: 0;
+        border: none;
+        background: none;
+
+        &:hover {
+            background: none;
+        }
+    }
+}
+
+/* ---- footer ---- */
+
+footer {
+    width: 100%;
+    margin-top: auto;
+    padding: 10px;
+    background-color: #e8e8e8;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    a {
+        font-size: 0.8rem;
+        text-decoration: none;
+        margin-left: 5px;
+        margin-right: 5px;
+    }
+}
+
+/* ---- print ---- */
+
+@media print {
+    .page-break {
+        page-break-before: always;
+    }
+
+    header .account,
+    footer {
+        display: none;
+    }
+}
