@@ -1,0 +1,90 @@
+# OpenTelemetry Collector for TestFlow logs (spec D7, §11).
+#
+# testflow writes one JSON object per line to stdout, already using the OTel log
+# data model field names (timestamp, severity_text, severity_number, body,
+# trace_id, span_id, trace_flags, resource, attributes). This config tails the container
+# runtime's log files, maps those fields onto the OTel log record and exports
+# over OTLP/HTTP.
+#
+# Environment:
+#   OTLP_ENDPOINT   OTLP/HTTP endpoint of the backend (default http://localhost:4318)
+#   LOG_FILES       glob of container log files (default: Docker json-file logs)
+
+receivers:
+  file_log:
+    include:
+      - ${env:LOG_FILES:-/var/lib/docker/containers/*/*-json.log}
+    start_at: end
+    operators:
+      # Unwrap the container runtime format (Docker json-file, CRI-O, containerd).
+      # Lines it cannot parse (other containers on the host) are dropped.
+      - type: container
+        add_metadata_from_filepath: false
+        on_error: drop_quiet
+
+      # Keep only testflow lines; other containers (e.g. Postgres) log plain text.
+      - type: filter
+        expr: 'not (body matches "^\\{.*\"severity_number\":")'
+
+      - type: json_parser
+        parse_from: body
+        parse_to: attributes
+        timestamp:
+          parse_from: attributes.timestamp
+          layout_type: gotime
+          layout: "2006-01-02T15:04:05.999999999Z07:00"
+        severity:
+          parse_from: attributes.severity_text
+
+      - type: trace_parser
+        trace_id:
+          parse_from: attributes.trace_id
+        span_id:
+          parse_from: attributes.span_id
+        trace_flags:
+          parse_from: attributes.trace_flags
+
+      - type: move
+        from: attributes.body
+        to: body
+
+      - type: move
+        from: attributes.resource
+        to: resource.testflow
+      - type: flatten
+        field: resource.testflow
+
+      - type: flatten
+        field: attributes.attributes
+        if: 'attributes.attributes != nil'
+
+      - type: remove
+        field: attributes.timestamp
+        if: 'attributes.timestamp != nil'
+      - type: remove
+        field: attributes.severity_text
+      - type: remove
+        field: attributes.severity_number
+      - type: remove
+        field: attributes.trace_id
+        if: 'attributes.trace_id != nil'
+      - type: remove
+        field: attributes.span_id
+        if: 'attributes.span_id != nil'
+      - type: remove
+        field: attributes.trace_flags
+        if: 'attributes.trace_flags != nil'
+
+processors:
+  batch: {}
+
+exporters:
+  otlphttp:
+    endpoint: ${env:OTLP_ENDPOINT:-http://localhost:4318}
+
+service:
+  pipelines:
+    logs:
+      receivers: [file_log]
+      processors: [batch]
+      exporters: [otlphttp]

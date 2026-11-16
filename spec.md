@@ -25,7 +25,7 @@
 |----|----------|--------|
 | D1 | Go, latest stable (1.27.x at time of writing). `go.mod` sets the minimum. | Accepted |
 | D2 | HTTP via `net/http` with the `ServeMux` method and wildcard patterns (`GET /sessions/{id}`). No router library. | Accepted |
-| D3 | HTML via `maragu.dev/gomponents`. htmx attributes are written with a small local helper (`internal/web/views/hx.go`: one generic `hx.Attr(name, value)` plus named helpers for the attributes we use), not `gomponents-htmx`. Reason: `gomponents-htmx` (v0.6.1, last released Oct 2024) was built for htmx 2, so its helpers would trail htmx 4 (D4). A local helper of about 30 lines works with any htmx version and adds no module. As of Nov 2026 the repo has had no commits since Oct 2024; htmx 4 support exists only as open issues. **Revisit** once `gomponents-htmx` releases htmx 4 support. Only the helper file would change. | Accepted |
+| D3 | HTML via `maragu.dev/gomponents`. htmx attributes are written with a small local helper (package `hx` in `internal/web/views/hx/hx.go`: one generic `hx.Attr(name, value)` plus named helpers for the attributes we use), not `gomponents-htmx`. Reason: `gomponents-htmx` (v0.6.1, last released Oct 2024) was built for htmx 2, so its helpers would trail htmx 4 (D4). A local helper of about 30 lines works with any htmx version and adds no module. As of Nov 2026 the repo has had no commits since Oct 2024; htmx 4 support exists only as open issues. **Revisit** once `gomponents-htmx` releases htmx 4 support. Only the helper file would change. | Accepted |
 | D4 | htmx **4.0.1**, pinned exactly, vendored as a static file and embedded with `embed`. No CDN, no npm. Upgrades are manual (§12). | Accepted |
 | D5 | PostgreSQL via `github.com/jackc/pgx/v5` (`pgxpool`), using pgx directly, not `database/sql`. | Accepted |
 | D6 | Migrations: plain `.sql` files, embedded, applied by a small runner of our own. No migration library. | Accepted |
@@ -123,9 +123,10 @@ internal/discovery/      repository → service/suite/test tree
 internal/runs/           dispatch automated runs, manual run lifecycle, syncer
 internal/activity/       activity log writes and types
 internal/mail/           SMTP and log mailers
-internal/web/            handlers, routes, htmx helpers
+internal/web/            handlers, routes, middleware
 internal/web/views/      Gomponents layouts, components, pages
-internal/web/static/     css, fonts, htmx.min.js (embedded)
+internal/web/views/hx/   htmx attribute helpers (D3)
+internal/web/static/     css, fonts, icons, app.js, htmx-x.y.z.min.js (embedded)
 deploy/                  Dockerfile, docker-compose.yaml, otel-collector.yaml
 ```
 
@@ -467,7 +468,9 @@ Legacy: `resources/views/sessions/report.blade.php`.
 - **Output:** Gomponents escapes all text. User and GitHub content is never inserted
   as raw HTML.
 - **Hardening:** `http.Server` timeouts set, request body size limits, response
-  headers `Content-Security-Policy` (self only), `X-Content-Type-Options`,
+  headers `Content-Security-Policy` (self only, except `form-action` also allows
+  `https://github.com`, because browsers check it against the redirect after
+  `POST /auth/redirect`), `X-Content-Type-Options`,
   `Referrer-Policy`.
 
 ## 10. Frontend
@@ -478,7 +481,11 @@ Legacy: `resources/views/sessions/report.blade.php`.
 - CSS: one hand-written stylesheet ported from `app/resources/css/app.css`
   (no build step), plus a `print` media block. Font: DM Sans (self-hosted).
 - htmx 4 (D4): the version is in the file name, which also busts the browser cache on
-  upgrade. The layout loads it with a Subresource Integrity (`integrity`) hash.
+  upgrade. The layout loads it with a Subresource Integrity (`integrity`) hash, and
+  a test checks the hash against the embedded file. htmx 4 injects its request
+  indicator CSS at runtime by default. The layout turns this off
+  (`<meta name="htmx-config" content='{"includeIndicatorCSS":false}'>`) and
+  `app.css` carries those rules instead, so the CSP stays self-only (§9).
   Used for the run-list polling, the manual run wizard (in a `<dialog>`),
   comment/review forms, expanding older runs per service (`hx-get` loads them), and
   the test tree "select all" interactions.
@@ -499,17 +506,20 @@ Legacy: `resources/views/sessions/report.blade.php`.
   line to stdout, with fields aligned to the OTel log data model:
   - `timestamp` (RFC 3339 nano), `severity_text`, `severity_number` (OTel mapping:
     DEBUG 5, INFO 9, WARN 13, ERROR 17), `body` (message);
-  - `trace_id`, `span_id` (hex) when the context carries them;
+  - `trace_id`, `span_id`, `trace_flags` (hex) when the context carries them;
   - `resource`: `service.name=testflow`, `service.version` (set at build time with
     `-ldflags`), `deployment.environment`;
   - all other attributes under `attributes`.
 - HTTP middleware reads or creates W3C `traceparent` (stdlib `crypto/rand`), stores
   trace/span ids in the context, and logs one line per request: method, route pattern,
-  status, duration, bytes, user id. It returns `traceparent` in the response.
+  status, duration, bytes, user id. A panicking handler is logged as status 500 at
+  ERROR, then the panic continues to net/http. It returns `traceparent` in the response.
 - The syncer starts a new trace per tick, and GitHub calls log at DEBUG with method,
   path, status and duration.
-- `deploy/otel-collector.yaml`: `filelog` receiver (container stdout) → `json_parser`
-  operator mapping the fields above → `batch` → `otlphttp` exporter (endpoint from env).
+- `deploy/otel-collector.yaml`: `file_log` receiver (container log files, `container`
+  operator; non-testflow lines are filtered out) → `json_parser` and `trace_parser`
+  operators mapping the fields above → `batch` → `otlphttp` exporter (endpoint from
+  `OTLP_ENDPOINT`).
 - Moving to the in-app OTel SDK later only changes `internal/telemetry`. Call sites
   use plain `slog`.
 
@@ -517,7 +527,9 @@ Legacy: `resources/views/sessions/report.blade.php`.
 
 - All Go tooling runs from `app-go/`. `app-go/Makefile` targets: `run`, `test`,
   `test-integration`, `lint` (`go vet`, `gofmt -l`), `check`, `build`, `docker`,
-  `update-htmx`.
+  `docker-up`/`docker-down` (compose stack), `update-htmx`. `GO` and `GOFMT` can
+  be overridden. Without a local `go`, the Makefile runs the toolchain in the same
+  hardened image as the Dockerfile build stage (`GO_IMAGE`).
 - **Manual checks and builds during the rewrite (D16).** No workflow runs for
   `app-go`. `make check` runs everything a CI job would, in order: `gofmt -l`
   (fails on output), `go vet ./...`, `go test ./...`, and `test-integration`
@@ -530,9 +542,11 @@ Legacy: `resources/views/sessions/report.blade.php`.
   version constant and hash in the layout and the §2 table, then run through the
   htmx-driven screens (§10) before merging. Nothing upgrades htmx automatically
   (Dependabot does not track vendored files).
-- `deploy/docker-compose.yaml` for development: `postgres:17`, the app, and the OTel
-  Collector (with the `debug` exporter).
-- `deploy/Dockerfile`: multi-stage, build context `app-go/`. `golang:1.27` builds
+- `deploy/docker-compose.yaml` for development: `postgres:17-alpine`, the app, and the OTel
+  Collector (`otel/opentelemetry-collector-contrib`, pinned, with the `debug` exporter
+  selected by extra `--config` overrides on top of `deploy/otel-collector.yaml`).
+- `deploy/Dockerfile`: multi-stage, build context `app-go/`. The Docker Hardened Image
+  `dhi.io/golang:1.27.x-debian13-dev`, pinned by digest (needs `docker login dhi.io`), builds
   with `CGO_ENABLED=0`, `-trimpath`, and version ldflags. The final image is
   `gcr.io/distroless/static` and runs as a non-root user.
 - `make build` produces `bin/testflow`. `make docker` builds the image locally
@@ -564,8 +578,6 @@ Legacy: `resources/views/sessions/report.blade.php`.
 One GitHub issue per row, done roughly in this order. Each issue copies the template
 in §15.
 
-| # | Iteration | Spec | Legacy reference |
-|---|-----------|------|------------------|
 Legacy paths are relative to `app/` (see the note at the top).
 
 | # | Iteration | Spec | Legacy reference |

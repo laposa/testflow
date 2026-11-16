@@ -1,0 +1,6 @@
+# Keep secrets and build output out of the Docker build context.
+.env
+.env.*
+!.env.example
+bin/
+.git
