@@ -85,6 +85,7 @@ func TestHandlerOutputShape(t *testing.T) {
 		"body":            "run synced",
 		"trace_id":        sc.TraceID.String(),
 		"span_id":         sc.SpanID.String(),
+		"trace_flags":     "01",
 	}
 	for k, want := range checks {
 		if first[k] != want {
@@ -221,6 +222,47 @@ func TestMiddleware(t *testing.T) {
 		}
 		if _, ok := attrs["http.server.request.duration"].(float64); !ok {
 			t.Error("duration missing")
+		}
+	})
+
+	t.Run("panic is logged as 500 and re-raised", func(t *testing.T) {
+		buf.Reset()
+		boom := Middleware(logger, http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+			panic("boom")
+		}))
+		func() {
+			defer func() {
+				if p := recover(); p != "boom" {
+					t.Errorf("recovered %v, want the original panic", p)
+				}
+			}()
+			boom.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/", nil))
+		}()
+		line := decodeLines(t, &buf)[0]
+		if line["severity_text"] != "ERROR" {
+			t.Errorf("severity = %v, want ERROR", line["severity_text"])
+		}
+		attrs := line["attributes"].(map[string]any)
+		if attrs["http.response.status_code"] != float64(500) || attrs["panic"] != "boom" {
+			t.Errorf("attributes = %v", attrs)
+		}
+	})
+
+	t.Run("abort handler is not an error", func(t *testing.T) {
+		buf.Reset()
+		abort := Middleware(logger, http.HandlerFunc(func(http.ResponseWriter, *http.Request) {
+			panic(http.ErrAbortHandler)
+		}))
+		func() {
+			defer func() { _ = recover() }()
+			abort.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/", nil))
+		}()
+		line := decodeLines(t, &buf)[0]
+		if line["severity_text"] != "INFO" {
+			t.Errorf("severity = %v, want INFO", line["severity_text"])
+		}
+		if _, ok := line["attributes"].(map[string]any)["panic"]; ok {
+			t.Error("abort logged as panic")
 		}
 	})
 

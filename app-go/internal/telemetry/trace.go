@@ -30,13 +30,17 @@ type SpanContext struct {
 	Sampled bool
 }
 
+// Flags returns the W3C trace flags as two hex digits ("01" when sampled).
+func (sc SpanContext) Flags() string {
+	if sc.Sampled {
+		return "01"
+	}
+	return "00"
+}
+
 // Traceparent formats sc as a W3C traceparent header value (version 00).
 func (sc SpanContext) Traceparent() string {
-	flags := "00"
-	if sc.Sampled {
-		flags = "01"
-	}
-	return fmt.Sprintf("00-%s-%s-%s", sc.TraceID, sc.SpanID, flags)
+	return fmt.Sprintf("00-%s-%s-%s", sc.TraceID, sc.SpanID, sc.Flags())
 }
 
 // ParseTraceparent parses a W3C traceparent header. Only the fields defined

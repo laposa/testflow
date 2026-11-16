@@ -2,6 +2,7 @@ package telemetry
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"sync/atomic"
@@ -49,12 +50,21 @@ func Middleware(logger *slog.Logger, next http.Handler) http.Handler {
 		rec := &recorder{ResponseWriter: w}
 
 		defer func() {
+			// A panicking handler is logged as a 500 at ERROR, then the panic
+			// continues so net/http aborts the response and logs the stack.
+			// http.ErrAbortHandler is a deliberate abort, not an error.
+			p := recover()
+			panicked := p != nil && p != http.ErrAbortHandler
+
 			status := rec.status
-			if status == 0 {
+			switch {
+			case panicked && status == 0:
+				status = http.StatusInternalServerError
+			case status == 0:
 				status = http.StatusOK
 			}
 			level := slog.LevelInfo
-			if status >= 500 {
+			if status >= 500 || panicked {
 				level = slog.LevelError
 			}
 			attrs := []slog.Attr{
@@ -68,7 +78,13 @@ func Middleware(logger *slog.Logger, next http.Handler) http.Handler {
 			if id := ri.userID.Load(); id != 0 {
 				attrs = append(attrs, slog.Int64("user.id", id))
 			}
+			if panicked {
+				attrs = append(attrs, slog.String("panic", fmt.Sprint(p)))
+			}
 			logger.LogAttrs(ctx, level, "http request", attrs...)
+			if p != nil {
+				panic(p)
+			}
 		}()
 
 		next.ServeHTTP(rec, r)

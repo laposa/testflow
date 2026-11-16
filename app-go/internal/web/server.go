@@ -25,8 +25,12 @@ const maxBodyBytes = 1 << 20
 // contentSecurityPolicy allows only same-origin resources (spec §9). There
 // are no inline scripts or styles; htmx's runtime indicator CSS is switched
 // off in the layout.
+//
+// form-action also allows github.com: browsers check form-action against
+// redirects that follow a form submission, and POST /auth/redirect redirects
+// to GitHub's OAuth page.
 const contentSecurityPolicy = "default-src 'self'; base-uri 'none'; object-src 'none'; " +
-	"frame-ancestors 'none'; form-action 'self'"
+	"frame-ancestors 'none'; form-action 'self' https://github.com"
 
 // Pinger checks a dependency for GET /healthz, e.g. the database pool.
 type Pinger interface {

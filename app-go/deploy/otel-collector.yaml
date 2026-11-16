@@ -2,7 +2,7 @@
 #
 # testflow writes one JSON object per line to stdout, already using the OTel log
 # data model field names (timestamp, severity_text, severity_number, body,
-# trace_id, span_id, resource, attributes). This config tails the container
+# trace_id, span_id, trace_flags, resource, attributes). This config tails the container
 # runtime's log files, maps those fields onto the OTel log record and exports
 # over OTLP/HTTP.
 #
@@ -41,6 +41,8 @@ receivers:
           parse_from: attributes.trace_id
         span_id:
           parse_from: attributes.span_id
+        trace_flags:
+          parse_from: attributes.trace_flags
 
       - type: move
         from: attributes.body
@@ -69,6 +71,9 @@ receivers:
       - type: remove
         field: attributes.span_id
         if: 'attributes.span_id != nil'
+      - type: remove
+        field: attributes.trace_flags
+        if: 'attributes.trace_flags != nil'
 
 processors:
   batch: {}

@@ -468,7 +468,9 @@ Legacy: `resources/views/sessions/report.blade.php`.
 - **Output:** Gomponents escapes all text. User and GitHub content is never inserted
   as raw HTML.
 - **Hardening:** `http.Server` timeouts set, request body size limits, response
-  headers `Content-Security-Policy` (self only), `X-Content-Type-Options`,
+  headers `Content-Security-Policy` (self only, except `form-action` also allows
+  `https://github.com`, because browsers check it against the redirect after
+  `POST /auth/redirect`), `X-Content-Type-Options`,
   `Referrer-Policy`.
 
 ## 10. Frontend
@@ -504,13 +506,14 @@ Legacy: `resources/views/sessions/report.blade.php`.
   line to stdout, with fields aligned to the OTel log data model:
   - `timestamp` (RFC 3339 nano), `severity_text`, `severity_number` (OTel mapping:
     DEBUG 5, INFO 9, WARN 13, ERROR 17), `body` (message);
-  - `trace_id`, `span_id` (hex) when the context carries them;
+  - `trace_id`, `span_id`, `trace_flags` (hex) when the context carries them;
   - `resource`: `service.name=testflow`, `service.version` (set at build time with
     `-ldflags`), `deployment.environment`;
   - all other attributes under `attributes`.
 - HTTP middleware reads or creates W3C `traceparent` (stdlib `crypto/rand`), stores
   trace/span ids in the context, and logs one line per request: method, route pattern,
-  status, duration, bytes, user id. It returns `traceparent` in the response.
+  status, duration, bytes, user id. A panicking handler is logged as status 500 at
+  ERROR, then the panic continues to net/http. It returns `traceparent` in the response.
 - The syncer starts a new trace per tick, and GitHub calls log at DEBUG with method,
   path, status and duration.
 - `deploy/otel-collector.yaml`: `file_log` receiver (container log files, `container`

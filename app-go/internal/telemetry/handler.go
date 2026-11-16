@@ -29,7 +29,7 @@ type Resource struct {
 // field names of the OpenTelemetry log data model:
 //
 //	{"timestamp":"…","severity_text":"INFO","severity_number":9,"body":"…",
-//	 "trace_id":"…","span_id":"…","resource":{…},"attributes":{…}}
+//	 "trace_id":"…","span_id":"…","trace_flags":"01","resource":{…},"attributes":{…}}
 type Handler struct {
 	out      *output
 	level    slog.Leveler
@@ -112,7 +112,7 @@ func (h *Handler) Handle(ctx context.Context, r slog.Record) error {
 	fmt.Fprintf(&buf, `,"severity_number":%d,"body":`, SeverityNumber(r.Level))
 	writeJSON(&buf, r.Message)
 	if sc, ok := SpanFromContext(ctx); ok {
-		fmt.Fprintf(&buf, `,"trace_id":"%s","span_id":"%s"`, sc.TraceID, sc.SpanID)
+		fmt.Fprintf(&buf, `,"trace_id":"%s","span_id":"%s","trace_flags":"%s"`, sc.TraceID, sc.SpanID, sc.Flags())
 	}
 	buf.WriteString(`,"resource":`)
 	buf.Write(h.resource)

@@ -97,10 +97,6 @@ section {
     }
 }
 
-body.overflow-hidden {
-    overflow: hidden;
-}
-
 button,
 .button {
     padding: 0.25rem 1rem;
