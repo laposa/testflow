@@ -13,7 +13,7 @@ ifeq ($(shell command -v go 2>/dev/null),)
 $(shell mkdir -p $(GO_CACHE))
 DOCKER_GO = docker run --rm -i --init -u $(shell id -u):$(shell id -g) --network host \
 	-v $(CURDIR):/src -w /src -v $(GO_CACHE):/cache \
-	-e HOME=/cache -e GOCACHE=/cache/build -e GOMODCACHE=/cache/mod \
+	-e HOME=/cache -e GOPATH=/cache/go -e GOCACHE=/cache/build -e GOMODCACHE=/cache/mod \
 	-e CGO_ENABLED -e TEST_DATABASE_URL $(DOCKER_GO_ENV) $(GO_IMAGE)
 GO    ?= $(DOCKER_GO) go
 GOFMT ?= $(DOCKER_GO) gofmt
@@ -37,10 +37,10 @@ HTMX_DIR := internal/web/static
 
 .PHONY: run test test-integration lint check build docker docker-up docker-down update-htmx clean
 
-## run: start the server locally with settings from .env
+## run: start the server locally with settings from .env (applies migrations)
 run:
 	@test -f .env || { echo ".env missing: cp .env.example .env"; exit 1; }
-	set -a && . ./.env && set +a && $(GO) run -ldflags "$(LDFLAGS)" ./cmd/testflow serve
+	set -a && . ./.env && set +a && $(GO) run -ldflags "$(LDFLAGS)" ./cmd/testflow serve -migrate
 
 ## test: unit and handler tests (DB tests are skipped without TEST_DATABASE_URL)
 test:

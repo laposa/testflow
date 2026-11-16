@@ -134,6 +134,46 @@ func TestLoadErrors(t *testing.T) {
 	}
 }
 
+func TestLoadMigrate(t *testing.T) {
+	c, err := loadMigrateEnv(map[string]string{"DATABASE_URL": "postgres://x", "LOG_LEVEL": "warn"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.Database.URL != "postgres://x" || c.LogLevel != slog.LevelWarn || c.Environment != "development" {
+		t.Errorf("got %+v", c)
+	}
+	if _, err := loadMigrateEnv(map[string]string{}); err == nil || !strings.Contains(err.Error(), "DATABASE_URL: is required") {
+		t.Errorf("err = %v", err)
+	}
+}
+
+func TestLoadDatabaseCredentials(t *testing.T) {
+	env := validEnv()
+	env["DATABASE_URL"] = "postgres://db.example.com:5432/testflow"
+	env["DATABASE_USER"] = " testflow "
+	env["DATABASE_PASSWORD"] = " p@ss:w/rd "
+	c, err := load(env)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := Database{URL: "postgres://db.example.com:5432/testflow", User: "testflow", Password: " p@ss:w/rd "}
+	if c.Database != want {
+		t.Errorf("Database = %+v, want %+v (user trimmed, password kept as is)", c.Database, want)
+	}
+	if strings.Contains(c.LogValue().String(), "p@ss") {
+		t.Error("LogValue leaks the database password")
+	}
+
+	m, err := loadMigrateEnv(env)
+	if err != nil || m.Database != want {
+		t.Errorf("LoadMigrate Database = %+v, %v", m.Database, err)
+	}
+}
+
+func loadMigrateEnv(env map[string]string) (*MigrateConfig, error) {
+	return LoadMigrate(func(k string) string { return env[k] })
+}
+
 func TestLogValueHasNoSecrets(t *testing.T) {
 	c, err := load(validEnv())
 	if err != nil {

@@ -114,6 +114,7 @@ internal/config/         env parsing and validation
 internal/telemetry/      slog handler (OTel field names), trace context, HTTP middleware
 internal/db/             pgxpool setup, migration runner
 internal/db/migrations/  0001_init.sql, ... (embedded)
+internal/db/dbtest/      test harness: isolated schema per test (§13)
 internal/store/          SQL queries, one file per aggregate (users.go, sessions.go, ...)
 internal/github/         App JWT, installation token cache, REST client
 internal/auth/           OAuth login flow, web sessions, middleware
@@ -148,6 +149,7 @@ For local development a `.env` file is read only by `make`/compose, not by the b
 | `ENVIRONMENT` | no | `development` | `APP_ENV` |
 | `LOG_LEVEL` | no | `info` | `LOG_LEVEL` |
 | `DATABASE_URL` | yes | | `DB_*` |
+| `DATABASE_USER`, `DATABASE_PASSWORD` | no | | `DB_USERNAME`, `DB_PASSWORD`. Override the credentials in `DATABASE_URL`, so the password needs no URL-encoding and can come from a separate secret |
 | `SESSION_LIFETIME` | no | `120m` | `SESSION_LIFETIME` (minutes) |
 | `GITHUB_CLIENT_ID` | yes | | same. Also used as JWT `iss` |
 | `GITHUB_CLIENT_SECRET` | yes | | same |
@@ -238,7 +240,18 @@ Types (legacy: `app/Enums/SessionActivityType.php`): `session_created`,
   transaction. Applied versions are recorded in `schema_migrations(version, applied_at)`.
 - Forward-only. Fix mistakes with a new migration.
 - `testflow migrate` applies pending migrations. `testflow serve` refuses to start if
-  migrations are pending (unless `-migrate` is passed).
+  migrations are pending (unless `-migrate` is passed). `migrate` needs only
+  `DATABASE_URL` (plus optional `DATABASE_USER`, `DATABASE_PASSWORD`, `LOG_LEVEL`,
+  `ENVIRONMENT`), so it can run as a deploy
+  step without the app secrets.
+- Runs are serialised with a Postgres advisory lock, so several instances starting
+  with `-migrate` at once apply each migration exactly once.
+- If the database has versions the binary doesn't know (migrated by a newer release,
+  e.g. after a rollback), `serve` logs a warning and starts anyway.
+- `updated_at` is maintained by a `BEFORE UPDATE` trigger (`set_updated_at()`), so
+  queries don't set it. `activity_log` and `web_sessions` have no `updated_at`.
+- `review_requests` has a partial unique index: at most one pending request per
+  (session, reviewer).
 
 ## 7. Routes
 
@@ -568,7 +581,10 @@ Legacy: `resources/views/sessions/report.blade.php`.
 - GitHub client tested against `httptest.Server` fixtures (real API response
   shapes saved as JSON). Domain packages use a fake `github` interface.
 - Store and integration tests need `TEST_DATABASE_URL` and are skipped when it is
-  unset. Each test uses its own schema or transaction.
+  unset. Each test uses its own schema or transaction: `dbtest.New(t)` returns a pool
+  on a new, migrated schema (`test_<random>`, selected through `search_path`) that is
+  dropped when the test ends; `dbtest.NewSchemaURL(t)` gives an empty schema's URL for
+  code that opens its own pool.
 - Handler tests use `httptest` and check status codes plus key HTML fragments.
 - Every iteration's issue lists its acceptance tests. An issue is closed only when
   `make check` passes (run locally until cut-over, D16).
