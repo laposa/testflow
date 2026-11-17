@@ -13,12 +13,15 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/laposa/testflow/app-go/internal/auth"
 	"github.com/laposa/testflow/app-go/internal/config"
 	"github.com/laposa/testflow/app-go/internal/db"
+	"github.com/laposa/testflow/app-go/internal/store"
 	"github.com/laposa/testflow/app-go/internal/telemetry"
 	"github.com/laposa/testflow/app-go/internal/web"
 )
@@ -174,13 +177,38 @@ func serve(ctx context.Context, cfg *config.Config, logger *slog.Logger, migrate
 		return err
 	}
 
-	handler := web.NewHandler(web.Options{
+	st := store.New(pool)
+	sessions := &auth.Sessions{
+		Store:    st,
+		Lifetime: cfg.SessionLifetime,
+		Secure:   !cfg.IsDevelopment(),
+		Logger:   logger,
+	}
+	handler, err := web.NewHandler(web.Options{
 		Logger:      logger,
 		Version:     version,
 		Development: cfg.IsDevelopment(),
 		DB:          pool,
+		BaseURL:     cfg.BaseURL,
+		Sessions:    sessions,
+		OAuth: &auth.GitHubOAuth{
+			ClientID:     cfg.GitHubClientID,
+			ClientSecret: cfg.GitHubClientSecret,
+			RedirectURL:  cfg.BaseURL.JoinPath("auth", "callback").String(),
+		},
+		Users: st,
 	})
+	if err != nil {
+		return err
+	}
 	srv := web.NewServer(cfg.Addr, handler, logger)
+
+	// Background work stops with ctx and finishes before the pool closes.
+	var bg sync.WaitGroup
+	defer bg.Wait()
+	bgCtx, stopBg := context.WithCancel(ctx)
+	defer stopBg()
+	bg.Go(func() { cleanupSessions(bgCtx, cfg.SyncInterval, sessions, logger) })
 
 	ln, err := net.Listen("tcp", cfg.Addr)
 	if err != nil {
@@ -211,4 +239,25 @@ func serve(ctx context.Context, cfg *config.Config, logger *slog.Logger, migrate
 	}
 	logger.Info("server stopped")
 	return nil
+}
+
+// cleanupSessions deletes expired web sessions every interval (spec §8.5).
+// The run syncer (iteration 9) will take this over as part of its loop.
+func cleanupSessions(ctx context.Context, interval time.Duration, sessions *auth.Sessions, logger *slog.Logger) {
+	t := time.NewTicker(interval)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			n, err := sessions.DeleteExpired(ctx)
+			switch {
+			case err != nil && ctx.Err() == nil:
+				logger.WarnContext(ctx, "delete expired web sessions failed", "err", err)
+			case n > 0:
+				logger.DebugContext(ctx, "expired web sessions deleted", "count", n)
+			}
+		}
+	}
 }

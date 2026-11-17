@@ -426,6 +426,18 @@ header {
     }
 }
 
+/* ---- login (legacy: auth/login.blade.php inline style) ---- */
+
+.login {
+    margin: 4rem auto;
+    text-align: center;
+
+    .login__error {
+        color: var(--error);
+        font-weight: 600;
+    }
+}
+
 /* ---- footer ---- */
 
 footer {

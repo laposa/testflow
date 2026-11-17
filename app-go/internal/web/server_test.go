@@ -11,7 +11,11 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/laposa/testflow/app-go/internal/auth"
+	"github.com/laposa/testflow/app-go/internal/auth/authtest"
+	"github.com/laposa/testflow/app-go/internal/store"
 	"github.com/laposa/testflow/app-go/internal/telemetry"
 	"github.com/laposa/testflow/app-go/internal/web/views"
 )
@@ -20,19 +24,71 @@ type fakePinger struct{ err error }
 
 func (f fakePinger) Ping(context.Context) error { return f.err }
 
-func newTestHandler(t *testing.T, o Options) (http.Handler, *bytes.Buffer) {
+// fakeOAuth stands in for GitHub: code "good" signs in as gh.
+type fakeOAuth struct{ gh store.GitHubUser }
+
+func (f fakeOAuth) AuthCodeURL(state string) string {
+	return "https://github.test/authorize?state=" + state
+}
+
+func (f fakeOAuth) Authenticate(_ context.Context, code string) (store.GitHubUser, error) {
+	if code != "good" {
+		return store.GitHubUser{}, errors.New("bad_verification_code")
+	}
+	return f.gh, nil
+}
+
+// testEnv is a handler with in-memory users and sessions.
+type testEnv struct {
+	h     http.Handler
+	logs  *bytes.Buffer
+	store *authtest.Store
+}
+
+func newEnv(t *testing.T, o Options) *testEnv {
 	t.Helper()
 	var logs bytes.Buffer
 	o.Logger = slog.New(telemetry.NewHandler(&logs, slog.LevelInfo, telemetry.Resource{ServiceName: "testflow"}))
 	if o.Version == "" {
 		o.Version = "test"
 	}
-	return NewHandler(o), &logs
+	st := authtest.NewStore()
+	if o.Sessions == nil {
+		o.Sessions = &auth.Sessions{Store: st, Lifetime: time.Hour, Secure: true, Logger: o.Logger}
+	}
+	if o.OAuth == nil {
+		o.OAuth = fakeOAuth{store.GitHubUser{ID: 99, Login: "ada", Name: "Ada Lovelace"}}
+	}
+	if o.Users == nil {
+		o.Users = st
+	}
+	h, err := NewHandler(o)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return &testEnv{h: h, logs: &logs, store: st}
 }
 
-func get(h http.Handler, target string) *httptest.ResponseRecorder {
+func newTestHandler(t *testing.T, o Options) (http.Handler, *bytes.Buffer) {
+	t.Helper()
+	e := newEnv(t, o)
+	return e.h, e.logs
+}
+
+// signIn stores a user with a session and returns its cookie.
+func (e *testEnv) signIn(name string) *http.Cookie {
+	id := int64(len(e.store.Users) + 1)
+	e.store.Users[id] = store.User{ID: id, GitHubID: 1000 + id, Name: name, Login: "u"}
+	return &http.Cookie{Name: auth.CookieName, Value: e.store.Add(id, time.Now().Add(time.Hour))}
+}
+
+func get(h http.Handler, target string, cookies ...*http.Cookie) *httptest.ResponseRecorder {
+	r := httptest.NewRequest(http.MethodGet, target, nil)
+	for _, c := range cookies {
+		r.AddCookie(c)
+	}
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, target, nil))
+	h.ServeHTTP(rec, r)
 	return rec
 }
 
@@ -94,9 +150,16 @@ func TestSecurityHeaders(t *testing.T) {
 	}
 }
 
+func TestNewHandlerRequiresAuth(t *testing.T) {
+	if _, err := NewHandler(Options{}); err == nil {
+		t.Error("NewHandler without Sessions/OAuth/Users should fail")
+	}
+}
+
 func TestHomePage(t *testing.T) {
-	h, _ := newTestHandler(t, Options{Version: "abc123"})
-	rec := get(h, "/")
+	e := newEnv(t, Options{Version: "abc123"})
+	h := e.h
+	rec := get(h, "/", e.signIn("Ada <Lovelace>"))
 	if rec.Code != 200 {
 		t.Fatalf("status = %d", rec.Code)
 	}
@@ -104,12 +167,13 @@ func TestHomePage(t *testing.T) {
 		t.Errorf("Content-Type = %q", ct)
 	}
 	body := rec.Body.String()
-	for _, want := range []string{"<!doctype html>", "/static/" + views.HTMXFile, "/static/app.css?v=abc123"} {
+	for _, want := range []string{"<!doctype html>", "/static/" + views.HTMXFile, "/static/app.css?v=abc123",
+		"Ada &lt;Lovelace&gt;", `action="/auth/logout"`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("home page missing %q", want)
 		}
 	}
-	if rec := get(h, "/does-not-exist"); rec.Code != http.StatusNotFound {
+	if rec := get(h, "/does-not-exist", e.signIn("x")); rec.Code != http.StatusNotFound {
 		t.Errorf("unknown path = %d, want 404", rec.Code)
 	}
 }
