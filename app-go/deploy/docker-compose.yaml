@@ -30,6 +30,7 @@ services:
       dockerfile: deploy/Dockerfile
       args:
         VERSION: ${VERSION:-dev}
+    command: ["serve", "-migrate"]
     env_file: ../.env
     environment:
       DATABASE_URL: postgres://testflow:testflow@postgres:5432/testflow?sslmode=disable

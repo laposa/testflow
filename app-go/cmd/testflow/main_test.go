@@ -10,25 +10,20 @@ import (
 	"time"
 
 	"github.com/laposa/testflow/app-go/internal/config"
+	"github.com/laposa/testflow/app-go/internal/db/dbtest"
 )
 
-func testConfig(t *testing.T) *config.Config {
-	t.Helper()
-	env := map[string]string{
+func testEnv(databaseURL string) map[string]string {
+	return map[string]string{
 		"ADDR":                       "127.0.0.1:0",
 		"BASE_URL":                   "http://localhost:8080",
-		"DATABASE_URL":               "postgres://localhost/testflow",
+		"DATABASE_URL":               databaseURL,
 		"GITHUB_CLIENT_ID":           "id",
 		"GITHUB_CLIENT_SECRET":       "secret",
 		"GITHUB_APP_INSTALLATION_ID": "1",
 		"GITHUB_PRIVATE_KEY":         "-----BEGIN RSA PRIVATE KEY-----\nZmFrZQ==\n-----END RSA PRIVATE KEY-----",
 		"TEST_SESSION_ENVIRONMENTS":  "preprod",
 	}
-	cfg, err := config.Load(func(k string) string { return env[k] })
-	if err != nil {
-		t.Fatal(err)
-	}
-	return cfg
 }
 
 func TestRunCommands(t *testing.T) {
@@ -42,8 +37,9 @@ func TestRunCommands(t *testing.T) {
 		{[]string{"bogus"}, 2, "", `unknown command "bogus"`},
 		{[]string{"version"}, 0, "dev", ""},
 		{[]string{"help"}, 0, "Commands:", ""},
-		{[]string{"migrate"}, 1, "", "not available yet"},
-		{[]string{"serve"}, 1, "", "BASE_URL: is required"}, // empty environment
+		{[]string{"migrate"}, 1, "", "DATABASE_URL: is required"}, // empty environment
+		{[]string{"serve"}, 1, "", "BASE_URL: is required"},
+		{[]string{"serve", "-bogus"}, 2, "", "flag provided but not defined"},
 	}
 	for _, tt := range tests {
 		t.Run(strings.Join(tt.args, " "), func(t *testing.T) {
@@ -62,24 +58,54 @@ func TestRunCommands(t *testing.T) {
 	}
 }
 
-// TestServeGracefulShutdown starts the real server, makes a request and
-// checks that cancelling the context stops it cleanly.
-func TestServeGracefulShutdown(t *testing.T) {
-	cfg := testConfig(t)
+func TestMigrateCommand(t *testing.T) {
+	env := testEnv(dbtest.NewSchemaURL(t))
+	getenv := func(k string) string { return env[k] }
+
+	var stdout, stderr bytes.Buffer
+	if code := run(t.Context(), []string{"migrate"}, getenv, &stdout, &stderr); code != 0 {
+		t.Fatalf("exit code %d: %s %s", code, stdout.String(), stderr.String())
+	}
+	if !strings.Contains(stdout.String(), `"migration":"0001_init.sql"`) {
+		t.Errorf("applied migration not logged:\n%s", stdout.String())
+	}
+
+	stdout.Reset()
+	if code := run(t.Context(), []string{"migrate"}, getenv, &stdout, &stderr); code != 0 {
+		t.Fatalf("second run exit code %d", code)
+	}
+	if !strings.Contains(stdout.String(), `"applied":0`) {
+		t.Errorf("second run should apply nothing:\n%s", stdout.String())
+	}
+}
+
+func TestServeRefusesPendingMigrations(t *testing.T) {
+	cfg := loadConfig(t, dbtest.NewSchemaURL(t)) // empty schema
 	var logs bytes.Buffer
-	logger := newLogger(&logs, cfg)
+	err := serve(t.Context(), cfg, newLogger(&logs, cfg.LogLevel, cfg.Environment), false, nil)
+	if err == nil || !strings.Contains(err.Error(), "pending migration") {
+		t.Fatalf("serve error = %v, want pending migrations", err)
+	}
+}
+
+// TestServeGracefulShutdown starts the real server with -migrate, makes a
+// request and checks that cancelling the context stops it cleanly.
+func TestServeGracefulShutdown(t *testing.T) {
+	cfg := loadConfig(t, dbtest.NewSchemaURL(t))
+	var logs bytes.Buffer
+	logger := newLogger(&logs, cfg.LogLevel, cfg.Environment)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	ready := make(chan string, 1)
 	done := make(chan error, 1)
-	go func() { done <- serve(ctx, cfg, logger, ready) }()
+	go func() { done <- serve(ctx, cfg, logger, true, ready) }()
 
 	var addr string
 	select {
 	case addr = <-ready:
 	case err := <-done:
 		t.Fatalf("serve exited early: %v", err)
-	case <-time.After(5 * time.Second):
+	case <-time.After(10 * time.Second):
 		t.Fatal("server did not start")
 	}
 
@@ -104,7 +130,7 @@ func TestServeGracefulShutdown(t *testing.T) {
 	}
 
 	out := logs.String()
-	for _, want := range []string{`"body":"server starting"`, `"body":"http request"`, `"body":"server stopped"`, `"service.version":"dev"`} {
+	for _, want := range []string{`"migration":"0001_init.sql"`, `"body":"server starting"`, `"body":"http request"`, `"body":"server stopped"`, `"service.version":"dev"`} {
 		if !strings.Contains(out, want) {
 			t.Errorf("logs missing %s", want)
 		}
@@ -112,4 +138,14 @@ func TestServeGracefulShutdown(t *testing.T) {
 	if strings.Contains(out, "secret") {
 		t.Error("startup log leaks a secret")
 	}
+}
+
+func loadConfig(t *testing.T, databaseURL string) *config.Config {
+	t.Helper()
+	env := testEnv(databaseURL)
+	cfg, err := config.Load(func(k string) string { return env[k] })
+	if err != nil {
+		t.Fatal(err)
+	}
+	return cfg
 }

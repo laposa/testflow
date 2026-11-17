@@ -19,7 +19,7 @@ type Config struct {
 	BaseURL         *url.URL
 	Environment     string
 	LogLevel        slog.Level
-	DatabaseURL     string
+	Database        Database
 	SessionLifetime time.Duration
 
 	GitHubClientID       string
@@ -31,6 +31,19 @@ type Config struct {
 	SyncInterval            time.Duration
 
 	Mail MailConfig
+}
+
+// Database holds the PostgreSQL connection settings. Either URL or Host is
+// set, never both. With Host, Port and Name are optional (5432, "testflow").
+// User and Password are optional; when set they override any credentials in
+// the URL, so the password can be kept out of the URL (no URL-encoding needed).
+type Database struct {
+	URL      string
+	Host     string
+	Port     int
+	Name     string
+	User     string
+	Password string
 }
 
 // MailConfig selects and configures the mailer (spec §8.10).
@@ -71,7 +84,7 @@ func Load(getenv func(string) string) (*Config, error) {
 		BaseURL:         p.baseURL("BASE_URL"),
 		Environment:     p.str("ENVIRONMENT", "development"),
 		LogLevel:        p.level("LOG_LEVEL", slog.LevelInfo),
-		DatabaseURL:     p.required("DATABASE_URL"),
+		Database:        p.database(),
 		SessionLifetime: p.duration("SESSION_LIFETIME", 120*time.Minute),
 
 		GitHubClientID:       p.required("GITHUB_CLIENT_ID"),
@@ -102,6 +115,28 @@ func Load(getenv func(string) string) (*Config, error) {
 	return c, nil
 }
 
+// MigrateConfig is the subset of settings `testflow migrate` needs, so it can
+// run (e.g. as a deploy step) without the GitHub and mail secrets.
+type MigrateConfig struct {
+	Database    Database
+	Environment string
+	LogLevel    slog.Level
+}
+
+// LoadMigrate builds a MigrateConfig from getenv.
+func LoadMigrate(getenv func(string) string) (*MigrateConfig, error) {
+	p := parser{getenv: getenv}
+	c := &MigrateConfig{
+		Database:    p.database(),
+		Environment: p.str("ENVIRONMENT", "development"),
+		LogLevel:    p.level("LOG_LEVEL", slog.LevelInfo),
+	}
+	if err := errors.Join(p.errs...); err != nil {
+		return nil, fmt.Errorf("invalid configuration:\n%w", err)
+	}
+	return c, nil
+}
+
 type parser struct {
 	getenv func(string) string
 	errs   []error
@@ -124,6 +159,33 @@ func (p *parser) required(name string) string {
 		p.fail(name, errors.New("is required"))
 	}
 	return v
+}
+
+func (p *parser) database() Database {
+	d := Database{
+		URL:  strings.TrimSpace(p.getenv("DATABASE_URL")),
+		Host: strings.TrimSpace(p.getenv("DATABASE_HOST")),
+		User: strings.TrimSpace(p.getenv("DATABASE_USER")),
+		// Not trimmed: a password may legitimately start or end with spaces.
+		Password: p.getenv("DATABASE_PASSWORD"),
+	}
+	switch {
+	case d.URL == "" && d.Host == "":
+		p.fail("DATABASE_URL", errors.New("is required (or set DATABASE_HOST)"))
+	case d.URL != "" && d.Host != "":
+		p.fail("DATABASE_HOST", errors.New("cannot be combined with DATABASE_URL; set one of them"))
+	case d.Host != "":
+		d.Port = 5432
+		if v := strings.TrimSpace(p.getenv("DATABASE_PORT")); v != "" {
+			n, err := strconv.Atoi(v)
+			if err != nil || n <= 0 || n > 65535 {
+				p.fail("DATABASE_PORT", fmt.Errorf("must be a port number, got %q", v))
+			}
+			d.Port = n
+		}
+		d.Name = p.str("DATABASE_NAME", "testflow")
+	}
+	return d
 }
 
 func (p *parser) baseURL(name string) *url.URL {

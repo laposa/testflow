@@ -134,6 +134,81 @@ func TestLoadErrors(t *testing.T) {
 	}
 }
 
+func TestLoadMigrate(t *testing.T) {
+	c, err := loadMigrateEnv(map[string]string{"DATABASE_URL": "postgres://x", "LOG_LEVEL": "warn"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if c.Database.URL != "postgres://x" || c.LogLevel != slog.LevelWarn || c.Environment != "development" {
+		t.Errorf("got %+v", c)
+	}
+	if _, err := loadMigrateEnv(map[string]string{}); err == nil || !strings.Contains(err.Error(), "DATABASE_URL: is required") {
+		t.Errorf("err = %v", err)
+	}
+}
+
+func TestLoadDatabaseCredentials(t *testing.T) {
+	env := validEnv()
+	env["DATABASE_URL"] = "postgres://db.example.com:5432/testflow"
+	env["DATABASE_USER"] = " testflow "
+	env["DATABASE_PASSWORD"] = " p@ss:w/rd "
+	c, err := load(env)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := Database{URL: "postgres://db.example.com:5432/testflow", User: "testflow", Password: " p@ss:w/rd "}
+	if c.Database != want {
+		t.Errorf("Database = %+v, want %+v (user trimmed, password kept as is)", c.Database, want)
+	}
+	if strings.Contains(c.LogValue().String(), "p@ss") {
+		t.Error("LogValue leaks the database password")
+	}
+
+	m, err := loadMigrateEnv(env)
+	if err != nil || m.Database != want {
+		t.Errorf("LoadMigrate Database = %+v, %v", m.Database, err)
+	}
+}
+
+func TestLoadDatabaseHost(t *testing.T) {
+	env := validEnv()
+	delete(env, "DATABASE_URL")
+	env["DATABASE_HOST"] = " localhost "
+	env["DATABASE_USER"] = "postgres"
+	env["DATABASE_PASSWORD"] = "secret"
+	c, err := load(env)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := Database{Host: "localhost", Port: 5432, Name: "testflow", User: "postgres", Password: "secret"}
+	if c.Database != want {
+		t.Errorf("Database = %+v, want %+v (defaults for port and name)", c.Database, want)
+	}
+
+	env["DATABASE_PORT"] = "5433"
+	env["DATABASE_NAME"] = "other"
+	if c, err = load(env); err != nil || c.Database.Port != 5433 || c.Database.Name != "other" {
+		t.Errorf("Database = %+v, %v", c.Database, err)
+	}
+
+	for name, edit := range map[string]func(map[string]string){
+		"DATABASE_PORT: must be a port number":   func(e map[string]string) { e["DATABASE_PORT"] = "abc" },
+		"DATABASE_HOST: cannot be combined with": func(e map[string]string) { e["DATABASE_URL"] = "postgres://x" },
+	} {
+		e := validEnv()
+		delete(e, "DATABASE_URL")
+		e["DATABASE_HOST"] = "localhost"
+		edit(e)
+		if _, err := load(e); err == nil || !strings.Contains(err.Error(), name) {
+			t.Errorf("err = %v, want %q", err, name)
+		}
+	}
+}
+
+func loadMigrateEnv(env map[string]string) (*MigrateConfig, error) {
+	return LoadMigrate(func(k string) string { return env[k] })
+}
+
 func TestLogValueHasNoSecrets(t *testing.T) {
 	c, err := load(validEnv())
 	if err != nil {
