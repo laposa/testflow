@@ -52,7 +52,7 @@ func newEnv(t *testing.T, o Options) *testEnv {
 	if o.Version == "" {
 		o.Version = "test"
 	}
-	st := authtest.NewStore(nil)
+	st := authtest.NewStore()
 	if o.Sessions == nil {
 		o.Sessions = &auth.Sessions{Store: st, Lifetime: time.Hour, Secure: true, Logger: o.Logger}
 	}

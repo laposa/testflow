@@ -48,6 +48,10 @@ func scanUser(row interface{ Scan(...any) error }) (User, error) {
 
 // UpsertUser creates the user with gh.ID or updates its name, email and
 // login, and returns the stored row.
+//
+// An empty gh.Email keeps the stored email: GitHub always has a verified
+// primary email, so empty only means it could not be read this time (e.g.
+// /user/emails failed). The name follows DisplayName with that email.
 func (s *Store) UpsertUser(ctx context.Context, gh GitHubUser) (User, error) {
 	if gh.ID <= 0 || gh.Login == "" {
 		return User{}, fmt.Errorf("upsert user: GitHub id and login are required")
@@ -56,9 +60,11 @@ func (s *Store) UpsertUser(ctx context.Context, gh GitHubUser) (User, error) {
 		INSERT INTO users (github_id, name, email, login)
 		VALUES ($1, $2, NULLIF($3, ''), $4)
 		ON CONFLICT (github_id) DO UPDATE
-		SET name = EXCLUDED.name, email = EXCLUDED.email, login = EXCLUDED.login
+		SET email = COALESCE(EXCLUDED.email, users.email),
+		    name  = COALESCE(NULLIF($5, ''), EXCLUDED.email, users.email, EXCLUDED.login),
+		    login = EXCLUDED.login
 		RETURNING `+userColumns,
-		gh.ID, gh.DisplayName(), gh.Email, gh.Login))
+		gh.ID, gh.DisplayName(), gh.Email, gh.Login, gh.Name))
 	if err != nil {
 		return User{}, fmt.Errorf("upsert user: %w", err)
 	}

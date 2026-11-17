@@ -181,8 +181,11 @@ Laravel housekeeping tables (`cache*`, `jobs`, `job_batches`, `failed_jobs`,
 | login | text NOT NULL | GitHub username (new) |
 
 ### 6.2 `web_sessions`
-`id text PK` (32 random bytes, base64url), `user_id → users ON DELETE CASCADE`,
-`expires_at timestamptz`, `created_at`. Expired rows are deleted by the syncer loop.
+`id text PK`, `user_id → users ON DELETE CASCADE`, `expires_at timestamptz`,
+`created_at`. The cookie carries 32 random bytes (base64url); `id` stores only
+their SHA-256 (hex), so the table's contents can't be used to sign in. Expiry
+is checked against the app's clock (passed to the queries), not Postgres
+`now()`. Expired rows are deleted by the syncer loop.
 
 ### 6.3 `test_sessions`
 `id`, `issuer_id → users`, `name text NOT NULL`, `environment text NOT NULL`.
@@ -472,7 +475,8 @@ Legacy: `resources/views/sessions/report.blade.php`.
     `SameSite=Lax`) is single-use: the callback always clears it.
   - A failed callback redirects to `/login?error=<code>` (`denied`, `state` or
     `github`). The page maps the code to a fixed message and never echoes the URL.
-  - On success the user is upserted by `github_id`, a new session starts, and
+  - On success the user is upserted by `github_id` (an email GitHub could not
+    return this time keeps the stored one), a new session starts, and
     the browser goes to `/`. `GET /login` sends signed-in users to `/`.
 - **Sessions:** server-side (`web_sessions`). Cookie `testflow_session`: `HttpOnly`,
   `SameSite=Lax`, `Secure` unless `ENVIRONMENT=development`, `Path=/`. The id is
@@ -572,7 +576,9 @@ Legacy: `resources/views/sessions/report.blade.php`.
   exact version from the npm registry tarball, saves it as `htmx-x.y.z.min.js`,
   removes the old file and prints the new SRI hash. In the same PR, update the
   version constant and hash in the layout and the §2 table, then run through the
-  htmx-driven screens (§10) before merging. Nothing upgrades htmx automatically
+  htmx-driven screens (§10) before merging, including an htmx request with an
+  expired session: it must land on `/login` (401 + `HX-Redirect`, §7; htmx 4.0.1
+  follows `HX-Redirect` on any status). Nothing upgrades htmx automatically
   (Dependabot does not track vendored files).
 - `deploy/docker-compose.yaml` for development: `postgres:17-alpine`, the app, and the OTel
   Collector (`otel/opentelemetry-collector-contrib`, pinned, with the `debug` exporter

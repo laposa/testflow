@@ -17,10 +17,10 @@ const CookieName = "testflow_session"
 // SessionStore is the part of store.Store the session manager needs.
 type SessionStore interface {
 	CreateWebSession(ctx context.Context, id string, userID int64, expiresAt time.Time) error
-	WebSessionUser(ctx context.Context, id string) (store.User, time.Time, error)
-	ExtendWebSession(ctx context.Context, id string, expiresAt time.Time) error
+	WebSessionUser(ctx context.Context, id string, now time.Time) (store.User, time.Time, error)
+	ExtendWebSession(ctx context.Context, id string, expiresAt, now time.Time) error
 	DeleteWebSession(ctx context.Context, id string) error
-	DeleteExpiredWebSessions(ctx context.Context) (int64, error)
+	DeleteExpiredWebSessions(ctx context.Context, now time.Time) (int64, error)
 }
 
 // Sessions manages server-side login sessions in web_sessions (spec §6.2, §9).
@@ -77,7 +77,8 @@ func (s *Sessions) Lookup(w http.ResponseWriter, r *http.Request) (u store.User,
 	if cerr != nil || c.Value == "" {
 		return store.User{}, false, nil
 	}
-	u, expires, err := s.Store.WebSessionUser(r.Context(), c.Value)
+	now := s.now()
+	u, expires, err := s.Store.WebSessionUser(r.Context(), c.Value, now)
 	if errors.Is(err, store.ErrNotFound) {
 		s.clearCookie(w)
 		return store.User{}, false, nil
@@ -85,9 +86,9 @@ func (s *Sessions) Lookup(w http.ResponseWriter, r *http.Request) (u store.User,
 	if err != nil {
 		return store.User{}, false, err
 	}
-	if now := s.now(); expires.Sub(now) < s.Lifetime/2 {
+	if expires.Sub(now) < s.Lifetime/2 {
 		expires = now.Add(s.Lifetime)
-		if err := s.Store.ExtendWebSession(r.Context(), c.Value, expires); err != nil {
+		if err := s.Store.ExtendWebSession(r.Context(), c.Value, expires, now); err != nil {
 			// The session is still valid; extending can wait for the next request.
 			s.logger().WarnContext(r.Context(), "extend web session failed", "err", err)
 		} else {
@@ -127,7 +128,7 @@ func (s *Sessions) Require(next http.Handler) http.Handler {
 
 // DeleteExpired removes expired sessions. The syncer loop calls it (§8.5).
 func (s *Sessions) DeleteExpired(ctx context.Context) (int64, error) {
-	return s.Store.DeleteExpiredWebSessions(ctx)
+	return s.Store.DeleteExpiredWebSessions(ctx, s.now())
 }
 
 func (s *Sessions) setCookie(w http.ResponseWriter, id string, expires time.Time) {

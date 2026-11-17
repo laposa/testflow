@@ -28,7 +28,7 @@ func sessionCookie(t *testing.T, rec *httptest.ResponseRecorder) *http.Cookie {
 
 func TestStartSetsCookieAndRotates(t *testing.T) {
 	now := t0
-	st := authtest.NewStore(func() time.Time { return now })
+	st := authtest.NewStore()
 	s := newSessions(st, &now)
 
 	rec := httptest.NewRecorder()
@@ -59,7 +59,7 @@ func TestStartSetsCookieAndRotates(t *testing.T) {
 
 func TestRequire(t *testing.T) {
 	now := t0
-	st := authtest.NewStore(func() time.Time { return now })
+	st := authtest.NewStore()
 	st.Users[1] = store.User{ID: 1, Name: "Ada"}
 	s := newSessions(st, &now)
 
@@ -132,7 +132,7 @@ func TestRequire(t *testing.T) {
 
 func TestEnd(t *testing.T) {
 	now := t0
-	st := authtest.NewStore(func() time.Time { return now })
+	st := authtest.NewStore()
 	s := newSessions(st, &now)
 	id := st.Add(1, now.Add(time.Hour))
 
@@ -156,7 +156,7 @@ func TestEnd(t *testing.T) {
 
 func TestDeleteExpired(t *testing.T) {
 	now := t0
-	st := authtest.NewStore(func() time.Time { return now })
+	st := authtest.NewStore()
 	s := newSessions(st, &now)
 	st.Add(1, now.Add(-time.Minute))
 	keep := st.Add(1, now.Add(time.Minute))
