@@ -33,11 +33,15 @@ type Config struct {
 	Mail MailConfig
 }
 
-// Database holds the PostgreSQL connection settings. User and Password are
-// optional; when set they override any credentials in the URL, so the
-// password can be kept out of the URL (no URL-encoding needed).
+// Database holds the PostgreSQL connection settings. Either URL or Host is
+// set, never both. With Host, Port and Name are optional (5432, "testflow").
+// User and Password are optional; when set they override any credentials in
+// the URL, so the password can be kept out of the URL (no URL-encoding needed).
 type Database struct {
 	URL      string
+	Host     string
+	Port     int
+	Name     string
 	User     string
 	Password string
 }
@@ -158,12 +162,30 @@ func (p *parser) required(name string) string {
 }
 
 func (p *parser) database() Database {
-	return Database{
-		URL:  p.required("DATABASE_URL"),
+	d := Database{
+		URL:  strings.TrimSpace(p.getenv("DATABASE_URL")),
+		Host: strings.TrimSpace(p.getenv("DATABASE_HOST")),
 		User: strings.TrimSpace(p.getenv("DATABASE_USER")),
 		// Not trimmed: a password may legitimately start or end with spaces.
 		Password: p.getenv("DATABASE_PASSWORD"),
 	}
+	switch {
+	case d.URL == "" && d.Host == "":
+		p.fail("DATABASE_URL", errors.New("is required (or set DATABASE_HOST)"))
+	case d.URL != "" && d.Host != "":
+		p.fail("DATABASE_HOST", errors.New("cannot be combined with DATABASE_URL; set one of them"))
+	case d.Host != "":
+		d.Port = 5432
+		if v := strings.TrimSpace(p.getenv("DATABASE_PORT")); v != "" {
+			n, err := strconv.Atoi(v)
+			if err != nil || n <= 0 || n > 65535 {
+				p.fail("DATABASE_PORT", fmt.Errorf("must be a port number, got %q", v))
+			}
+			d.Port = n
+		}
+		d.Name = p.str("DATABASE_NAME", "testflow")
+	}
+	return d
 }
 
 func (p *parser) baseURL(name string) *url.URL {

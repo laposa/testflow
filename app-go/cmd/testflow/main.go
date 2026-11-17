@@ -115,7 +115,7 @@ func migrateOnly(ctx context.Context, c config.Database, logger *slog.Logger) er
 }
 
 func dbConfig(c config.Database) db.Config {
-	return db.Config{URL: c.URL, User: c.User, Password: c.Password}
+	return db.Config{URL: c.URL, Host: c.Host, Port: c.Port, Name: c.Name, User: c.User, Password: c.Password}
 }
 
 func applyMigrations(ctx context.Context, pool *pgxpool.Pool, logger *slog.Logger) error {

@@ -76,7 +76,9 @@ The binary has subcommands:
 - `testflow serve [-migrate]`: run the server. It refuses to start while migrations
   are pending, unless `-migrate` applies them first.
 - `testflow migrate`: apply pending migrations and exit. Needs only `DATABASE_URL`
-  (and `DATABASE_USER`/`DATABASE_PASSWORD` if the credentials aren't in the URL).
+  (and `DATABASE_USER`/`DATABASE_PASSWORD` if the credentials aren't in the URL),
+  or instead `DATABASE_HOST` with `DATABASE_USER`/`DATABASE_PASSWORD` (optional
+  `DATABASE_PORT`, default 5432, and `DATABASE_NAME`, default `testflow`).
 - `testflow version`.
 
 `make run` needs a Postgres: `docker compose -f deploy/docker-compose.yaml up -d
