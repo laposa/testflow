@@ -1,0 +1,56 @@
+# Local development stack (spec §12): Postgres, the app and the OTel Collector.
+#
+#   make docker-up            # or: docker compose -f deploy/docker-compose.yaml up --build
+#
+# The app reads its settings from app-go/.env (copy .env.example). DATABASE_URL
+# is overridden here so the container reaches the compose Postgres.
+
+name: testflow-go
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: testflow
+      POSTGRES_PASSWORD: testflow
+      POSTGRES_DB: testflow
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U testflow -d testflow"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+      args:
+        VERSION: ${VERSION:-dev}
+    env_file: ../.env
+    environment:
+      DATABASE_URL: postgres://testflow:testflow@postgres:5432/testflow?sslmode=disable
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.165.0
+    # Base config from otel-collector.yaml; for development, send logs to the
+    # debug exporter (printed by the collector) instead of an OTLP backend.
+    command:
+      - --config=/etc/otelcol/config.yaml
+      - "--config=yaml:exporters::debug::verbosity: detailed"
+      - "--config=yaml:service::pipelines::logs::exporters: [debug]"
+    user: "0:0" # needs to read the Docker log files
+    volumes:
+      - ./otel-collector.yaml:/etc/otelcol/config.yaml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+
+volumes:
+  pgdata:
