@@ -5,13 +5,16 @@ package web
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"path"
 	"strings"
 	"time"
 
+	"github.com/laposa/testflow/app-go/internal/auth"
 	"github.com/laposa/testflow/app-go/internal/telemetry"
 	"github.com/laposa/testflow/app-go/internal/web/static"
 	"github.com/laposa/testflow/app-go/internal/web/views"
@@ -42,7 +45,14 @@ type Options struct {
 	Logger      *slog.Logger
 	Version     string // build version, used to bust asset caches
 	Development bool   // disables long-lived caching of static files
-	DB          Pinger // optional until the database lands (iteration 2)
+	DB          Pinger // optional: /healthz pings it when set
+
+	// BaseURL is the public origin (BASE_URL). Its origin is trusted by the
+	// CSRF check, which matters when a proxy rewrites the Host header.
+	BaseURL  *url.URL
+	Sessions *auth.Sessions // web sessions and the auth middleware
+	OAuth    OAuthProvider  // GitHub login
+	Users    UserStore
 }
 
 type server struct {
@@ -51,20 +61,55 @@ type server struct {
 }
 
 // NewHandler returns the root handler with all routes and middleware.
-func NewHandler(o Options) http.Handler {
+// Sessions, OAuth and Users are required.
+func NewHandler(o Options) (http.Handler, error) {
 	if o.Logger == nil {
 		o.Logger = slog.Default()
 	}
+	if o.Sessions == nil || o.OAuth == nil || o.Users == nil {
+		return nil, fmt.Errorf("web: Sessions, OAuth and Users are required")
+	}
 	s := &server{Options: o, static: static.FS}
 
+	csrf, err := s.crossOriginProtection()
+	if err != nil {
+		return nil, err
+	}
+
+	// Public routes (spec §7).
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /healthz", s.healthz)
 	mux.HandleFunc("GET /static/{path...}", s.staticFile)
-	mux.HandleFunc("GET /{$}", s.home)
+	mux.HandleFunc("GET /login", s.login)
+	mux.HandleFunc("POST /auth/redirect", s.authRedirect)
+	mux.HandleFunc("GET /auth/callback", s.authCallback)
+	mux.HandleFunc("POST /auth/logout", s.logout)
+
+	// Everything else requires a signed-in user.
+	private := func(pattern string, h http.HandlerFunc) { mux.Handle(pattern, o.Sessions.Require(h)) }
+	private("GET /{$}", s.home)
 
 	// Telemetry wraps the mux with handlers that keep the same *http.Request,
 	// so it can log the matched route pattern.
-	return telemetry.Middleware(o.Logger, securityHeaders(limitBody(mux)))
+	return telemetry.Middleware(o.Logger, securityHeaders(limitBody(csrf.Handler(mux)))), nil
+}
+
+// crossOriginProtection rejects cross-origin non-GET requests (spec §9). It
+// checks Sec-Fetch-Site, or Origin against Host for older browsers, so no
+// CSRF tokens are needed in forms.
+func (s *server) crossOriginProtection() (*http.CrossOriginProtection, error) {
+	c := http.NewCrossOriginProtection()
+	if s.BaseURL != nil && s.BaseURL.Host != "" {
+		if err := c.AddTrustedOrigin(s.BaseURL.Scheme + "://" + s.BaseURL.Host); err != nil {
+			return nil, fmt.Errorf("web: trusted origin: %w", err)
+		}
+	}
+	c.SetDenyHandler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		s.Logger.WarnContext(r.Context(), "cross-origin request rejected",
+			"origin", r.Header.Get("Origin"), "sec_fetch_site", r.Header.Get("Sec-Fetch-Site"))
+		http.Error(w, "Forbidden: cross-origin request", http.StatusForbidden)
+	}))
+	return c, nil
 }
 
 // NewServer returns an http.Server with timeouts suited to TestFlow's
@@ -105,8 +150,13 @@ func limitBody(next http.Handler) http.Handler {
 	})
 }
 
-func (s *server) page(title string) views.Page {
-	return views.Page{Title: title, AssetVersion: s.Version}
+// page returns the layout data for r, including the signed-in user's name.
+func (s *server) page(r *http.Request, title string) views.Page {
+	p := views.Page{Title: title, AssetVersion: s.Version}
+	if u, ok := auth.UserFrom(r.Context()); ok {
+		p.UserName = u.Name
+	}
+	return p
 }
 
 // render writes a Gomponents node as an HTML response.
@@ -119,7 +169,7 @@ func (s *server) render(w http.ResponseWriter, r *http.Request, status int, n g.
 }
 
 func (s *server) home(w http.ResponseWriter, r *http.Request) {
-	s.render(w, r, http.StatusOK, views.HomePage(s.page("")))
+	s.render(w, r, http.StatusOK, views.HomePage(s.page(r, "")))
 }
 
 // healthz reports liveness and, once configured, database reachability.

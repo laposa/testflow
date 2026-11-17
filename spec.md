@@ -118,6 +118,7 @@ internal/db/dbtest/      test harness: isolated schema per test (§13)
 internal/store/          SQL queries, one file per aggregate (users.go, sessions.go, ...)
 internal/github/         App JWT, installation token cache, REST client
 internal/auth/           OAuth login flow, web sessions, middleware
+internal/auth/authtest/  in-memory user/session store for tests without Postgres
 internal/testcase/       manual test-case model, YAML parsing, file-name check
 internal/junit/          JUnit XML parsing and test-name matching
 internal/discovery/      repository → service/suite/test tree
@@ -465,11 +466,29 @@ Legacy: `resources/views/sessions/report.blade.php`.
 - **OAuth:** GitHub web flow done by hand with `net/http`. `state` is 32 random bytes
   in a short-lived `HttpOnly` cookie and is compared in constant time. Scope:
   `read:user user:email`. Name/email/login are read from `/user` (and
-  `/user/emails` if email is private).
+  `/user/emails` if email is private: the primary, verified address; a failure
+  there is not fatal). The redirect URI is `BASE_URL/auth/callback`.
+  - The state cookie `testflow_oauth_state` (`Path=/auth/callback`, 10 min,
+    `SameSite=Lax`) is single-use: the callback always clears it.
+  - A failed callback redirects to `/login?error=<code>` (`denied`, `state` or
+    `github`). The page maps the code to a fixed message and never echoes the URL.
+  - On success the user is upserted by `github_id`, a new session starts, and
+    the browser goes to `/`. `GET /login` sends signed-in users to `/`.
 - **Sessions:** server-side (`web_sessions`). Cookie `testflow_session`: `HttpOnly`,
   `SameSite=Lax`, `Secure` unless `ENVIRONMENT=development`, `Path=/`. The id is
-  rotated on login.
+  rotated on login (the old session row is deleted).
+  - Sliding expiry, like Laravel's `SESSION_LIFETIME`: a session expires
+    `SESSION_LIFETIME` after the last request. To avoid a write per request,
+    `expires_at` and the cookie are renewed only once less than half the
+    lifetime is left.
+  - An unknown or expired cookie is cleared. Logout deletes the row and clears
+    the cookie.
+  - Until the syncer exists (iteration 9), `serve` runs a small loop every
+    `SYNC_INTERVAL` that only deletes expired sessions. The syncer takes it over.
 - **CSRF:** `http.CrossOriginProtection` wraps all non-GET routes. Logout is POST.
+  The `BASE_URL` origin is added as a trusted origin, so the `Origin` fallback
+  check still passes behind a proxy that rewrites `Host`. Rejected requests get
+  403 and a WARN log line.
 - **GitHub App:** the JWT (RS256, `iat`=now−60s, `exp`=now+9m, `iss`=client id) is
   exchanged for an installation token (`POST /app/installations/{id}/access_tokens`).
   The token is cached in memory under a mutex and refreshed 5 min before
