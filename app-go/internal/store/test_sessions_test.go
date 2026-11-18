@@ -129,3 +129,91 @@ func TestCreateTestSessionIsAtomic(t *testing.T) {
 		t.Error("session without services accepted")
 	}
 }
+
+func TestListTestSessions(t *testing.T) {
+	pool := dbtest.New(t)
+	s := store.New(pool)
+	ctx := t.Context()
+
+	u, err := s.UpsertUser(ctx, store.GitHubUser{ID: 1, Login: "ada", Name: "Ada"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if list, err := s.ListTestSessions(ctx); err != nil || len(list) != 0 {
+		t.Fatalf("empty list = %v, %v", list, err)
+	}
+
+	svc := func(name string) store.NewService {
+		return store.NewService{Type: "automated", Name: name, Path: "tests/" + name, RepositoryName: "o/r", CommitSHA: "c",
+			Suites: []store.NewSuite{{Name: "s", Path: "p", Tests: []store.NewTest{{Name: "t", Path: "p/t"}}}}}
+	}
+	create := func(name string, services ...store.NewService) int64 {
+		id, err := s.CreateTestSession(ctx, store.NewTestSession{IssuerID: u.ID, IssuerName: u.Name,
+			Name: name, Environment: "beta", Services: services})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return id
+	}
+	serviceID := func(session int64, name string) int64 {
+		var id int64
+		if err := pool.QueryRow(ctx, `SELECT id FROM session_services WHERE session_id = $1 AND name = $2`, session, name).Scan(&id); err != nil {
+			t.Fatal(err)
+		}
+		return id
+	}
+	run := func(service int64, status string, counts ...int) {
+		var p, f, sk *int
+		if len(counts) == 3 {
+			p, f, sk = &counts[0], &counts[1], &counts[2]
+		}
+		if _, err := pool.Exec(ctx, `INSERT INTO service_runs (service_id, type, status, passed, failed, skipped)
+			VALUES ($1, 'automated', $2, $3, $4, $5)`, service, status, p, f, sk); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	noRuns := create("no runs", svc("web"))
+
+	finished := create("finished", svc("web"), svc("api"))
+	web, api := serviceID(finished, "web"), serviceID(finished, "api")
+	run(web, "failure", 1, 9, 9) // superseded by the next run of web
+	run(web, "success", 3, 1, 0)
+	run(api, "failure", 0, 2, 4)
+
+	running := create("running", svc("web"), svc("api"), svc("mobile"))
+	run(serviceID(running, "web"), "success", 5, 0, 1)
+	run(serviceID(running, "api"), "queued")
+	run(serviceID(running, "mobile"), "in_progress")
+	// A success without results counts as finished (legacy parity).
+	emptySuccess := create("empty success", svc("web"))
+	run(serviceID(emptySuccess, "web"), "success", 0, 0, 0)
+
+	list, err := s.ListTestSessions(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(list) != 4 {
+		t.Fatalf("list = %+v", list)
+	}
+	byID := map[int64]store.SessionSummary{}
+	for i, ss := range list {
+		byID[ss.ID] = ss
+		if i > 0 && list[i-1].ID < ss.ID {
+			t.Errorf("not ordered newest first: %+v", list)
+		}
+	}
+
+	if got := byID[noRuns]; got.Runs != 0 || got.Running() || got.IssuerName != "Ada" || got.Environment != "beta" || got.CreatedAt.IsZero() {
+		t.Errorf("no runs = %+v", got)
+	}
+	if got := byID[finished]; got.Runs != 2 || got.Running() || got.Passed != 3 || got.Failed != 3 || got.Skipped != 4 {
+		t.Errorf("finished = %+v, want only the latest run per service added up", got)
+	}
+	if got := byID[running]; got.Runs != 3 || got.RunningStatus != "in_progress" || got.Passed != 5 || got.Skipped != 1 {
+		t.Errorf("running = %+v, want the newest unfinished status", got)
+	}
+	if got := byID[emptySuccess]; got.Runs != 1 || got.Running() || got.Passed+got.Failed+got.Skipped != 0 {
+		t.Errorf("empty success = %+v", got)
+	}
+}

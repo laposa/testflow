@@ -49,6 +49,14 @@ type fakeTestSessions struct {
 	created  []store.NewTestSession
 	sessions map[int64]store.TestSession
 	err      error
+	list     []store.SessionSummary // returned by ListTestSessions
+	listErr  error
+}
+
+func (f *fakeTestSessions) ListTestSessions(context.Context) ([]store.SessionSummary, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.list, f.listErr
 }
 
 func newFakeTestSessions(users *authtest.Store) *fakeTestSessions {
@@ -406,5 +414,56 @@ func TestShowSession(t *testing.T) {
 		if rec := get(e.h, target, cookie); rec.Code != http.StatusNotFound {
 			t.Errorf("GET %s = %d, want 404", target, rec.Code)
 		}
+	}
+}
+
+func TestSessionList(t *testing.T) {
+	e := newEnv(t, Options{})
+	cookie := e.signIn("Ada")
+	created := time.Date(2026, 3, 4, 17, 5, 0, 0, time.UTC)
+	e.testSessions.list = []store.SessionSummary{
+		{ID: 3, Name: "Release <2>", Environment: "prod", IssuerName: "Ada", CreatedAt: created,
+			Runs: 2, Passed: 3, Failed: 1},
+		{ID: 2, Name: "Running", Environment: "beta", IssuerName: "Bob", CreatedAt: created,
+			Runs: 2, RunningStatus: "in_progress", Passed: 5},
+		{ID: 1, Name: "Fresh", Environment: "preprod", IssuerName: "Ada", CreatedAt: created},
+	}
+	for _, path := range []string{"/", "/sessions"} {
+		rec := get(e.h, path, cookie)
+		if rec.Code != http.StatusOK {
+			t.Fatalf("%s = %d", path, rec.Code)
+		}
+		body := rec.Body.String()
+		for _, want := range []string{
+			`<h2>All Sessions</h2>`,
+			`<a href="/sessions/new" class="button filled">New session</a>`,
+			`<td><a href="/sessions/3">Release &lt;2&gt;</a></td>`,
+			`<span class="pass">3 passed</span> and <span class="fail">1 failed</span>`,
+			`<td><span>in_progress</span></td>`,
+			`<td><span>No runs yet</span></td>`,
+			`<td>Prod</td>`,
+			`<time datetime="2026-03-04T17:05:00Z">4 Mar 2026 17:05</time>`,
+			`<td>Bob</td>`,
+		} {
+			if !strings.Contains(body, want) {
+				t.Errorf("%s missing %q", path, want)
+			}
+		}
+		if i, j := strings.Index(body, "/sessions/3"), strings.Index(body, "/sessions/1"); i > j {
+			t.Errorf("%s: sessions not in the store's order", path)
+		}
+	}
+}
+
+func TestSessionListEmptyAndError(t *testing.T) {
+	e := newEnv(t, Options{})
+	cookie := e.signIn("Ada")
+	if rec := get(e.h, "/", cookie); rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "No sessions yet.") {
+		t.Errorf("empty list = %d", rec.Code)
+	}
+	e.testSessions.listErr = errors.New("db down")
+	rec := get(e.h, "/sessions", cookie)
+	if rec.Code != http.StatusInternalServerError || strings.Contains(rec.Body.String(), "db down") {
+		t.Errorf("store error = %d %q", rec.Code, rec.Body.String())
 	}
 }

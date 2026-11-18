@@ -241,3 +241,73 @@ func (s *Store) TestSession(ctx context.Context, id int64) (TestSession, error) 
 	}
 	return ts, nil
 }
+
+// SessionSummary is one row of the session list (spec §8.3).
+type SessionSummary struct {
+	ID          int64
+	Name        string
+	Environment string
+	IssuerName  string
+	CreatedAt   time.Time
+
+	// Runs is the number of services with at least one run. Only the latest
+	// run of each service counts towards the fields below.
+	Runs int
+	// RunningStatus is the status of the newest latest run that has no
+	// results yet, or "" if every latest run has finished.
+	RunningStatus string
+	// Passed, Failed and Skipped add up the latest runs that have finished.
+	Passed, Failed, Skipped int
+}
+
+// Running reports whether a latest run has no results yet.
+func (s SessionSummary) Running() bool { return s.RunningStatus != "" }
+
+// ListTestSessions returns every session, newest first, with the results of
+// the latest run per service (legacy: SessionController::index,
+// Session::lastRuns). A latest run counts as finished if it has passed or
+// failed tests or its status is success; legacy treated anything else as
+// still running.
+func (s *Store) ListTestSessions(ctx context.Context) ([]SessionSummary, error) {
+	rows, err := s.db.Query(ctx, `
+		WITH last_runs AS (
+		    SELECT DISTINCT ON (r.service_id)
+		           ss.session_id, r.id, r.status,
+		           COALESCE(r.passed, 0) AS passed,
+		           COALESCE(r.failed, 0) AS failed,
+		           COALESCE(r.skipped, 0) AS skipped,
+		           (COALESCE(r.passed, 0) > 0 OR COALESCE(r.failed, 0) > 0 OR r.status = 'success') AS done
+		    FROM service_runs r
+		    JOIN session_services ss ON ss.id = r.service_id
+		    ORDER BY r.service_id, r.id DESC
+		), totals AS (
+		    SELECT session_id,
+		           count(*)::int AS runs,
+		           (sum(passed) FILTER (WHERE done))::int AS passed,
+		           (sum(failed) FILTER (WHERE done))::int AS failed,
+		           (sum(skipped) FILTER (WHERE done))::int AS skipped,
+		           (array_agg(status ORDER BY id DESC) FILTER (WHERE NOT done))[1] AS running_status
+		    FROM last_runs
+		    GROUP BY session_id
+		)
+		SELECT ts.id, ts.name, ts.environment, u.name, ts.created_at,
+		       COALESCE(t.runs, 0), COALESCE(t.running_status, ''),
+		       COALESCE(t.passed, 0), COALESCE(t.failed, 0), COALESCE(t.skipped, 0)
+		FROM test_sessions ts
+		JOIN users u ON u.id = ts.issuer_id
+		LEFT JOIN totals t ON t.session_id = ts.id
+		ORDER BY ts.id DESC`)
+	if err != nil {
+		return nil, fmt.Errorf("list test sessions: %w", err)
+	}
+	list, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (SessionSummary, error) {
+		var s SessionSummary
+		err := row.Scan(&s.ID, &s.Name, &s.Environment, &s.IssuerName, &s.CreatedAt,
+			&s.Runs, &s.RunningStatus, &s.Passed, &s.Failed, &s.Skipped)
+		return s, err
+	})
+	if err != nil {
+		return nil, fmt.Errorf("list test sessions: %w", err)
+	}
+	return list, nil
+}

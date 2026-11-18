@@ -587,6 +587,33 @@ header {
     }
 }
 
+/* ---- session list (legacy: components/sessions/list.css). The legacy
+ * filter bar is not ported (spec §8.3); only its "New session" button is. ---- */
+
+.sessions__header {
+    display: flex;
+    align-items: center;
+    margin: 1rem 0;
+
+    h2 {
+        margin: 0;
+    }
+
+    /* Legacy got the button's height from its stretched flex row of
+     * inputs; without the filter bar it needs its own padding. */
+    .button {
+        display: flex;
+        margin-left: auto;
+        padding: 0.5rem 0 0.5rem 1rem;
+        line-height: normal;
+
+        &:after {
+            content: '+';
+            margin: 0 1rem;
+        }
+    }
+}
+
 /* ---- session detail (legacy: components/sessions/detail.css) ---- */
 
 .session-environment {

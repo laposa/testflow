@@ -23,6 +23,7 @@ type TestDiscovery interface {
 
 // TestSessionStore creates and reads test sessions (store.Store).
 type TestSessionStore interface {
+	ListTestSessions(ctx context.Context) ([]store.SessionSummary, error)
 	CreateTestSession(ctx context.Context, ns store.NewTestSession) (int64, error)
 	TestSession(ctx context.Context, id int64) (store.TestSession, error)
 }
@@ -41,6 +42,17 @@ const (
 	msgDiscoveryError = "Could not load the tests from GitHub. Please try again."
 	msgDiscoveryStale = "Could not load the tests from GitHub, so this is the last list that loaded and it may be outdated. Please try again."
 )
+
+// listSessions renders the session list (spec §8.3; legacy:
+// SessionController::index).
+func (s *server) listSessions(w http.ResponseWriter, r *http.Request) {
+	list, err := s.TestSessions.ListTestSessions(r.Context())
+	if err != nil {
+		s.serverError(w, r, "list test sessions", err)
+		return
+	}
+	s.render(w, r, http.StatusOK, views.SessionListPage(s.page(r, ""), list))
+}
 
 // newSession shows the test picker (legacy: SessionController::create and
 // Livewire/Sessions/CreateSession). A successful ?refresh redirects back,

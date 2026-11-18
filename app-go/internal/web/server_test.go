@@ -183,7 +183,7 @@ func TestHomePage(t *testing.T) {
 	}
 	body := rec.Body.String()
 	for _, want := range []string{"<!doctype html>", "/static/" + views.HTMXFile, "/static/app.css?v=abc123",
-		"Ada &lt;Lovelace&gt;", `action="/auth/logout"`} {
+		"Ada &lt;Lovelace&gt;", `action="/auth/logout"`, `<h2>All Sessions</h2>`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("home page missing %q", want)
 		}

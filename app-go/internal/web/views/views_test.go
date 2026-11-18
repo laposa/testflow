@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/laposa/testflow/app-go/internal/web/static"
 	"github.com/laposa/testflow/app-go/internal/web/views/hx"
@@ -78,6 +79,37 @@ func TestSection(t *testing.T) {
 	}
 	if got := render(t, Section("Runs", false)); !strings.Contains(got, `class="portal-section no-border"`) {
 		t.Errorf("borderless section = %s", got)
+	}
+}
+
+func TestPassedFailed(t *testing.T) {
+	pass := func(n string) string { return `<span class="pass">` + n + ` passed</span>` }
+	fail := func(n string) string { return `<span class="fail">` + n + ` failed</span>` }
+	skip := func(n string) string { return `<span class="skip">` + n + ` skipped</span>` }
+	tests := []struct {
+		p, f, s  int
+		showZero bool
+		want     string
+	}{
+		{0, 0, 0, false, `<span class="no-runs">None</span>`},
+		{3, 0, 0, false, pass("3")},
+		{3, 1, 0, false, pass("3") + " and " + fail("1")},
+		{3, 0, 2, false, pass("3") + " and " + skip("2")}, // legacy: "and and"
+		{0, 1, 2, false, fail("1") + " and " + skip("2")},
+		{3, 1, 2, false, pass("3") + ", " + fail("1") + " and " + skip("2")},
+		{0, 0, 0, true, pass("0") + ", " + fail("0") + " and " + skip("0")},
+	}
+	for _, tt := range tests {
+		if got := render(t, PassedFailed(tt.p, tt.f, tt.s, tt.showZero)); got != tt.want {
+			t.Errorf("PassedFailed(%d, %d, %d, %v)\n got  %s\n want %s", tt.p, tt.f, tt.s, tt.showZero, got, tt.want)
+		}
+	}
+}
+
+func TestTimestamp(t *testing.T) {
+	ts := time.Date(2026, 3, 4, 17, 5, 0, 0, time.UTC)
+	if got := render(t, Timestamp(ts)); got != `<time datetime="2026-03-04T17:05:00Z">4 Mar 2026 17:05</time>` {
+		t.Errorf("Timestamp = %s", got)
 	}
 }
 
