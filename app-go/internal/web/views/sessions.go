@@ -20,6 +20,7 @@ type NewSessionForm struct {
 	Selected     map[string]bool   // test keys
 	Tests        *discovery.Result // nil if discovery failed
 	LoadError    string            // why Tests is nil
+	Warning      string            // set if Tests is a fallback after a failed discovery
 	Errors       []string          // validation errors
 }
 
@@ -28,7 +29,9 @@ type NewSessionForm struct {
 func NewSessionPage(p Page, f NewSessionForm) g.Node {
 	return Layout(p,
 		g.If(len(f.Errors) > 0, ErrorList(f.Errors)),
-		h.Form(h.Method("post"), h.Action("/sessions"), h.Class("new-session"),
+		// data-submit-once: app.js disables the button on submit, so a
+		// double click does not create two sessions.
+		h.Form(h.Method("post"), h.Action("/sessions"), h.Class("new-session"), g.Attr("data-submit-once"),
 			g.Iff(f.Tests != nil, func() g.Node { return h.Input(h.Type("hidden"), h.Name("discovery"), h.Value(f.Tests.ID)) }),
 			h.Section(
 				h.H2(g.Text("New session")),
@@ -68,6 +71,7 @@ func testPicker(f NewSessionForm) g.Node {
 				", loaded at "+res.FetchedAt.Format("15:04")+".")),
 			refresh,
 		),
+		g.If(f.Warning != "", h.P(h.Class("alert"), h.Role("alert"), g.Text(f.Warning))),
 		g.If(len(res.Problems) > 0,
 			h.Ul(h.Class("test-picker__problems"),
 				g.Map(res.Problems, func(pr discovery.Problem) g.Node {

@@ -272,7 +272,7 @@ the `HX-Redirect` header for htmx requests.
 | `GET /auth/callback` | finish OAuth, upsert user, create session | `AuthController::callback` |
 | `POST /auth/logout` | destroy session (legacy used GET) | `AuthController::logout` |
 | `GET /` and `GET /sessions` | session list | `SessionController::index` |
-| `GET /sessions/new` | test picker (discovery §8.1). `?refresh` discovers again, then redirects back | `SessionController::create` |
+| `GET /sessions/new` | test picker (discovery §8.1). `?refresh` discovers again, then redirects back; if that fails, the page is rendered directly (no redirect, which would start another discovery) | `SessionController::create` |
 | `POST /sessions` | create session | `SessionController::store` |
 | `GET /sessions/{id}` | session detail: services, runs, activity, reviews | `SessionController::show` |
 | `GET /sessions/{id}/runs` | htmx fragment: run list (polled) | `Livewire/Runs/ListRuns` |
@@ -324,8 +324,12 @@ time; requests that arrive meanwhile wait for it and share its result. A discove
 is not cancelled when the request that started it goes away; it is bounded by a
 45 s timeout, below the server's write timeout.
 
-If listing the installation's repositories fails, the picker shows a fixed error
-and a retry link (HTTP 502). If one repository fails (other than the skips above),
+If a discovery fails (listing the installation's repositories fails, or the
+timeout is hit), the picker falls back to the last successful result while its
+snapshot is still retained (see below), with a warning above the tree that the
+discovery failed and the list may be outdated (HTTP 200); it can still be
+submitted. Without such a result it shows a fixed error and a retry link (HTTP
+502). A failed discovery is never cached, so the next request tries again. If one repository fails (other than the skips above),
 it is left out and named in a warning above the tree. If only its workflows fail,
 its tree is kept without workflow ids and the warning says its automated tests
 cannot be selected.
@@ -342,6 +346,9 @@ Legacy: `app/Actions/Session/CreateSession.php`.
 - Input: `name` (required, trimmed, at most 255 characters), `environment` (one
   of `TEST_SESSION_ENVIRONMENTS`), `discovery` (the snapshot id, §8.1) and at least
   one selected test in `tests` ("Please select at least one test suite.").
+- The form has `data-submit-once`: app.js disables its submit button once the
+  form is sent, so a double click does not create two sessions (legacy could). A
+  page restored from the back/forward cache gets the button back.
 - Errors re-render the form (HTTP 422) with the messages above it, keeping the
   name, environment and selection; tree levels that hold selected tests start
   open. If the snapshot has expired, the form is re-rendered from the current
@@ -588,7 +595,8 @@ Legacy: `resources/views/sessions/report.blade.php`.
   2. htmx for anything that needs the server;
   3. a small plain-JS file (`internal/web/static/app.js`, no inline scripts, so it
      fits the CSP in §9) for what's left: opening/closing the dialog, closing it on
-     a click outside, and "select all" checkboxes in the test tree. A group
+     a click outside, "select all" checkboxes in the test tree, and disabling the
+     submit button of a `data-submit-once` form once it is sent (§8.2). A group
      checkbox (in the level's `<summary>`) checks or clears every test below it
      and shows checked, indeterminate or clear for its tests; it needs no server.
 - Handlers check the `HX-Request` header. htmx requests get the fragment, normal

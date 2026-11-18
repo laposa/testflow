@@ -15,6 +15,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"slices"
@@ -144,6 +145,8 @@ type Discoverer struct {
 	mu        sync.Mutex
 	current   *Result
 	snapshots map[string]*Result
+	lastErr   error  // the last failed discovery
+	failures  uint64 // number of failed discoveries
 }
 
 // New returns a Discoverer.
@@ -173,15 +176,22 @@ func New(c Config) *Discoverer {
 // it discovers again. refresh skips the cache, unless another request
 // finished a discovery while this one waited for it.
 //
+// If the discovery fails, Tests returns the error together with the last
+// successful result while its snapshot is still retained, so callers can
+// offer it as possibly outdated. The result is nil if there is none.
+//
 // The discovery itself is not cancelled with ctx, so a user who navigates
 // away does not waste a nearly finished run; it is bounded by the timeout.
 func (d *Discoverer) Tests(ctx context.Context, refresh bool) (*Result, error) {
 	asked := d.cfg.Now()
+	d.mu.Lock()
+	failures := d.failures
+	d.mu.Unlock()
 	d.fetchMu.Lock()
 	defer d.fetchMu.Unlock()
 
 	d.mu.Lock()
-	cur := d.current
+	cur, lastErr, failedMeanwhile := d.current, d.lastErr, d.failures != failures
 	d.mu.Unlock()
 	if cur != nil {
 		fresh := d.cfg.Now().Sub(cur.FetchedAt) < d.cfg.TTL
@@ -189,16 +199,29 @@ func (d *Discoverer) Tests(ctx context.Context, refresh bool) (*Result, error) {
 			return cur, nil
 		}
 	}
+	// A discovery that failed while this request waited has just spent up
+	// to Timeout; failing fast keeps queued requests within the server's
+	// write timeout instead of each retrying in turn.
+	if failedMeanwhile {
+		return d.fallback(cur), lastErr
+	}
 
 	fctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), d.cfg.Timeout)
 	defer cancel()
 	res, err := d.discover(fctx)
-	if err != nil {
-		return nil, err
+	if err == nil && fctx.Err() != nil {
+		// Every repository still pending failed with the deadline; a tree
+		// with them missing must not be cached as if it were complete.
+		err = fmt.Errorf("discovery: %w", fctx.Err())
 	}
 
 	d.mu.Lock()
 	defer d.mu.Unlock()
+	if err != nil {
+		d.lastErr = err
+		d.failures++
+		return d.fallback(cur), err
+	}
 	d.current = res
 	d.snapshots[res.ID] = res
 	for id, s := range d.snapshots {
@@ -207,6 +230,15 @@ func (d *Discoverer) Tests(ctx context.Context, refresh bool) (*Result, error) {
 		}
 	}
 	return res, nil
+}
+
+// fallback returns cur if its snapshot is still retained, so a form
+// rendered from it can be submitted.
+func (d *Discoverer) fallback(cur *Result) *Result {
+	if cur == nil || d.cfg.Now().Sub(cur.FetchedAt) > d.cfg.Retention {
+		return nil
+	}
+	return cur
 }
 
 // Snapshot returns the result with id if it is still retained.
@@ -263,7 +295,7 @@ func (d *Discoverer) discover(ctx context.Context) (*Result, error) {
 func (d *Discoverer) repository(ctx context.Context, r github.Repository) (*Repository, []Problem) {
 	name := r.FullName
 	fail := func(msg string, err error) (*Repository, []Problem) {
-		d.cfg.Logger.WarnContext(ctx, "discovery: "+msg, "repository", name, "err", err)
+		d.cfg.Logger.WarnContext(ctx, "discovery: repository skipped", "repository", name, "problem", msg, "err", err)
 		return nil, []Problem{{Repository: name, Message: msg}}
 	}
 

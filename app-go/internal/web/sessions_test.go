@@ -152,7 +152,7 @@ func TestNewSessionPage(t *testing.T) {
 	}
 	body := rec.Body.String()
 	for _, want := range []string{
-		`<form method="post" action="/sessions" class="new-session">`,
+		`<form method="post" action="/sessions" class="new-session" data-submit-once>`,
 		`<input type="hidden" name="discovery" value="snap1">`,
 		`<option value="preprod" selected>Preprod</option>`,
 		`<option value="prod">Prod</option>`,
@@ -187,6 +187,50 @@ func TestNewSessionDiscoveryError(t *testing.T) {
 	}
 	if !strings.Contains(body, `<button type="submit" class="button filled" disabled>`) {
 		t.Error("create button should be disabled without tests")
+	}
+}
+
+func TestNewSessionStaleFallback(t *testing.T) {
+	e := newEnv(t, Options{})
+	e.discovery.err = errors.New("github down") // res stays: the last result
+	rec := get(e.h, "/sessions/new", e.signIn("Ada"))
+	if rec.Code != http.StatusOK {
+		t.Errorf("status = %d, want 200", rec.Code)
+	}
+	body := rec.Body.String()
+	for _, want := range []string{
+		msgDiscoveryStale,
+		`<input type="hidden" name="discovery" value="snap1">`,
+		`laposa/shop-tests`,
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("page missing %q", want)
+		}
+	}
+	if strings.Contains(body, "github down") || strings.Contains(body, " disabled>Create") {
+		t.Error("the fallback list should be usable and hide the error details")
+	}
+}
+
+func TestNewSessionRefreshFailure(t *testing.T) {
+	e := newEnv(t, Options{})
+	cookie := e.signIn("Ada")
+
+	// With a fallback, the page is rendered directly, not redirected,
+	// which would start another discovery.
+	e.discovery.err = errors.New("github down")
+	rec := get(e.h, "/sessions/new?refresh", cookie)
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), msgDiscoveryStale) {
+		t.Errorf("refresh with fallback = %d, want 200 with the stale warning", rec.Code)
+	}
+
+	e.discovery.res = nil
+	rec = get(e.h, "/sessions/new?refresh", cookie)
+	if rec.Code != http.StatusBadGateway || !strings.Contains(rec.Body.String(), msgDiscoveryError) {
+		t.Errorf("refresh without fallback = %d, want 502 with the error", rec.Code)
+	}
+	if e.discovery.refreshes != 2 {
+		t.Errorf("refreshes = %d, want 2", e.discovery.refreshes)
 	}
 }
 

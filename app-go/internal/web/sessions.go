@@ -39,32 +39,37 @@ const (
 	msgSnapshotGone   = "The test list has expired. Please check your selection and create the session again."
 	msgTestsUnusable  = "Some selected tests are not available any more. Please check your selection."
 	msgDiscoveryError = "Could not load the tests from GitHub. Please try again."
+	msgDiscoveryStale = "Could not load the tests from GitHub, so this is the last list that loaded and it may be outdated. Please try again."
 )
 
 // newSession shows the test picker (legacy: SessionController::create and
-// Livewire/Sessions/CreateSession). ?refresh discovers again and redirects
-// back, so reloading the page does not repeat it.
+// Livewire/Sessions/CreateSession). A successful ?refresh redirects back,
+// so reloading the page does not repeat it. A failed one renders the page
+// directly: redirecting would start another discovery straight away.
 func (s *server) newSession(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Query().Has("refresh") {
-		if _, err := s.Discovery.Tests(r.Context(), true); err != nil {
-			s.Logger.ErrorContext(r.Context(), "test discovery failed", "err", err)
-		}
+	refresh := r.URL.Query().Has("refresh")
+	form := views.NewSessionForm{Environments: s.Environments, Environment: s.Environments[0]}
+	status := s.loadTests(r, &form, refresh)
+	if refresh && form.LoadError == "" && form.Warning == "" {
 		http.Redirect(w, r, "/sessions/new", http.StatusSeeOther)
 		return
 	}
-	form := views.NewSessionForm{Environments: s.Environments, Environment: s.Environments[0]}
-	status := s.loadTests(r, &form)
 	s.render(w, r, status, views.NewSessionPage(s.page(r, "New session"), form))
 }
 
-// loadTests puts the current discovery result into form, or the error
-// message if discovery failed. It returns the status to render with.
-func (s *server) loadTests(r *http.Request, form *views.NewSessionForm) int {
-	res, err := s.Discovery.Tests(r.Context(), false)
+// loadTests puts the discovery result into form. If discovery failed, it
+// falls back to the last result with a warning that it may be outdated, or
+// sets the error message if there is none. It returns the status to render
+// with.
+func (s *server) loadTests(r *http.Request, form *views.NewSessionForm, refresh bool) int {
+	res, err := s.Discovery.Tests(r.Context(), refresh)
 	if err != nil {
-		s.Logger.ErrorContext(r.Context(), "test discovery failed", "err", err)
-		form.LoadError = msgDiscoveryError
-		return http.StatusBadGateway
+		s.Logger.ErrorContext(r.Context(), "test discovery failed", "err", err, "fallback", res != nil)
+		if res == nil {
+			form.LoadError = msgDiscoveryError
+			return http.StatusBadGateway
+		}
+		form.Warning = msgDiscoveryStale
 	}
 	form.Tests = res
 	return http.StatusOK
@@ -124,7 +129,7 @@ func (s *server) createSession(w http.ResponseWriter, r *http.Request) {
 		status := http.StatusUnprocessableEntity
 		if ok {
 			form.Tests = snapshot
-		} else if st := s.loadTests(r, &form); st != http.StatusOK {
+		} else if st := s.loadTests(r, &form, false); st != http.StatusOK {
 			status = st
 		}
 		s.render(w, r, status, views.NewSessionPage(s.page(r, "New session"), form))

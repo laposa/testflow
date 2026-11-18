@@ -253,6 +253,78 @@ func TestDiscoverRepositoriesError(t *testing.T) {
 	}
 }
 
+func TestDiscoverTimeoutIsNotCached(t *testing.T) {
+	gh := shopFake()
+	gh.delay = 20 * time.Millisecond
+	d := New(Config{GitHub: gh, Timeout: 30 * time.Millisecond, Logger: quietLogger()})
+	if _, err := d.Tests(t.Context(), false); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("err = %v, want deadline exceeded", err)
+	}
+	gh.delay = 0
+	res, err := d.Tests(t.Context(), false)
+	if err != nil || len(res.Repositories) != 1 {
+		t.Errorf("after a timeout the next request should discover again: %v %+v", err, res)
+	}
+}
+
+func TestQueuedRequestsShareFailure(t *testing.T) {
+	gh := &fakeGitHub{reposErr: errors.New("boom"), delay: 50 * time.Millisecond}
+	d := New(Config{GitHub: gh, Logger: quietLogger()})
+	var wg sync.WaitGroup
+	for range 3 {
+		wg.Go(func() {
+			if _, err := d.Tests(t.Context(), false); err == nil {
+				t.Error("want error")
+			}
+		})
+		time.Sleep(5 * time.Millisecond) // the first one starts the discovery
+	}
+	wg.Wait()
+	if n := gh.calls.Load(); n != 1 {
+		t.Errorf("GitHub called %d times, want 1: queued requests should get the same error", n)
+	}
+	// A later request tries again.
+	_, _ = d.Tests(t.Context(), false)
+	if n := gh.calls.Load(); n != 2 {
+		t.Errorf("GitHub called %d times, want 2", n)
+	}
+}
+
+func TestFailureFallsBackToLastResult(t *testing.T) {
+	gh := shopFake()
+	now := time.Date(2026, 11, 18, 9, 0, 0, 0, time.UTC)
+	var mu sync.Mutex
+	clock := func() time.Time { mu.Lock(); defer mu.Unlock(); return now }
+	advance := func(d time.Duration) { mu.Lock(); now = now.Add(d); mu.Unlock() }
+	d := New(Config{GitHub: gh, TTL: 5 * time.Minute, Retention: time.Hour, Now: clock, Logger: quietLogger()})
+	ctx := t.Context()
+
+	first, err := d.Tests(ctx, false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gh.reposErr = errors.New("boom")
+
+	advance(10 * time.Minute)
+	res, err := d.Tests(ctx, false)
+	if err == nil || res != first {
+		t.Errorf("after the TTL: res = %p, err = %v; want the last result with the error", res, err)
+	}
+	if res, err := d.Tests(ctx, true); err == nil || res != first {
+		t.Errorf("refresh: res = %p, err = %v; want the last result with the error", res, err)
+	}
+	if _, ok := d.Snapshot(first.ID); !ok {
+		t.Error("the fallback result must stay submittable")
+	}
+
+	// Once its snapshot has expired, a form rendered from it could not be
+	// submitted, so it is not offered any more.
+	advance(time.Hour)
+	if res, err := d.Tests(ctx, false); err == nil || res != nil {
+		t.Errorf("beyond retention: res = %p, err = %v; want only the error", res, err)
+	}
+}
+
 func TestDiscoverConcurrencyBound(t *testing.T) {
 	gh := &fakeGitHub{shas: map[string]string{}, files: map[string][]string{}, delay: 5 * time.Millisecond}
 	for i := range 10 {

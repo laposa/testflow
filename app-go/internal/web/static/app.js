@@ -38,3 +38,37 @@
     // after a validation error.
     document.querySelectorAll('.list-interactive').forEach(syncGroups);
 })();
+
+// A form marked data-submit-once disables its submit buttons once it is
+// sent, so a double click does not submit it twice (e.g. two sessions).
+// The browser skips the submit event while required fields are invalid, so
+// the buttons stay usable until the form can actually be sent.
+(function () {
+    document.addEventListener('submit', function (e) {
+        const form = e.target;
+        if (!(form instanceof HTMLFormElement) || !form.hasAttribute('data-submit-once')) return;
+        if (form.dataset.submitted) {
+            e.preventDefault();
+            return;
+        }
+        form.dataset.submitted = 'true';
+        form.querySelectorAll('button[type="submit"]:enabled, input[type="submit"]:enabled').forEach(function (b) {
+            b.disabled = true;
+            b.dataset.disabledOnSubmit = 'true';
+        });
+    });
+
+    // Going back to the page can restore it from the back/forward cache with
+    // the buttons still disabled. Only the ones disabled here are restored;
+    // the server disables Create when there are no tests.
+    window.addEventListener('pageshow', function (e) {
+        if (!e.persisted) return;
+        document.querySelectorAll('form[data-submit-once]').forEach(function (form) {
+            delete form.dataset.submitted;
+            form.querySelectorAll('[data-disabled-on-submit]').forEach(function (b) {
+                b.disabled = false;
+                delete b.dataset.disabledOnSubmit;
+            });
+        });
+    });
+})();
