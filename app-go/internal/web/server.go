@@ -10,6 +10,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"strings"
 	"time"
@@ -45,7 +46,10 @@ type Options struct {
 	Logger      *slog.Logger
 	Version     string // build version, used to bust asset caches
 	Development bool   // disables long-lived caching of static files
-	DB          Pinger // optional: /healthz pings it when set
+	// StaticDir, if set, serves /static/ from this directory instead of the
+	// embedded files, so edits show on reload (STATIC_DIR, development only).
+	StaticDir string
+	DB        Pinger // optional: /healthz pings it when set
 
 	// BaseURL is the public origin (BASE_URL). Its origin is trusted by the
 	// CSRF check, which matters when a proxy rewrites the Host header.
@@ -57,6 +61,7 @@ type Options struct {
 	Discovery    TestDiscovery    // test picker (spec §8.1)
 	TestSessions TestSessionStore // test sessions (spec §8.2)
 	Environments []string         // TEST_SESSION_ENVIRONMENTS
+	Activity     ActivityStore    // activity feed and comments (spec §8.9)
 }
 
 type server struct {
@@ -65,8 +70,8 @@ type server struct {
 }
 
 // NewHandler returns the root handler with all routes and middleware.
-// Sessions, OAuth, Users, Discovery, TestSessions and Environments are
-// required.
+// Sessions, OAuth, Users, Discovery, TestSessions, Environments and
+// Activity are required.
 func NewHandler(o Options) (http.Handler, error) {
 	if o.Logger == nil {
 		o.Logger = slog.Default()
@@ -74,10 +79,16 @@ func NewHandler(o Options) (http.Handler, error) {
 	if o.Sessions == nil || o.OAuth == nil || o.Users == nil {
 		return nil, fmt.Errorf("web: Sessions, OAuth and Users are required")
 	}
-	if o.Discovery == nil || o.TestSessions == nil || len(o.Environments) == 0 {
-		return nil, fmt.Errorf("web: Discovery, TestSessions and Environments are required")
+	if o.Discovery == nil || o.TestSessions == nil || len(o.Environments) == 0 || o.Activity == nil {
+		return nil, fmt.Errorf("web: Discovery, TestSessions, Environments and Activity are required")
 	}
 	s := &server{Options: o, static: static.FS}
+	if o.StaticDir != "" {
+		if info, err := os.Stat(o.StaticDir); err != nil || !info.IsDir() {
+			return nil, fmt.Errorf("web: STATIC_DIR %q is not a directory", o.StaticDir)
+		}
+		s.static = os.DirFS(o.StaticDir)
+	}
 
 	csrf, err := s.crossOriginProtection()
 	if err != nil {
@@ -100,6 +111,7 @@ func NewHandler(o Options) (http.Handler, error) {
 	private("GET /sessions/new", s.newSession)
 	private("POST /sessions", s.createSession)
 	private("GET /sessions/{id}", s.showSession)
+	private("POST /sessions/{id}/comments", s.addComment)
 
 	// Telemetry wraps the mux with handlers that keep the same *http.Request,
 	// so it can log the matched route pattern.

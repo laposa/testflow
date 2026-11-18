@@ -15,10 +15,13 @@ import (
 // Config is the validated runtime configuration. It is built once at startup
 // by Load and passed down explicitly; nothing reads the environment later.
 type Config struct {
-	Addr            string
-	BaseURL         *url.URL
-	Environment     string
-	LogLevel        slog.Level
+	Addr        string
+	BaseURL     *url.URL
+	Environment string
+	LogLevel    slog.Level
+	// StaticDir serves /static/ from this directory instead of the embedded
+	// files, so CSS and JS edits show on reload. Development only.
+	StaticDir       string
 	Database        Database
 	SessionLifetime time.Duration
 
@@ -66,6 +69,7 @@ func (c *Config) LogValue() slog.Value {
 		slog.String("base_url", c.BaseURL.String()),
 		slog.String("environment", c.Environment),
 		slog.String("log_level", c.LogLevel.String()),
+		slog.String("static_dir", c.StaticDir),
 		slog.Duration("session_lifetime", c.SessionLifetime),
 		slog.Int64("github_installation_id", c.GitHubInstallationID),
 		slog.String("test_session_environments", strings.Join(c.TestSessionEnvironments, ",")),
@@ -94,6 +98,10 @@ func Load(getenv func(string) string) (*Config, error) {
 
 		TestSessionEnvironments: p.list("TEST_SESSION_ENVIRONMENTS"),
 		SyncInterval:            p.duration("SYNC_INTERVAL", 30*time.Second),
+	}
+
+	if c.StaticDir = p.str("STATIC_DIR", ""); c.StaticDir != "" && !c.IsDevelopment() {
+		p.fail("STATIC_DIR", errors.New("is only allowed with ENVIRONMENT=development"))
 	}
 
 	c.Mail.Mailer = p.str("MAIL_MAILER", "log")
