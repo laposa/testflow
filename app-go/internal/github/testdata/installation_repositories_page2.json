@@ -1,0 +1,17 @@
+{
+  "total_count": 3,
+  "repository_selection": "selected",
+  "repositories": [
+    {
+      "id": 1296271,
+      "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2Mjcx",
+      "name": "old-tests",
+      "full_name": "laposa/old-tests",
+      "private": true,
+      "owner": { "login": "laposa", "id": 1, "type": "Organization" },
+      "default_branch": "master",
+      "archived": true,
+      "visibility": "private"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "total_count": 2,
+  "jobs": [
+    {
+      "id": 399444496,
+      "run_id": 30433600,
+      "run_attempt": 2,
+      "node_id": "MDg6Q2hlY2tSdW4zOTk0NDQ0OTY=",
+      "head_sha": "acb5820ced9479c074f688cc328bf03f341a511d",
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-11-18T09:05:00Z",
+      "started_at": "2026-11-18T09:05:10Z",
+      "completed_at": "2026-11-18T09:08:00Z",
+      "name": "build",
+      "steps": [
+        { "name": "Set up job", "status": "completed", "conclusion": "success", "number": 1,
+          "started_at": "2026-11-18T09:05:10Z", "completed_at": "2026-11-18T09:05:12Z" }
+      ],
+      "labels": ["ubuntu-latest"]
+    },
+    {
+      "id": 399444497,
+      "run_id": 30433600,
+      "run_attempt": 2,
+      "node_id": "MDg6Q2hlY2tSdW4zOTk0NDQ0OTc=",
+      "head_sha": "acb5820ced9479c074f688cc328bf03f341a511d",
+      "status": "queued",
+      "conclusion": null,
+      "created_at": "2026-11-18T09:05:00Z",
+      "started_at": null,
+      "completed_at": null,
+      "name": "test",
+      "steps": [],
+      "labels": ["ubuntu-latest"]
+    }
+  ]
+}

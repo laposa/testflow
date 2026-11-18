@@ -1,0 +1,36 @@
+{
+  "total_count": 3,
+  "repository_selection": "selected",
+  "repositories": [
+    {
+      "id": 1296269,
+      "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2MjY5",
+      "name": "shop-tests",
+      "full_name": "laposa/shop-tests",
+      "private": true,
+      "owner": { "login": "laposa", "id": 1, "type": "Organization" },
+      "html_url": "https://github.com/laposa/shop-tests",
+      "default_branch": "master",
+      "archived": false,
+      "visibility": "private",
+      "pushed_at": "2026-11-10T08:21:44Z",
+      "created_at": "2024-01-26T19:01:12Z",
+      "updated_at": "2026-11-10T08:21:44Z"
+    },
+    {
+      "id": 1296270,
+      "node_id": "MDEwOlJlcG9zaXRvcnkxMjk2Mjcw",
+      "name": "app-tests",
+      "full_name": "laposa/app-tests",
+      "private": true,
+      "owner": { "login": "laposa", "id": 1, "type": "Organization" },
+      "html_url": "https://github.com/laposa/app-tests",
+      "default_branch": "main",
+      "archived": false,
+      "visibility": "private",
+      "pushed_at": "2026-11-12T10:00:00Z",
+      "created_at": "2024-02-01T09:00:00Z",
+      "updated_at": "2026-11-12T10:00:00Z"
+    }
+  ]
+}

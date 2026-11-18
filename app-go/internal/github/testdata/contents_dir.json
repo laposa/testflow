@@ -1,0 +1,34 @@
+[
+  {
+    "type": "dir",
+    "size": 0,
+    "name": "web",
+    "path": "tests/web",
+    "sha": "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
+    "url": "https://api.github.com/repos/laposa/shop-tests/contents/tests/web?ref=master",
+    "git_url": "https://api.github.com/repos/laposa/shop-tests/git/trees/a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
+    "html_url": "https://github.com/laposa/shop-tests/tree/master/tests/web",
+    "download_url": null,
+    "_links": {
+      "self": "https://api.github.com/repos/laposa/shop-tests/contents/tests/web?ref=master",
+      "git": "https://api.github.com/repos/laposa/shop-tests/git/trees/a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d",
+      "html": "https://github.com/laposa/shop-tests/tree/master/tests/web"
+    }
+  },
+  {
+    "type": "file",
+    "size": 625,
+    "name": "README.md",
+    "path": "tests/README.md",
+    "sha": "3d21ec53a331a6f037a91c368710b99387d012c1",
+    "url": "https://api.github.com/repos/laposa/shop-tests/contents/tests/README.md?ref=master",
+    "git_url": "https://api.github.com/repos/laposa/shop-tests/git/blobs/3d21ec53a331a6f037a91c368710b99387d012c1",
+    "html_url": "https://github.com/laposa/shop-tests/blob/master/tests/README.md",
+    "download_url": "https://raw.githubusercontent.com/laposa/shop-tests/master/tests/README.md",
+    "_links": {
+      "self": "https://api.github.com/repos/laposa/shop-tests/contents/tests/README.md?ref=master",
+      "git": "https://api.github.com/repos/laposa/shop-tests/git/blobs/3d21ec53a331a6f037a91c368710b99387d012c1",
+      "html": "https://github.com/laposa/shop-tests/blob/master/tests/README.md"
+    }
+  }
+]

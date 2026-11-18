@@ -1,0 +1,29 @@
+{
+  "total_count": 2,
+  "workflows": [
+    {
+      "id": 161335,
+      "node_id": "MDg6V29ya2Zsb3cxNjEzMzU=",
+      "name": "Run web tests",
+      "path": ".github/workflows/run-tests-web.yaml",
+      "state": "active",
+      "created_at": "2024-02-04T12:11:44.000Z",
+      "updated_at": "2026-10-20T08:55:12.000Z",
+      "url": "https://api.github.com/repos/laposa/shop-tests/actions/workflows/161335",
+      "html_url": "https://github.com/laposa/shop-tests/blob/master/.github/workflows/run-tests-web.yaml",
+      "badge_url": "https://github.com/laposa/shop-tests/workflows/Run%20web%20tests/badge.svg"
+    },
+    {
+      "id": 161336,
+      "node_id": "MDg6V29ya2Zsb3cxNjEzMzY=",
+      "name": "Run api tests",
+      "path": ".github/workflows/run-tests-api.yaml",
+      "state": "active",
+      "created_at": "2024-02-04T12:11:44.000Z",
+      "updated_at": "2026-10-20T08:55:12.000Z",
+      "url": "https://api.github.com/repos/laposa/shop-tests/actions/workflows/161336",
+      "html_url": "https://github.com/laposa/shop-tests/blob/master/.github/workflows/run-tests-api.yaml",
+      "badge_url": "https://github.com/laposa/shop-tests/workflows/Run%20api%20tests/badge.svg"
+    }
+  ]
+}

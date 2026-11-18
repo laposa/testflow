@@ -3,15 +3,30 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/laposa/testflow/app-go/internal/config"
 	"github.com/laposa/testflow/app-go/internal/db/dbtest"
 )
+
+// testKeyPEM is a real RSA key (serve parses it), generated once since
+// generation is slow.
+var testKeyPEM = sync.OnceValue(func() string {
+	k, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		panic(err)
+	}
+	return string(pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(k)}))
+})
 
 func testEnv(databaseURL string) map[string]string {
 	return map[string]string{
@@ -21,7 +36,7 @@ func testEnv(databaseURL string) map[string]string {
 		"GITHUB_CLIENT_ID":           "id",
 		"GITHUB_CLIENT_SECRET":       "secret",
 		"GITHUB_APP_INSTALLATION_ID": "1",
-		"GITHUB_PRIVATE_KEY":         "-----BEGIN RSA PRIVATE KEY-----\nZmFrZQ==\n-----END RSA PRIVATE KEY-----",
+		"GITHUB_PRIVATE_KEY":         testKeyPEM(),
 		"TEST_SESSION_ENVIRONMENTS":  "preprod",
 	}
 }
@@ -148,4 +163,15 @@ func loadConfig(t *testing.T, databaseURL string) *config.Config {
 		t.Fatal(err)
 	}
 	return cfg
+}
+
+// A PEM block that is not a usable RSA key passes config validation but stops
+// serve before it touches the database.
+func TestServeRejectsBadGitHubKey(t *testing.T) {
+	cfg := loadConfig(t, "postgres://unused@127.0.0.1:1/none")
+	cfg.GitHubPrivateKey = []byte("-----BEGIN RSA PRIVATE KEY-----\nZmFrZQ==\n-----END RSA PRIVATE KEY-----\n")
+	err := serve(t.Context(), cfg, newLogger(io.Discard, cfg.LogLevel, cfg.Environment), false, nil)
+	if err == nil || !strings.Contains(err.Error(), "github app key") {
+		t.Fatalf("serve err = %v, want a github app key error", err)
+	}
 }

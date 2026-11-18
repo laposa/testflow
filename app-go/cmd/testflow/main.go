@@ -21,6 +21,7 @@ import (
 	"github.com/laposa/testflow/app-go/internal/auth"
 	"github.com/laposa/testflow/app-go/internal/config"
 	"github.com/laposa/testflow/app-go/internal/db"
+	"github.com/laposa/testflow/app-go/internal/github"
 	"github.com/laposa/testflow/app-go/internal/store"
 	"github.com/laposa/testflow/app-go/internal/telemetry"
 	"github.com/laposa/testflow/app-go/internal/web"
@@ -162,6 +163,13 @@ func checkSchema(ctx context.Context, pool *pgxpool.Pool, logger *slog.Logger) e
 // serve runs the HTTP server until ctx is cancelled, then shuts down
 // gracefully. If ready is non-nil it receives the listening address.
 func serve(ctx context.Context, cfg *config.Config, logger *slog.Logger, migrate bool, ready chan<- string) error {
+	// The GitHub App client parses the private key, so a bad key stops the
+	// server here rather than on the first API call. Discovery (iteration 5)
+	// and the syncer (iteration 9) will use it.
+	if _, err := newGitHubClient(cfg, logger); err != nil {
+		return err
+	}
+
 	pool, err := db.Open(ctx, dbConfig(cfg.Database))
 	if err != nil {
 		return err
@@ -239,6 +247,15 @@ func serve(ctx context.Context, cfg *config.Config, logger *slog.Logger, migrate
 	}
 	logger.Info("server stopped")
 	return nil
+}
+
+func newGitHubClient(cfg *config.Config, logger *slog.Logger) (*github.Client, error) {
+	return github.New(github.Config{
+		ClientID:       cfg.GitHubClientID,
+		InstallationID: cfg.GitHubInstallationID,
+		PrivateKey:     cfg.GitHubPrivateKey,
+		Logger:         logger,
+	})
 }
 
 // cleanupSessions deletes expired web sessions every interval (spec §8.5).

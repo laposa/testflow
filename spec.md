@@ -499,6 +499,26 @@ Legacy: `resources/views/sessions/report.blade.php`.
   `expires_at`. API calls send `Accept: application/vnd.github+json` and
   `X-GitHub-Api-Version`, use a context with a timeout, and follow
   redirects for log and artifact downloads.
+  - The key (PKCS#1 as GitHub issues it, or PKCS#8) is parsed when `serve`
+    starts. A key that is not a usable RSA key stops startup.
+  - Timeouts: 30 s per API call, 5 min per log or artifact download. Downloads
+    and raw files are read into memory up to 100 MiB; anything larger is an
+    error.
+  - Redirects are followed (at most 10). The `Authorization` header is dropped
+    when the redirect leaves the API host, so signed storage URLs never get
+    the token.
+  - A 401 drops the cached token and retries the call once with a new one
+    (revoked token, clock skew).
+  - List endpoints are fetched with `per_page=100`, following the `Link`
+    header's `rel="next"` (at most 50 pages).
+  - The latest commit is read with `Accept: application/vnd.github.sha` (bare
+    SHA, no diff), raw files with `application/vnd.github.raw+json`. Workflow
+    runs can be filtered by `event`, `branch` and `created>=`, so the syncer
+    does not page through a workflow's whole history as legacy did.
+  - Repository names must be `owner/repo`, and file paths and refs may not
+    contain empty, `.` or `..` segments. Segments are URL-escaped.
+  - A 404 matches `github.ErrNotFound` (e.g. a repository without `tests/`).
+    Other non-2xx responses are a `*github.APIError` with GitHub's `message`.
 - **Authorization:** any authenticated user can see and act on all sessions (legacy
   parity). Restricting login to members of a GitHub org is open question Q5.
 - **Output:** Gomponents escapes all text. User and GitHub content is never inserted
