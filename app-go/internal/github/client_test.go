@@ -51,7 +51,7 @@ func (f *fakeAPI) handle(pattern string, h http.HandlerFunc) {
 			w.Write([]byte(`{"message":"Bad credentials"}`))
 			return
 		}
-		if r.Header.Get("X-GitHub-Api-Version") != apiVersion {
+		if r.Header.Get("X-GitHub-Api-Version") != APIVersion {
 			f.t.Errorf("%s: X-GitHub-Api-Version = %q", pattern, r.Header.Get("X-GitHub-Api-Version"))
 		}
 		h(w, r)
@@ -439,5 +439,17 @@ func TestHasNextPage(t *testing.T) {
 		if got := hasNextPage(link); got != want {
 			t.Errorf("hasNextPage(%q) = %v", link, got)
 		}
+	}
+}
+
+// A list response without the expected key is an error, not an empty list.
+func TestListMissingKeyIsError(t *testing.T) {
+	f := newFakeAPI(t)
+	f.handle("GET /repos/laposa/shop-tests/actions/workflows", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`{"total_count":0,"items":[]}`))
+	})
+	_, err := f.client.Workflows(context.Background(), "laposa/shop-tests")
+	if err == nil || !strings.Contains(err.Error(), `response has no "workflows"`) {
+		t.Fatalf("err = %v", err)
 	}
 }

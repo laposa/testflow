@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"sync"
 	"time"
 )
 
@@ -78,9 +77,9 @@ func AppJWT(clientID string, key *rsa.PrivateKey, now time.Time) (string, error)
 }
 
 // installationTokens exchanges the app JWT for an installation access token
-// and caches it in memory under a mutex (spec §3, §9). Callers that arrive
-// while a refresh is running wait for it, so at most one exchange is in
-// flight.
+// and caches it in memory (spec §3, §9). Callers that arrive while a refresh
+// is running wait for it, so at most one exchange is in flight; a waiter
+// gives up when its own context ends.
 type installationTokens struct {
 	clientID       string
 	installationID int64
@@ -88,16 +87,36 @@ type installationTokens struct {
 	client         *Client // sends the exchange request (without a token)
 	now            func() time.Time
 
-	mu      sync.Mutex
+	// lock is a one-slot semaphore guarding token and expires. Unlike a
+	// sync.Mutex, acquiring it can be abandoned when ctx is done.
+	lock    chan struct{}
 	token   string
 	expires time.Time
 }
 
+func newInstallationTokens(clientID string, installationID int64, key *rsa.PrivateKey, client *Client, now func() time.Time) *installationTokens {
+	return &installationTokens{
+		clientID:       clientID,
+		installationID: installationID,
+		key:            key,
+		client:         client,
+		now:            now,
+		lock:           make(chan struct{}, 1),
+	}
+}
+
 // Token returns a cached installation token, fetching a new one when none is
 // cached or the cached one expires within tokenRefreshBefore.
+//
+// Errors are not wrapped with %w: a 404 here means the installation is wrong
+// or gone, and must not look like ErrNotFound to the caller of, say, Dir.
 func (s *installationTokens) Token(ctx context.Context) (string, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	select {
+	case s.lock <- struct{}{}:
+	case <-ctx.Done():
+		return "", fmt.Errorf("installation token: %w", context.Cause(ctx))
+	}
+	defer func() { <-s.lock }()
 	now := s.now()
 	if s.token != "" && now.Before(s.expires.Add(-tokenRefreshBefore)) {
 		return s.token, nil
@@ -113,7 +132,7 @@ func (s *installationTokens) Token(ctx context.Context) (string, error) {
 	path := "/app/installations/" + strconv.FormatInt(s.installationID, 10) + "/access_tokens"
 	err = s.client.do(ctx, request{method: http.MethodPost, path: path, bearer: jwt}, decodeJSON(&body))
 	if err != nil {
-		return "", fmt.Errorf("installation token: %w", err)
+		return "", fmt.Errorf("installation token: %v", err)
 	}
 	if body.Token == "" || body.ExpiresAt.IsZero() {
 		return "", errors.New("installation token: response has no token or expires_at")
@@ -125,8 +144,8 @@ func (s *installationTokens) Token(ctx context.Context) (string, error) {
 // invalidate drops token from the cache if it is still the cached one, e.g.
 // after GitHub answered 401 for it (revoked, or the clocks disagree).
 func (s *installationTokens) invalidate(token string) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	s.lock <- struct{}{}
+	defer func() { <-s.lock }()
 	if s.token == token {
 		s.token, s.expires = "", time.Time{}
 	}

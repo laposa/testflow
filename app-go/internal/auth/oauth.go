@@ -16,21 +16,19 @@ import (
 	"strings"
 	"time"
 
+	"github.com/laposa/testflow/app-go/internal/github"
 	"github.com/laposa/testflow/app-go/internal/store"
 )
 
 // Scope is the OAuth scope requested from GitHub (spec §9).
 const Scope = "read:user user:email"
 
-// GitHub's OAuth web-flow and REST endpoints.
+// GitHub's OAuth web-flow endpoints. The REST API URL and version come from
+// package github.
 const (
 	DefaultAuthURL  = "https://github.com/login/oauth/authorize"
 	DefaultTokenURL = "https://github.com/login/oauth/access_token"
-	DefaultAPIURL   = "https://api.github.com"
 )
-
-// apiVersion is sent as X-GitHub-Api-Version.
-const apiVersion = "2022-11-28"
 
 // requestTimeout bounds each call to GitHub.
 const requestTimeout = 10 * time.Second
@@ -145,13 +143,13 @@ func (o *GitHubOAuth) user(ctx context.Context, token string) (store.GitHubUser,
 func (o *GitHubOAuth) api(ctx context.Context, token, path string, v any) error {
 	ctx, cancel := context.WithTimeout(ctx, requestTimeout)
 	defer cancel()
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, or(o.APIURL, DefaultAPIURL)+path, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, or(o.APIURL, github.DefaultAPIURL)+path, nil)
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Accept", "application/vnd.github+json")
-	req.Header.Set("X-GitHub-Api-Version", apiVersion)
+	req.Header.Set("X-GitHub-Api-Version", github.APIVersion)
 	if err := o.do(req, v); err != nil {
 		return fmt.Errorf("GET %s: %w", path, err)
 	}

@@ -25,8 +25,9 @@ import (
 // DefaultAPIURL is GitHub's REST API.
 const DefaultAPIURL = "https://api.github.com"
 
-// apiVersion is sent as X-GitHub-Api-Version.
-const apiVersion = "2022-11-28"
+// APIVersion is sent as X-GitHub-Api-Version. internal/auth uses it too, so
+// OAuth and App calls stay on the same version.
+const APIVersion = "2022-11-28"
 
 // Defaults for Config.
 const (
@@ -139,13 +140,7 @@ func New(c Config) (*Client, error) {
 	if now == nil {
 		now = time.Now
 	}
-	cl.tokens = &installationTokens{
-		clientID:       c.ClientID,
-		installationID: c.InstallationID,
-		key:            key,
-		client:         cl,
-		now:            now,
-	}
+	cl.tokens = newInstallationTokens(c.ClientID, c.InstallationID, key, cl, now)
 	return cl, nil
 }
 
@@ -224,7 +219,7 @@ func (c *Client) send(ctx context.Context, timeout time.Duration, r request, bod
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Accept", orDefault(r.accept, "application/vnd.github+json"))
-	req.Header.Set("X-GitHub-Api-Version", apiVersion)
+	req.Header.Set("X-GitHub-Api-Version", APIVersion)
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
@@ -315,11 +310,13 @@ func listAll[T any](ctx context.Context, c *Client, path string, query url.Value
 		if err != nil {
 			return nil, err
 		}
+		v, ok := raw[key]
+		if !ok {
+			return nil, fmt.Errorf("github: GET %s: response has no %q", path, key)
+		}
 		var items []T
-		if v, ok := raw[key]; ok {
-			if err := json.Unmarshal(v, &items); err != nil {
-				return nil, fmt.Errorf("github: GET %s: decode %s: %w", path, key, err)
-			}
+		if err := json.Unmarshal(v, &items); err != nil {
+			return nil, fmt.Errorf("github: GET %s: decode %s: %w", path, key, err)
 		}
 		all = append(all, items...)
 		if !next || len(items) == 0 {

@@ -12,6 +12,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -282,5 +283,55 @@ func TestNewValidates(t *testing.T) {
 		if _, err := New(cfg); err == nil {
 			t.Errorf("%s: New succeeded", name)
 		}
+	}
+}
+
+// A 404 from the token exchange (wrong or removed installation) must not
+// look like a missing file or directory to the caller.
+func TestInstallationTokenNotFoundIsNotErrNotFound(t *testing.T) {
+	srv := httptest.NewServer(http.NotFoundHandler()) // every exchange is a 404
+	defer srv.Close()
+	_, err := newTestClient(t, srv, nil).Dir(context.Background(), "laposa/shop-tests", "tests", "")
+	if err == nil || !strings.Contains(err.Error(), "installation token") || !strings.Contains(err.Error(), "status 404") {
+		t.Fatalf("err = %v", err)
+	}
+	if errors.Is(err, ErrNotFound) {
+		t.Error("token 404 matches ErrNotFound")
+	}
+}
+
+// A caller waiting for another caller's refresh gives up when its own
+// context ends.
+func TestInstallationTokenWaiterHonoursContext(t *testing.T) {
+	release := make(chan struct{})
+	started := make(chan struct{})
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		close(started)
+		<-release
+		w.WriteHeader(http.StatusCreated)
+		fmt.Fprintf(w, `{"token":"tok-1","expires_at":%q}`, time.Now().Add(time.Hour).UTC().Format(time.RFC3339))
+	}))
+	defer srv.Close()
+	c := newTestClient(t, srv, nil)
+
+	first := make(chan error, 1)
+	go func() {
+		_, err := c.tokens.Token(context.Background())
+		first <- err
+	}()
+	<-started
+
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancel()
+	if _, err := c.tokens.Token(ctx); !errors.Is(err, context.DeadlineExceeded) {
+		t.Errorf("waiter err = %v, want DeadlineExceeded", err)
+	}
+
+	close(release)
+	if err := <-first; err != nil {
+		t.Fatalf("first caller: %v", err)
+	}
+	if tok, err := c.tokens.Token(context.Background()); err != nil || tok != "tok-1" {
+		t.Errorf("after refresh: %q, %v", tok, err)
 	}
 }
