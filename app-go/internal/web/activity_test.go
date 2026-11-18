@@ -21,6 +21,7 @@ type fakeActivity struct {
 	sessions *fakeTestSessions
 	entries  map[int64][]store.Activity // newest first
 	added    []store.Activity
+	userIDs  []int64 // who added each comment
 	err      error
 }
 
@@ -39,7 +40,8 @@ func (f *fakeActivity) AddComment(_ context.Context, sessionID, userID int64, bo
 	if _, ok := f.sessions.sessions[sessionID]; !ok {
 		return store.ErrNotFound
 	}
-	a := store.Activity{ID: int64(len(f.added) + 100), UserID: userID, UserName: "Ada",
+	f.userIDs = append(f.userIDs, userID)
+	a := store.Activity{ID: int64(len(f.added) + 100), UserName: "Ada",
 		Type: store.ActivityComment, Body: body, CreatedAt: time.Now()}
 	f.added = append(f.added, a)
 	f.entries[sessionID] = append([]store.Activity{a}, f.entries[sessionID]...)
@@ -53,9 +55,9 @@ func activityEnv(t *testing.T) (*testEnv, *http.Cookie) {
 	e.testSessions.sessions[3] = store.TestSession{ID: 3, IssuerName: "Ada", Name: "Release", Environment: "beta",
 		CreatedAt: time.Now().Add(-3 * time.Hour)}
 	e.activity.entries[3] = []store.Activity{
-		{ID: 2, UserID: 2, UserName: "Bob <B>", Type: store.ActivityComment, Body: "Line one\n<script>x</script>",
+		{ID: 2, UserName: "Bob <B>", Type: store.ActivityComment, Body: "Line one\n<script>x</script>",
 			CreatedAt: time.Now().Add(-5 * time.Minute)},
-		{ID: 1, UserID: 1, UserName: "Ada", Type: store.ActivitySessionCreated, Body: "Ada created the session.",
+		{ID: 1, UserName: "Ada", Type: store.ActivitySessionCreated, Body: "Ada created the session.",
 			CreatedAt: time.Now().Add(-3 * time.Hour)},
 	}
 	return e, cookie
@@ -75,11 +77,15 @@ func TestSessionPageActivity(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d", rec.Code)
 	}
+	if got := rec.Header().Get("Vary"); got != "HX-Request" {
+		t.Errorf("Vary = %q: the page and the htmx fragment share the URL", got)
+	}
 	body := rec.Body.String()
 	for _, want := range []string{
 		`<section id="activity" class="activity">`,
 		`<form method="post" action="/sessions/3/comments" class="create-comment" hx-post="/sessions/3/comments" hx-target="#activity" hx-swap="outerHTML" hx-sync="this:drop">`,
 		`<label for="comment-body">Add a comment</label>`,
+		`<div id="comment-errors" class="field-error" role="alert"></div>`,
 		`<div class="activity-feed-item activity-feed--comment">`,
 		`<strong>Bob &lt;B&gt;</strong> commented`,
 		"Line one\n&lt;script&gt;x&lt;/script&gt;",
@@ -105,7 +111,7 @@ func TestAddComment(t *testing.T) {
 	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/sessions/3#activity" {
 		t.Fatalf("POST = %d %q, want redirect to the session", rec.Code, rec.Header().Get("Location"))
 	}
-	if len(e.activity.added) != 1 || e.activity.added[0].Body != "Looks good" || e.activity.added[0].UserID != 1 {
+	if len(e.activity.added) != 1 || e.activity.added[0].Body != "Looks good" || e.activity.userIDs[0] != 1 {
 		t.Errorf("added = %+v, want the trimmed body by the signed-in user", e.activity.added)
 	}
 
@@ -179,4 +185,25 @@ func TestAddCommentErrors(t *testing.T) {
 	if rec := get(e.h, "/sessions/3", cookie); rec.Code != http.StatusInternalServerError {
 		t.Errorf("store error on read = %d, want 500", rec.Code)
 	}
+}
+
+func TestAddCommentHTMXErrors(t *testing.T) {
+	e, cookie := activityEnv(t)
+	check := func(name string, rec *httptest.ResponseRecorder, status int, msg string) {
+		t.Helper()
+		if rec.Code != status {
+			t.Errorf("%s: status = %d, want %d", name, rec.Code, status)
+		}
+		if rec.Header().Get("HX-Retarget") != "#comment-errors" || rec.Header().Get("HX-Reswap") != "innerHTML" {
+			t.Errorf("%s: want the message retargeted into the form's error area, headers %v", name, rec.Header())
+		}
+		if got := rec.Body.String(); got != "<p>"+msg+"</p>" {
+			t.Errorf("%s: body = %q", name, got)
+		}
+	}
+	check("missing session", postHTMX(e, "/sessions/4/comments", url.Values{"body": {"Hello there"}}, cookie),
+		http.StatusNotFound, msgSessionGone)
+	e.activity.err = errors.New("db down")
+	check("store error", postHTMX(e, "/sessions/3/comments", url.Values{"body": {"Hello there"}}, cookie),
+		http.StatusInternalServerError, msgActivityFailed)
 }

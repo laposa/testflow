@@ -513,7 +513,13 @@ is left to `tests-validator`.
   re-renders with HTTP 422, keeping the text. On success an htmx request gets
   the activity block back with an empty form, and a normal request is
   redirected to `/sessions/{id}#activity`. `hx-sync="this:drop"` ignores a
-  second submit while one is in flight. A missing session is a 404. Legacy's
+  second submit while one is in flight. A missing session is a 404.
+  htmx 4 swaps error responses too, so for an htmx request a 404 or 500 sends
+  `HX-Retarget: #comment-errors` and `HX-Reswap: innerHTML` with a short
+  message ("This session does not exist any more." / "Something went wrong.
+  Please reload the page."), instead of the plain error page replacing the
+  activity block; the typed comment stays in the form. Responses that depend
+  on `HX-Request` send `Vary: HX-Request`. Legacy's
   "Comment created" flash message was never displayed and is not ported.
 - **Request review:** the reviewer is chosen from users who have no pending request
   on this session. Creates `review_requests` (pending), emails the reviewer (§8.10),

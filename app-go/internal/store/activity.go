@@ -57,7 +57,6 @@ func insertActivity(ctx context.Context, db DB, a NewActivity) error {
 // Activity is an activity_log row with its user's name.
 type Activity struct {
 	ID        int64
-	UserID    int64  // 0 for the system
 	UserName  string // "" for the system
 	Type      ActivityType
 	Body      string // plain text (D13)
@@ -69,7 +68,7 @@ type Activity struct {
 // id decides.
 func (s *Store) SessionActivity(ctx context.Context, sessionID int64) ([]Activity, error) {
 	rows, err := s.db.Query(ctx, `
-		SELECT a.id, COALESCE(a.user_id, 0), COALESCE(u.name, ''), a.type, a.body, a.created_at
+		SELECT a.id, COALESCE(u.name, ''), a.type, a.body, a.created_at
 		FROM activity_log a
 		LEFT JOIN users u ON u.id = a.user_id
 		WHERE a.session_id = $1
@@ -79,7 +78,7 @@ func (s *Store) SessionActivity(ctx context.Context, sessionID int64) ([]Activit
 	}
 	list, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (Activity, error) {
 		var a Activity
-		err := row.Scan(&a.ID, &a.UserID, &a.UserName, &a.Type, &a.Body, &a.CreatedAt)
+		err := row.Scan(&a.ID, &a.UserName, &a.Type, &a.Body, &a.CreatedAt)
 		return a, err
 	})
 	if err != nil {

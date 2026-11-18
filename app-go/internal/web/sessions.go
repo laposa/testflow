@@ -51,8 +51,11 @@ const (
 	msgSnapshotGone    = "The test list has expired. Please check your selection and create the session again."
 	msgTestsUnusable   = "Some selected tests are not available any more. Please check your selection."
 	msgCommentTooShort = "The comment must be at least 5 characters."
-	msgDiscoveryError  = "Could not load the tests from GitHub. Please try again."
-	msgDiscoveryStale  = "Could not load the tests from GitHub, so this is the last list that loaded and it may be outdated. Please try again."
+	msgSessionGone     = "This session does not exist any more."
+	// Not "try again": the comment may have been saved before the failure.
+	msgActivityFailed = "Something went wrong. Please reload the page."
+	msgDiscoveryError = "Could not load the tests from GitHub. Please try again."
+	msgDiscoveryStale = "Could not load the tests from GitHub, so this is the last list that loaded and it may be outdated. Please try again."
 )
 
 // listSessions renders the session list (spec §8.3; legacy:
@@ -234,13 +237,8 @@ func (s *server) addComment(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	u, _ := auth.UserFrom(ctx)
-	err := s.Activity.AddComment(ctx, id, u.ID, av.Comment)
-	if errors.Is(err, store.ErrNotFound) {
-		http.NotFound(w, r)
-		return
-	}
-	if err != nil {
-		s.serverError(w, r, "add comment", err)
+	if err := s.Activity.AddComment(ctx, id, u.ID, av.Comment); err != nil {
+		s.activityError(w, r, "add comment", err)
 		return
 	}
 	s.Logger.InfoContext(ctx, "comment added", "session.id", id)
@@ -258,24 +256,42 @@ func (s *server) addComment(w http.ResponseWriter, r *http.Request) {
 func (s *server) renderActivity(w http.ResponseWriter, r *http.Request, status int, av views.ActivityView) {
 	ctx := r.Context()
 	ts, err := s.TestSessions.TestSession(ctx, av.SessionID)
-	if errors.Is(err, store.ErrNotFound) {
-		http.NotFound(w, r)
-		return
-	}
 	if err != nil {
-		s.serverError(w, r, "load test session", err)
+		s.activityError(w, r, "load test session", err)
 		return
 	}
 	if av.Entries, err = s.Activity.SessionActivity(ctx, av.SessionID); err != nil {
-		s.serverError(w, r, "load session activity", err)
+		s.activityError(w, r, "load session activity", err)
 		return
 	}
 	av.Now = time.Now()
+	// The same URL answers with the full page or the fragment.
+	w.Header().Add("Vary", "HX-Request")
 	if isHTMX(r) {
 		s.render(w, r, status, views.Activity(av))
 		return
 	}
 	s.render(w, r, status, views.SessionPage(s.page(r, ts.Name), ts, av))
+}
+
+// activityError answers a failed session page or comment request:
+// ErrNotFound is a 404, anything else a logged 500. htmx 4 swaps error
+// responses too, so an htmx request gets a short message in the comment
+// form's error area instead of the plain error page replacing the whole
+// activity block; the typed comment stays in the form.
+func (s *server) activityError(w http.ResponseWriter, r *http.Request, what string, err error) {
+	status, msg := http.StatusNotFound, msgSessionGone
+	if !errors.Is(err, store.ErrNotFound) {
+		status, msg = http.StatusInternalServerError, msgActivityFailed
+		s.Logger.ErrorContext(r.Context(), what+" failed", "err", err)
+	}
+	if !isHTMX(r) {
+		http.Error(w, http.StatusText(status), status)
+		return
+	}
+	w.Header().Set("HX-Retarget", "#"+views.CommentErrorsID)
+	w.Header().Set("HX-Reswap", "innerHTML")
+	s.render(w, r, status, views.ErrorText(msg))
 }
 
 // sessionID parses the {id} path value. An invalid id is a 404, written to w.

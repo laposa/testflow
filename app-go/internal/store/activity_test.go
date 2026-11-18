@@ -51,10 +51,10 @@ func TestSessionActivityAndComments(t *testing.T) {
 	if len(got) != 4 {
 		t.Fatalf("activity = %+v", got)
 	}
-	if sys := got[0]; sys.Type != store.ActivityRunStatusChanged || sys.UserID != 0 || sys.UserName != "" {
+	if sys := got[0]; sys.Type != store.ActivityRunStatusChanged || sys.UserName != "" {
 		t.Errorf("system entry = %+v", sys)
 	}
-	if c := got[1]; c.Type != store.ActivityComment || c.UserID != ada.ID || c.UserName != "Ada" || c.Body != "Thanks,\nmerging" || c.CreatedAt.IsZero() {
+	if c := got[1]; c.Type != store.ActivityComment || c.UserName != "Ada" || c.Body != "Thanks,\nmerging" || c.CreatedAt.IsZero() {
 		t.Errorf("newest comment = %+v", c)
 	}
 	if c := got[2]; c.UserName != "Bob" || c.Body != "Looks good to me" {

@@ -21,8 +21,15 @@ type ActivityView struct {
 }
 
 // ActivityID is the id of the activity block, which htmx replaces after a
-// comment is posted.
-const ActivityID = "activity"
+// comment is posted. CommentErrorsID is the comment form's error area,
+// always present so that a failed htmx request can put a message there.
+const (
+	ActivityID      = "activity"
+	CommentErrorsID = "comment-errors"
+)
+
+// ErrorText is a message for an error area, e.g. CommentErrorsID.
+func ErrorText(msg string) g.Node { return h.P(g.Text(msg)) }
 
 // Activity ports livewire/activity/activity-list.blade.php and
 // livewire/comments/create-comment.blade.php. The form is a normal POST
@@ -36,12 +43,10 @@ func Activity(a ActivityView) g.Node {
 			h.Div(h.Class("form-group"),
 				h.Label(h.For("comment-body"), g.Text("Add a comment")),
 				h.Textarea(h.ID("comment-body"), h.Name("body"), h.Rows("10"), h.Required(),
-					g.If(len(a.Errors) > 0, g.Group{g.Attr("aria-invalid", "true"), g.Attr("aria-describedby", "comment-errors")}),
+					g.If(len(a.Errors) > 0, g.Group{g.Attr("aria-invalid", "true"), g.Attr("aria-describedby", CommentErrorsID)}),
 					g.Text(a.Comment)),
-				g.If(len(a.Errors) > 0,
-					h.Div(h.ID("comment-errors"), h.Class("field-error"), h.Role("alert"),
-						g.Map(a.Errors, func(e string) g.Node { return h.P(g.Text(e)) }),
-					),
+				h.Div(h.ID(CommentErrorsID), h.Class("field-error"), h.Role("alert"),
+					g.Map(a.Errors, ErrorText),
 				),
 			),
 			h.Button(h.Type("submit"), h.Class("button filled"), g.Text("Save")),
