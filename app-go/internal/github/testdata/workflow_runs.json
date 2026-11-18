@@ -1,0 +1,43 @@
+{
+  "total_count": 2,
+  "workflow_runs": [
+    {
+      "id": 30433642,
+      "name": "Run web tests",
+      "node_id": "MDEyOldvcmtmbG93IFJ1bjI2OTI4OQ==",
+      "head_branch": "master",
+      "head_sha": "acb5820ced9479c074f688cc328bf03f341a511d",
+      "path": ".github/workflows/run-tests-web.yaml",
+      "run_number": 562,
+      "run_attempt": 1,
+      "event": "workflow_dispatch",
+      "status": "in_progress",
+      "conclusion": null,
+      "workflow_id": 161335,
+      "html_url": "https://github.com/laposa/shop-tests/actions/runs/30433642",
+      "created_at": "2026-11-18T10:15:03Z",
+      "updated_at": "2026-11-18T10:16:40Z",
+      "run_started_at": "2026-11-18T10:15:03Z",
+      "actor": { "login": "testflow-app[bot]", "id": 99, "type": "Bot" }
+    },
+    {
+      "id": 30433600,
+      "name": "Run web tests",
+      "node_id": "MDEyOldvcmtmbG93IFJ1bjI2OTI4OA==",
+      "head_branch": "master",
+      "head_sha": "acb5820ced9479c074f688cc328bf03f341a511d",
+      "path": ".github/workflows/run-tests-web.yaml",
+      "run_number": 561,
+      "run_attempt": 2,
+      "event": "workflow_dispatch",
+      "status": "completed",
+      "conclusion": "failure",
+      "workflow_id": 161335,
+      "html_url": "https://github.com/laposa/shop-tests/actions/runs/30433600",
+      "created_at": "2026-11-18T09:00:00Z",
+      "updated_at": "2026-11-18T09:12:31Z",
+      "run_started_at": "2026-11-18T09:05:00Z",
+      "actor": { "login": "testflow-app[bot]", "id": 99, "type": "Bot" }
+    }
+  ]
+}
