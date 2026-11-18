@@ -95,7 +95,8 @@ func NewHandler(o Options) (http.Handler, error) {
 
 	// Everything else requires a signed-in user.
 	private := func(pattern string, h http.HandlerFunc) { mux.Handle(pattern, o.Sessions.Require(h)) }
-	private("GET /{$}", s.home)
+	private("GET /{$}", s.listSessions)
+	private("GET /sessions", s.listSessions)
 	private("GET /sessions/new", s.newSession)
 	private("POST /sessions", s.createSession)
 	private("GET /sessions/{id}", s.showSession)
@@ -177,10 +178,6 @@ func (s *server) render(w http.ResponseWriter, r *http.Request, status int, n g.
 	if err := n.Render(w); err != nil {
 		s.Logger.ErrorContext(r.Context(), "render failed", "err", err)
 	}
-}
-
-func (s *server) home(w http.ResponseWriter, r *http.Request) {
-	s.render(w, r, http.StatusOK, views.HomePage(s.page(r, "")))
 }
 
 // healthz reports liveness and, once configured, database reachability.

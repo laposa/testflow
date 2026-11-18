@@ -115,7 +115,8 @@ internal/telemetry/      slog handler (OTel field names), trace context, HTTP mi
 internal/db/             pgxpool setup, migration runner
 internal/db/migrations/  0001_init.sql, ... (embedded)
 internal/db/dbtest/      test harness: isolated schema per test (§13)
-internal/store/          SQL queries, one file per aggregate (users.go, sessions.go, ...)
+internal/store/          SQL queries, one file per aggregate (users.go, test_sessions.go,
+                         activity.go: activity log writes and types, ...)
 internal/github/         App JWT, installation token cache, REST client
 internal/auth/           OAuth login flow, web sessions, middleware
 internal/auth/authtest/  in-memory user/session store for tests without Postgres
@@ -123,7 +124,6 @@ internal/testcase/       manual test-case model, YAML parsing, file-name check
 internal/junit/          JUnit XML parsing and test-name matching
 internal/discovery/      repository → service/suite/test tree
 internal/runs/           dispatch automated runs, manual run lifecycle, syncer
-internal/activity/       activity log writes and types
 internal/mail/           SMTP and log mailers
 internal/web/            handlers, routes, middleware
 internal/web/views/      Gomponents layouts, components, pages
@@ -329,8 +329,10 @@ timeout is hit), the picker falls back to the last successful result while its
 snapshot is still retained (see below), with a warning above the tree that the
 discovery failed and the list may be outdated (HTTP 200); it can still be
 submitted. Without such a result it shows a fixed error and a retry link (HTTP
-502). A failed discovery is never cached, so the next request tries again. If one repository fails (other than the skips above),
-it is left out and named in a warning above the tree. If only its workflows fail,
+502). A failed discovery is never cached, so the next request tries again.
+
+If one repository fails (other than the skips above), it is left out and named
+in a warning above the tree. If only its workflows fail,
 its tree is kept without workflow ids and the warning says its automated tests
 cannot be selected.
 
@@ -373,6 +375,22 @@ Legacy: `SessionController::index`, `Session::lastRuns`.
 Ordered by id, newest first. For each session, only the **latest run per service**
 is aggregated. If a run has `passed>0 || failed>0 || status=='success'`, its counts
 are added to passed/failed/skipped. Otherwise the session shows as *running*.
+
+- Served on `GET /` and `GET /sessions`: the "All Sessions" heading with a "New
+  session" button, then a table with the columns Name (links to the session),
+  Status, Environment (capitalised), Created and Issuer. All sessions are
+  listed, without paging (legacy parity). Sessions, issuers and latest runs come
+  from one query (`store.ListTestSessions`).
+- Status is "No runs yet" without runs. While running, it shows the raw status of
+  the newest latest run that has no results (legacy showed the first latest
+  run's status, which could be a finished one). Otherwise it shows the totals
+  with `PassedFailed`: "3 passed, 1 failed and 2 skipped", leaving out zero
+  counts, or "None" if all are zero. Legacy printed "3 passed and and 2 skipped"
+  when only failed was zero; this is fixed.
+- Created is shown as "2 Jan 2006 15:04" in a `<time>` element, as on the session
+  page. Legacy's `d M, Y h:m` showed the month where the minutes belong.
+- The legacy filter bar (search, date, environment and issuer) is not ported: its
+  inputs were never wired up, and making them work would be a new feature.
 
 ### 8.4 Automated runs
 Legacy: `app/Actions/Github/DispatchSessionRun.php`, `FetchSessionWorkflowRuns.php`.
