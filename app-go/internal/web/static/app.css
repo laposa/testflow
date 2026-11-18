@@ -256,8 +256,28 @@ ul {
 }
 
 .checkbox {
+    /* Visually hidden but still focusable, so the tree works with a keyboard. */
     & input[type='checkbox'] {
-        display: none;
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        margin: 0;
+    }
+
+    & input:focus-visible + .checkmark {
+        outline: 2px solid var(--primary-opaque);
+        outline-offset: 2px;
+    }
+
+    & input:disabled + .checkmark {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    & input:indeterminate + .checkmark:before {
+        width: 50%;
+        height: 2px;
     }
 
     & .checkmark {
@@ -435,6 +455,166 @@ header {
     .login__error {
         color: var(--error);
         font-weight: 600;
+    }
+}
+
+/* ---- errors (legacy: components/error-list.css) ---- */
+
+.error-list {
+    background-color: var(--danger);
+    color: white;
+    padding: 8px 12px;
+    margin-bottom: 1rem;
+
+    ul {
+        margin: 0;
+    }
+}
+
+/* ---- new session (legacy: livewire/sessions/create-session.blade.php,
+ * components/test-suites/list-interactive.css). Each tree level is a
+ * <details>, so expanding needs no JS (D17). ---- */
+
+.new-session .information {
+    display: flex;
+    gap: 1rem;
+
+    input[type='text'] {
+        width: 60%;
+    }
+}
+
+.test-picker__header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.test-picker__problems {
+    margin-bottom: 1rem;
+}
+
+.list-interactive {
+    display: flex;
+    flex-direction: column;
+    row-gap: 10px;
+
+    .test,
+    .title {
+        display: flex;
+        align-items: center;
+        column-gap: 10px;
+    }
+
+    .title {
+        padding-right: 15px;
+        color: var(--body);
+        text-decoration: none;
+        list-style: none;
+        transition: 0.5s ease;
+
+        &::-webkit-details-marker {
+            display: none;
+        }
+    }
+
+    .test {
+        margin-bottom: 2px;
+    }
+
+    .list-repository {
+        padding-left: 0;
+        box-shadow: 0px 0px 5px 0px rgba(0, 0, 0, 0.1);
+        margin-bottom: 10px;
+        overflow: hidden;
+
+        .list,
+        .list-test {
+            padding-left: 30px;
+            position: relative;
+        }
+
+        > .list {
+            padding-left: 45px;
+        }
+
+        > .title {
+            padding: 15px;
+        }
+
+        &[open] {
+            box-shadow: 0px 0px 10px 5px rgba(95, 158, 160, 0.2);
+
+            > .title {
+                background-color: var(--primary);
+                color: white;
+                margin-bottom: 10px;
+
+                .checkmark {
+                    border: 2px solid white;
+                }
+            }
+        }
+    }
+
+    .expand:after {
+        opacity: 0;
+        margin-left: 10px;
+        content: '▼';
+        transition: 0.3s ease;
+    }
+
+    .title:hover .expand:after {
+        opacity: 1;
+    }
+
+    .list[open] {
+        padding-bottom: 10px;
+
+        > .title .expand:after {
+            content: '▲';
+        }
+    }
+
+    .list:not(.list-repository)[open] {
+        margin-bottom: 10px;
+        padding-top: 10px;
+    }
+
+    .list-suite[open] .list-test {
+        padding-top: 10px;
+    }
+}
+
+/* ---- session detail (legacy: components/sessions/detail.css) ---- */
+
+.session-environment {
+    position: absolute;
+    top: 7px;
+    right: 20px;
+    font-size: 14px;
+
+    span {
+        font-weight: bold;
+    }
+}
+
+.session-meta {
+    color: var(--gray);
+}
+
+.session-selected-suites {
+    margin-top: 1rem;
+
+    ul {
+        padding-left: 20px;
+        list-style: disc;
+        margin-bottom: 20px;
+
+        li::marker {
+            color: var(--primary);
+        }
     }
 }
 

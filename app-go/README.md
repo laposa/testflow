@@ -91,5 +91,7 @@ parses the environment, `internal/telemetry` writes OTel-shaped JSON logs, `inte
 Postgres pool and runs the migrations in `internal/db/migrations`,
 `internal/store` holds the SQL queries,
 `internal/auth` the GitHub OAuth login, web sessions and auth middleware,
+`internal/github` the GitHub App REST client, `internal/discovery` the test
+discovery behind the test picker,
 `internal/web` holds routes and handlers, `internal/web/views` the Gomponents
 components, and `internal/web/static` the embedded CSS, fonts and htmx.
