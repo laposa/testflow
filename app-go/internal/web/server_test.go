@@ -40,9 +40,11 @@ func (f fakeOAuth) Authenticate(_ context.Context, code string) (store.GitHubUse
 
 // testEnv is a handler with in-memory users and sessions.
 type testEnv struct {
-	h     http.Handler
-	logs  *bytes.Buffer
-	store *authtest.Store
+	h            http.Handler
+	logs         *bytes.Buffer
+	store        *authtest.Store
+	discovery    *fakeDiscovery    // set unless Options.Discovery was given
+	testSessions *fakeTestSessions // set unless Options.TestSessions was given
 }
 
 func newEnv(t *testing.T, o Options) *testEnv {
@@ -62,11 +64,24 @@ func newEnv(t *testing.T, o Options) *testEnv {
 	if o.Users == nil {
 		o.Users = st
 	}
+	e := &testEnv{logs: &logs, store: st}
+	if o.Discovery == nil {
+		e.discovery = &fakeDiscovery{res: sampleTests()}
+		o.Discovery = e.discovery
+	}
+	if o.TestSessions == nil {
+		e.testSessions = newFakeTestSessions(st)
+		o.TestSessions = e.testSessions
+	}
+	if o.Environments == nil {
+		o.Environments = []string{"preprod", "beta", "prod"}
+	}
 	h, err := NewHandler(o)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return &testEnv{h: h, logs: &logs, store: st}
+	e.h = h
+	return e
 }
 
 func newTestHandler(t *testing.T, o Options) (http.Handler, *bytes.Buffer) {

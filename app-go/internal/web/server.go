@@ -53,6 +53,10 @@ type Options struct {
 	Sessions *auth.Sessions // web sessions and the auth middleware
 	OAuth    OAuthProvider  // GitHub login
 	Users    UserStore
+
+	Discovery    TestDiscovery    // test picker (spec §8.1)
+	TestSessions TestSessionStore // test sessions (spec §8.2)
+	Environments []string         // TEST_SESSION_ENVIRONMENTS
 }
 
 type server struct {
@@ -61,13 +65,17 @@ type server struct {
 }
 
 // NewHandler returns the root handler with all routes and middleware.
-// Sessions, OAuth and Users are required.
+// Sessions, OAuth, Users, Discovery, TestSessions and Environments are
+// required.
 func NewHandler(o Options) (http.Handler, error) {
 	if o.Logger == nil {
 		o.Logger = slog.Default()
 	}
 	if o.Sessions == nil || o.OAuth == nil || o.Users == nil {
 		return nil, fmt.Errorf("web: Sessions, OAuth and Users are required")
+	}
+	if o.Discovery == nil || o.TestSessions == nil || len(o.Environments) == 0 {
+		return nil, fmt.Errorf("web: Discovery, TestSessions and Environments are required")
 	}
 	s := &server{Options: o, static: static.FS}
 
@@ -88,6 +96,9 @@ func NewHandler(o Options) (http.Handler, error) {
 	// Everything else requires a signed-in user.
 	private := func(pattern string, h http.HandlerFunc) { mux.Handle(pattern, o.Sessions.Require(h)) }
 	private("GET /{$}", s.home)
+	private("GET /sessions/new", s.newSession)
+	private("POST /sessions", s.createSession)
+	private("GET /sessions/{id}", s.showSession)
 
 	// Telemetry wraps the mux with handlers that keep the same *http.Request,
 	// so it can log the matched route pattern.

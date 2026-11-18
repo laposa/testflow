@@ -272,7 +272,7 @@ the `HX-Redirect` header for htmx requests.
 | `GET /auth/callback` | finish OAuth, upsert user, create session | `AuthController::callback` |
 | `POST /auth/logout` | destroy session (legacy used GET) | `AuthController::logout` |
 | `GET /` and `GET /sessions` | session list | `SessionController::index` |
-| `GET /sessions/new` | test picker (discovery §8.1) | `SessionController::create` |
+| `GET /sessions/new` | test picker (discovery §8.1). `?refresh` discovers again, then redirects back; if that fails, the page is rendered directly (no redirect, which would start another discovery) | `SessionController::create` |
 | `POST /sessions` | create session | `SessionController::store` |
 | `GET /sessions/{id}` | session detail: services, runs, activity, reviews | `SessionController::show` |
 | `GET /sessions/{id}/runs` | htmx fragment: run list (polled) | `Livewire/Runs/ListRuns` |
@@ -301,28 +301,71 @@ Legacy: `app/Actions/Github/FetchTests.php`.
 2. For each repository, get the latest commit of `master`
    (`GET /repos/{repo}/commits/master`). Its SHA pins everything that follows.
 3. Walk the contents API: `tests/{service}/tests/{suite}/{test}`, at most 3 levels.
-   Skip entries whose name starts with `_`. Repositories without `tests/` are skipped.
-4. Match each service to the workflow whose path ends with `run-tests-{service}.yaml`
-   (`GET /repos/{repo}/actions/workflows`).
+   Skip entries whose name starts with `_`. Services and suites are directories
+   (files such as `tests/README.md` are ignored); every entry of a suite is a test.
+   Repositories without `master`, without commits, or without `tests/` are skipped,
+   as are services without `tests/` and empty suites.
+4. Match each service to the workflow whose file name is `run-tests-{service}.yaml`
+   (`GET /repos/{repo}/actions/workflows`), fetched only for repositories with tests.
 5. A test is **manual** if its file name contains `manual` (in practice
-   `*.manual.yaml`). Otherwise it is **automated**.
+   `*.manual.yaml`, case-sensitive). Otherwise it is **automated**.
 6. Result: tree grouped by repository → service → suite → test, each test carrying
    repository id/name, commit SHA, service/suite/test name and path, workflow id.
+   Repositories are sorted by name; the rest keeps GitHub's (alphabetical) order.
 
-Discovery calls GitHub many times. It runs concurrently per repository (bounded),
-and the result is cached in memory for a short TTL (default 5 min, with a "refresh"
-button). Legacy fetched on every page load.
+An automated test whose service has no workflow cannot be selected (an error icon
+explains why). Manual tests never use the workflow, so they stay selectable
+(legacy required a workflow for both).
+
+Discovery calls GitHub many times. It runs concurrently per repository (at most 4
+at once), and the result is cached in memory for a short TTL (default 5 min, with a
+"refresh" button). Legacy fetched on every page load. Only one discovery runs at a
+time; requests that arrive meanwhile wait for it and share its result. A discovery
+is not cancelled when the request that started it goes away; it is bounded by a
+45 s timeout, below the server's write timeout.
+
+If a discovery fails (listing the installation's repositories fails, or the
+timeout is hit), the picker falls back to the last successful result while its
+snapshot is still retained (see below), with a warning above the tree that the
+discovery failed and the list may be outdated (HTTP 200); it can still be
+submitted. Without such a result it shows a fixed error and a retry link (HTTP
+502). A failed discovery is never cached, so the next request tries again. If one repository fails (other than the skips above),
+it is left out and named in a warning above the tree. If only its workflows fail,
+its tree is kept without workflow ids and the warning says its automated tests
+cannot be selected.
+
+Every result is a **snapshot** with a random id, kept in memory for 1 h after it
+was fetched. The picker form carries the snapshot id and the selected tests' keys
+(`{repository id}:{path}`), never repository names, paths or SHAs. `POST /sessions`
+looks the keys up in that snapshot, so the client cannot inject other
+repositories or paths, and the commit SHA is the one the user saw.
 
 ### 8.2 Creating a session
 Legacy: `app/Actions/Session/CreateSession.php`.
 
-- Input: `name` (required), `environment` (one of `TEST_SESSION_ENVIRONMENTS`), at
-  least one selected test ("Please select at least one test suite.").
-- Selected tests are grouped by type (manual/automated), then by
-  repository+service. Each group becomes a `session_services` row (with
-  `branch='master'` and the discovery commit SHA), its suites, and their tests.
-- Logs activity `session_created`: "{user} created the session."
+- Input: `name` (required, trimmed, at most 255 characters), `environment` (one
+  of `TEST_SESSION_ENVIRONMENTS`), `discovery` (the snapshot id, §8.1) and at least
+  one selected test in `tests` ("Please select at least one test suite.").
+- The form has `data-submit-once`: app.js disables its submit button once the
+  form is sent, so a double click does not create two sessions (legacy could). A
+  page restored from the back/forward cache gets the button back.
+- Errors re-render the form (HTTP 422) with the messages above it, keeping the
+  name, environment and selection; tree levels that hold selected tests start
+  open. If the snapshot has expired, the form is re-rendered from the current
+  discovery and asks the user to check the selection. Unknown keys or tests that
+  cannot be selected are an error, never silently dropped.
+- Selected tests are grouped by type (automated first, then manual), then by
+  repository+service, in tree order. Each group becomes a `session_services` row
+  (with `branch='master'`, the discovery commit SHA and the service's workflow id,
+  NULL if none), its suites, and their tests.
+- The session, its services, suites, tests and the `session_created` activity
+  ("{user} created the session.") are written in one transaction.
 - Redirect to `/sessions/{id}`.
+
+The session page (iteration 5: read-only) shows the name, environment, issuer and
+creation time, and the selected tests in a `<details>` ("Selected tests (n)"),
+listed by service display name, suite and test. Runs, activity, comments, reviews
+and report links are added by their iterations.
 
 ### 8.3 Session list
 Legacy: `SessionController::index`, `Session::lastRuns`.
@@ -543,16 +586,19 @@ Legacy: `resources/views/sessions/report.blade.php`.
   (`<meta name="htmx-config" content='{"includeIndicatorCSS":false}'>`) and
   `app.css` carries those rules instead, so the CSP stays self-only (§9).
   Used for the run-list polling, the manual run wizard (in a `<dialog>`),
-  comment/review forms, expanding older runs per service (`hx-get` loads them), and
-  the test tree "select all" interactions.
+  comment/review forms, and expanding older runs per service (`hx-get` loads them).
 - No Alpine.js or other client framework (D17). Prefer, in this order:
   1. native HTML: `<details>/<summary>` for show/hide sections (selected tests,
-     JUnit results, run log), `<dialog>` + `showModal()` for the manual run wizard
+     JUnit results, run log, and each repository/service/suite level of the test
+     tree), `<dialog>` + `showModal()` for the manual run wizard
      (Escape, focus trap and backdrop come from the browser);
   2. htmx for anything that needs the server;
   3. a small plain-JS file (`internal/web/static/app.js`, no inline scripts, so it
      fits the CSP in §9) for what's left: opening/closing the dialog, closing it on
-     a click outside, and "select all" checkboxes in the test tree.
+     a click outside, "select all" checkboxes in the test tree, and disabling the
+     submit button of a `data-submit-once` form once it is sent (§8.2). A group
+     checkbox (in the level's `<summary>`) checks or clears every test below it
+     and shows checked, indeterminate or clear for its tests; it needs no server.
 - Handlers check the `HX-Request` header. htmx requests get the fragment, normal
   requests get the full page from the same components.
 

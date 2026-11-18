@@ -12,6 +12,7 @@ func HomePage(p Page) g.Node {
 		h.H1(g.Text("Test sessions")),
 		Section("Coming soon", false,
 			h.P(g.Text("The Go version of TestFlow is being built. Sessions will appear here.")),
+			h.A(h.Href("/sessions/new"), h.Class("button filled"), g.Text("New session")),
 		),
 	)
 }

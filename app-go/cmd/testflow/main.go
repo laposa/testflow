@@ -21,6 +21,7 @@ import (
 	"github.com/laposa/testflow/app-go/internal/auth"
 	"github.com/laposa/testflow/app-go/internal/config"
 	"github.com/laposa/testflow/app-go/internal/db"
+	"github.com/laposa/testflow/app-go/internal/discovery"
 	"github.com/laposa/testflow/app-go/internal/github"
 	"github.com/laposa/testflow/app-go/internal/store"
 	"github.com/laposa/testflow/app-go/internal/telemetry"
@@ -164,9 +165,9 @@ func checkSchema(ctx context.Context, pool *pgxpool.Pool, logger *slog.Logger) e
 // gracefully. If ready is non-nil it receives the listening address.
 func serve(ctx context.Context, cfg *config.Config, logger *slog.Logger, migrate bool, ready chan<- string) error {
 	// The GitHub App client parses the private key, so a bad key stops the
-	// server here rather than on the first API call. Discovery (iteration 5)
-	// and the syncer (iteration 9) will use it.
-	if _, err := newGitHubClient(cfg, logger); err != nil {
+	// server here rather than on the first API call.
+	gh, err := newGitHubClient(cfg, logger)
+	if err != nil {
 		return err
 	}
 
@@ -204,7 +205,10 @@ func serve(ctx context.Context, cfg *config.Config, logger *slog.Logger, migrate
 			ClientSecret: cfg.GitHubClientSecret,
 			RedirectURL:  cfg.BaseURL.JoinPath("auth", "callback").String(),
 		},
-		Users: st,
+		Users:        st,
+		Discovery:    discovery.New(discovery.Config{GitHub: gh, Logger: logger}),
+		TestSessions: st,
+		Environments: cfg.TestSessionEnvironments,
 	})
 	if err != nil {
 		return err
