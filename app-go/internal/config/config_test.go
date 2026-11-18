@@ -112,6 +112,9 @@ func TestLoadErrors(t *testing.T) {
 		{"not pem", func(e map[string]string) { e["GITHUB_PRIVATE_KEY"] = "secret" }, []string{"GITHUB_PRIVATE_KEY: is not a PEM"}},
 		{"only commas", func(e map[string]string) { e["TEST_SESSION_ENVIRONMENTS"] = " , ," }, []string{"TEST_SESSION_ENVIRONMENTS: is required"}},
 		{"bad mailer", func(e map[string]string) { e["MAIL_MAILER"] = "sendmail" }, []string{"MAIL_MAILER"}},
+		{"static dir outside development", func(e map[string]string) {
+			e["ENVIRONMENT"], e["STATIC_DIR"] = "production", "internal/web/static"
+		}, []string{"STATIC_DIR: is only allowed with ENVIRONMENT=development"}},
 		{"smtp incomplete", func(e map[string]string) { e["MAIL_MAILER"] = "smtp" }, []string{
 			"SMTP_HOST: is required", "SMTP_PORT: is required", "SMTP_USERNAME: is required",
 			"SMTP_PASSWORD: is required", "MAIL_FROM: is required",
@@ -219,5 +222,17 @@ func TestLogValueHasNoSecrets(t *testing.T) {
 		if strings.Contains(got, secret) {
 			t.Errorf("LogValue leaks %q: %s", secret, got)
 		}
+	}
+}
+
+func TestLoadStaticDir(t *testing.T) {
+	env := validEnv()
+	c, err := load(env)
+	if err != nil || c.StaticDir != "" {
+		t.Fatalf("default StaticDir = %q, %v; want empty", c.StaticDir, err)
+	}
+	env["STATIC_DIR"] = " internal/web/static "
+	if c, err = load(env); err != nil || c.StaticDir != "internal/web/static" {
+		t.Errorf("StaticDir = %q, %v", c.StaticDir, err)
 	}
 }

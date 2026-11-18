@@ -9,6 +9,8 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -45,6 +47,7 @@ type testEnv struct {
 	store        *authtest.Store
 	discovery    *fakeDiscovery    // set unless Options.Discovery was given
 	testSessions *fakeTestSessions // set unless Options.TestSessions was given
+	activity     *fakeActivity     // set unless Options.Activity was given
 }
 
 func newEnv(t *testing.T, o Options) *testEnv {
@@ -72,6 +75,10 @@ func newEnv(t *testing.T, o Options) *testEnv {
 	if o.TestSessions == nil {
 		e.testSessions = newFakeTestSessions(st)
 		o.TestSessions = e.testSessions
+	}
+	if o.Activity == nil {
+		e.activity = &fakeActivity{sessions: e.testSessions, entries: map[int64][]store.Activity{}}
+		o.Activity = e.activity
 	}
 	if o.Environments == nil {
 		o.Environments = []string{"preprod", "beta", "prod"}
@@ -236,6 +243,35 @@ func TestStaticDevelopmentNoCache(t *testing.T) {
 	h, _ := newTestHandler(t, Options{Development: true})
 	if got := get(h, "/static/app.css?v=1").Header().Get("Cache-Control"); got != "no-cache" {
 		t.Errorf("Cache-Control = %q, want no-cache", got)
+	}
+}
+
+func TestStaticDir(t *testing.T) {
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "app.css"), []byte("body{color:red}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	h, _ := newTestHandler(t, Options{Development: true, StaticDir: dir})
+	rec := get(h, "/static/app.css?v=1")
+	if rec.Code != http.StatusOK || rec.Body.String() != "body{color:red}" {
+		t.Fatalf("GET = %d %q, want the file from STATIC_DIR", rec.Code, rec.Body.String())
+	}
+	// An edit shows on the next request, without a restart.
+	if err := os.WriteFile(filepath.Join(dir, "app.css"), []byte("body{color:blue}"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if got := get(h, "/static/app.css").Body.String(); got != "body{color:blue}" {
+		t.Errorf("after an edit = %q", got)
+	}
+	if rec := get(h, "/static/missing.css"); rec.Code != http.StatusNotFound {
+		t.Errorf("missing file = %d, want 404", rec.Code)
+	}
+
+	o := Options{StaticDir: filepath.Join(dir, "nope")}
+	o.Sessions, o.OAuth, o.Users = &auth.Sessions{}, fakeOAuth{}, authtest.NewStore()
+	o.Discovery, o.TestSessions, o.Activity, o.Environments = &fakeDiscovery{}, &fakeTestSessions{}, &fakeActivity{}, []string{"x"}
+	if _, err := NewHandler(o); err == nil {
+		t.Error("a missing STATIC_DIR should fail at startup")
 	}
 }
 

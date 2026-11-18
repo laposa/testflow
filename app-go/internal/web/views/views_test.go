@@ -120,3 +120,29 @@ func TestHx(t *testing.T) {
 		t.Errorf("got  %s\nwant %s", got, want)
 	}
 }
+
+func TestAgo(t *testing.T) {
+	const day = 24 * time.Hour
+	tests := []struct {
+		d    time.Duration
+		want string
+	}{
+		{-time.Minute, "just now"}, // clock skew
+		{59 * time.Second, "just now"},
+		{time.Minute, "1 minute ago"},
+		{59 * time.Minute, "59 minutes ago"},
+		{90 * time.Minute, "1 hour ago"},
+		{23 * time.Hour, "23 hours ago"},
+		{day, "1 day ago"},
+		{6 * day, "6 days ago"},
+		{14 * day, "2 weeks ago"},
+		{45 * day, "1 month ago"},
+		{364 * day, "12 months ago"},
+		{800 * day, "2 years ago"},
+	}
+	for _, tt := range tests {
+		if got := Ago(tt.d); got != tt.want {
+			t.Errorf("Ago(%v) = %q, want %q", tt.d, got, tt.want)
+		}
+	}
+}

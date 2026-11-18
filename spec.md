@@ -149,6 +149,7 @@ For local development a `.env` file is read only by `make`/compose, not by the b
 | `BASE_URL` | yes | | `APP_URL` |
 | `ENVIRONMENT` | no | `development` | `APP_ENV` |
 | `LOG_LEVEL` | no | `info` | `LOG_LEVEL` |
+| `STATIC_DIR` | no | | new. Development only (rejected otherwise): serve `/static/` from this directory instead of the embedded files, so CSS and JS edits show on reload. `.env.example` sets `internal/web/static`; the compose app container clears it |
 | `DATABASE_URL` | yes | | `DB_*` |
 | `DATABASE_USER`, `DATABASE_PASSWORD` | no | | `DB_USERNAME`, `DB_PASSWORD`. Override the credentials in `DATABASE_URL`, so the password needs no URL-encoding and can come from a separate secret |
 | `SESSION_LIFETIME` | no | `120m` | `SESSION_LIFETIME` (minutes) |
@@ -364,10 +365,11 @@ Legacy: `app/Actions/Session/CreateSession.php`.
   ("{user} created the session.") are written in one transaction.
 - Redirect to `/sessions/{id}`.
 
-The session page (iteration 5: read-only) shows the name, environment, issuer and
-creation time, and the selected tests in a `<details>` ("Selected tests (n)"),
-listed by service display name, suite and test. Runs, activity, comments, reviews
-and report links are added by their iterations.
+The session page shows the name, environment, issuer and creation time, and the
+selected tests in a `<details>` ("Selected tests (n)"), listed by service display
+name, suite and test. Below them come the comment form and the activity feed
+(§8.9, iteration 7). Runs, reviews and report links are added by their
+iterations.
 
 ### 8.3 Session list
 Legacy: `SessionController::index`, `Session::lastRuns`.
@@ -497,8 +499,22 @@ content with the parse error instead of blocking the run. Full schema validation
 is left to `tests-validator`.
 
 ### 8.9 Activity, comments and reviews
-- Activity list on the session page, newest first, with user name and relative time.
-- **Comment:** body required, minimum 5 characters. Logs `comment`.
+- Activity list on the session page, newest first (legacy was oldest first),
+  with the comment form above it. Times are relative ("5 minutes ago", months
+  of 30 days, years of 365), with the exact time as the tooltip of the `<time>`
+  element; legacy showed the raw timestamp. A comment shows "{user} commented"
+  above its text. Other entries show the legacy icon of their type (inline SVG
+  constants) and their body.
+- Entries are plain text (D13). Comments are not rendered as Markdown (D9,
+  legacy did); CSS keeps their line breaks.
+- **Comment** (`POST /sessions/{id}/comments`): the body is trimmed and must
+  have at least 5 characters (counted as characters, not bytes): "The comment
+  must be at least 5 characters." Logs `comment` with the user. An error
+  re-renders with HTTP 422, keeping the text. On success an htmx request gets
+  the activity block back with an empty form, and a normal request is
+  redirected to `/sessions/{id}#activity`. `hx-sync="this:drop"` ignores a
+  second submit while one is in flight. A missing session is a 404. Legacy's
+  "Comment created" flash message was never displayed and is not ported.
 - **Request review:** the reviewer is chosen from users who have no pending request
   on this session. Creates `review_requests` (pending), emails the reviewer (§8.10),
   and logs `review_requested`: "{requester} requested a review from {reviewer}".

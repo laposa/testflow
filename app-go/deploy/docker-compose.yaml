@@ -34,6 +34,8 @@ services:
     env_file: ../.env
     environment:
       DATABASE_URL: postgres://testflow:testflow@postgres:5432/testflow?sslmode=disable
+      # The image has no source tree; serve the embedded assets.
+      STATIC_DIR: ""
     ports:
       - "${APP_PORT:-8080}:8080"
     depends_on:

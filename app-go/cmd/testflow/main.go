@@ -197,6 +197,7 @@ func serve(ctx context.Context, cfg *config.Config, logger *slog.Logger, migrate
 		Logger:      logger,
 		Version:     version,
 		Development: cfg.IsDevelopment(),
+		StaticDir:   cfg.StaticDir,
 		DB:          pool,
 		BaseURL:     cfg.BaseURL,
 		Sessions:    sessions,
@@ -208,6 +209,7 @@ func serve(ctx context.Context, cfg *config.Config, logger *slog.Logger, migrate
 		Users:        st,
 		Discovery:    discovery.New(discovery.Config{GitHub: gh, Logger: logger}),
 		TestSessions: st,
+		Activity:     st,
 		Environments: cfg.TestSessionEnvironments,
 	})
 	if err != nil {

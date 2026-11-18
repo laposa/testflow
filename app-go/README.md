@@ -81,6 +81,10 @@ The binary has subcommands:
   `DATABASE_PORT`, default 5432, and `DATABASE_NAME`, default `testflow`).
 - `testflow version`.
 
+With `STATIC_DIR=internal/web/static` (set in `.env.example`), `make run`
+serves CSS, JS and icons from the source tree, so edits show on a browser
+reload. Go code and views still need a restart.
+
 `make run` needs a Postgres: `docker compose -f deploy/docker-compose.yaml up -d
 postgres` starts the one `.env.example` points to.
 

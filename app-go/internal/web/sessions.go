@@ -7,6 +7,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/laposa/testflow/app-go/internal/auth"
@@ -28,19 +29,30 @@ type TestSessionStore interface {
 	TestSession(ctx context.Context, id int64) (store.TestSession, error)
 }
 
+// ActivityStore reads a session's activity and adds comments (store.Store).
+type ActivityStore interface {
+	SessionActivity(ctx context.Context, sessionID int64) ([]store.Activity, error)
+	AddComment(ctx context.Context, sessionID, userID int64, body string) error
+}
+
+// minComment is the legacy rule (required|min:5), counted in characters
+// after trimming.
+const minComment = 5
+
 // maxSessionName matches the legacy varchar(255) column.
 const maxSessionName = 255
 
 // Validation messages (spec §8.2; legacy: Actions/Session/CreateSession.php).
 const (
-	msgNameRequired   = "The session name is required."
-	msgNameTooLong    = "The session name may not be longer than 255 characters."
-	msgEnvironment    = "Please choose one of the listed environments."
-	msgNoTests        = "Please select at least one test suite."
-	msgSnapshotGone   = "The test list has expired. Please check your selection and create the session again."
-	msgTestsUnusable  = "Some selected tests are not available any more. Please check your selection."
-	msgDiscoveryError = "Could not load the tests from GitHub. Please try again."
-	msgDiscoveryStale = "Could not load the tests from GitHub, so this is the last list that loaded and it may be outdated. Please try again."
+	msgNameRequired    = "The session name is required."
+	msgNameTooLong     = "The session name may not be longer than 255 characters."
+	msgEnvironment     = "Please choose one of the listed environments."
+	msgNoTests         = "Please select at least one test suite."
+	msgSnapshotGone    = "The test list has expired. Please check your selection and create the session again."
+	msgTestsUnusable   = "Some selected tests are not available any more. Please check your selection."
+	msgCommentTooShort = "The comment must be at least 5 characters."
+	msgDiscoveryError  = "Could not load the tests from GitHub. Please try again."
+	msgDiscoveryStale  = "Could not load the tests from GitHub, so this is the last list that loaded and it may be outdated. Please try again."
 )
 
 // listSessions renders the session list (spec §8.3; legacy:
@@ -192,15 +204,60 @@ func newServices(groups []discovery.Group) []store.NewService {
 }
 
 // showSession renders the session detail page (legacy:
-// SessionController::show). Runs, activity and reviews are added by later
-// iterations.
+// SessionController::show). Runs and reviews are added by later iterations.
 func (s *server) showSession(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
-	if err != nil || id <= 0 {
+	id, ok := sessionID(w, r)
+	if !ok {
+		return
+	}
+	s.renderActivity(w, r, http.StatusOK, views.ActivityView{SessionID: id})
+}
+
+// addComment logs a comment (spec §8.9; legacy: Livewire/Comments/CreateComment).
+// An htmx request gets the activity block back; a normal one is redirected
+// to the session page (PRG). A validation error re-renders with 422.
+func (s *server) addComment(w http.ResponseWriter, r *http.Request) {
+	id, ok := sessionID(w, r)
+	if !ok {
+		return
+	}
+	if err := r.ParseForm(); err != nil {
+		http.Error(w, "Bad Request", http.StatusBadRequest)
+		return
+	}
+	av := views.ActivityView{SessionID: id, Comment: strings.TrimSpace(r.PostForm.Get("body"))}
+	if utf8.RuneCountInString(av.Comment) < minComment {
+		av.Errors = []string{msgCommentTooShort}
+		s.renderActivity(w, r, http.StatusUnprocessableEntity, av)
+		return
+	}
+
+	ctx := r.Context()
+	u, _ := auth.UserFrom(ctx)
+	err := s.Activity.AddComment(ctx, id, u.ID, av.Comment)
+	if errors.Is(err, store.ErrNotFound) {
 		http.NotFound(w, r)
 		return
 	}
-	ts, err := s.TestSessions.TestSession(r.Context(), id)
+	if err != nil {
+		s.serverError(w, r, "add comment", err)
+		return
+	}
+	s.Logger.InfoContext(ctx, "comment added", "session.id", id)
+	if !isHTMX(r) {
+		http.Redirect(w, r, "/sessions/"+strconv.FormatInt(id, 10)+"#"+views.ActivityID, http.StatusSeeOther)
+		return
+	}
+	av.Comment = ""
+	s.renderActivity(w, r, http.StatusOK, av)
+}
+
+// renderActivity loads the session and its activity into av and renders
+// the session page, or only the activity block for htmx requests. A
+// missing session is a 404.
+func (s *server) renderActivity(w http.ResponseWriter, r *http.Request, status int, av views.ActivityView) {
+	ctx := r.Context()
+	ts, err := s.TestSessions.TestSession(ctx, av.SessionID)
 	if errors.Is(err, store.ErrNotFound) {
 		http.NotFound(w, r)
 		return
@@ -209,5 +266,28 @@ func (s *server) showSession(w http.ResponseWriter, r *http.Request) {
 		s.serverError(w, r, "load test session", err)
 		return
 	}
-	s.render(w, r, http.StatusOK, views.SessionPage(s.page(r, ts.Name), ts))
+	if av.Entries, err = s.Activity.SessionActivity(ctx, av.SessionID); err != nil {
+		s.serverError(w, r, "load session activity", err)
+		return
+	}
+	av.Now = time.Now()
+	if isHTMX(r) {
+		s.render(w, r, status, views.Activity(av))
+		return
+	}
+	s.render(w, r, status, views.SessionPage(s.page(r, ts.Name), ts, av))
 }
+
+// sessionID parses the {id} path value. An invalid id is a 404, written to w.
+func sessionID(w http.ResponseWriter, r *http.Request) (int64, bool) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil || id <= 0 {
+		http.NotFound(w, r)
+		return 0, false
+	}
+	return id, true
+}
+
+// isHTMX reports a request made by htmx, which gets a fragment instead of
+// the full page (spec §10).
+func isHTMX(r *http.Request) bool { return r.Header.Get("HX-Request") == "true" }
