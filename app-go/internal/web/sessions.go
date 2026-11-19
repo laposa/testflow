@@ -20,6 +20,9 @@ import (
 type TestDiscovery interface {
 	Tests(ctx context.Context, refresh bool) (*discovery.Result, error)
 	Snapshot(id string) (*discovery.Result, bool)
+	// Cached reports whether Tests would answer from the cache, without
+	// discovering.
+	Cached() bool
 }
 
 // TestSessionStore creates and reads test sessions (store.Store).
@@ -73,10 +76,25 @@ func (s *server) listSessions(w http.ResponseWriter, r *http.Request) {
 // Livewire/Sessions/CreateSession). A successful ?refresh redirects back,
 // so reloading the page does not repeat it. A failed one renders the page
 // directly: redirecting would start another discovery straight away.
+//
+// Discovery can take a while, so unless fresh tests are cached the page
+// first shows the heading and a loading overlay, and htmx loads the form
+// (legacy: the lazy CreateSession component). htmx requests, from that
+// page or its Refresh button, get the form as a fragment; a failure is
+// rendered there too.
 func (s *server) newSession(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Vary", "HX-Request")
 	refresh := r.URL.Query().Has("refresh")
+	if !isHTMX(r) && !refresh && !s.Discovery.Cached() {
+		s.render(w, r, http.StatusOK, views.NewSessionLoadingPage(s.page(r, "New session")))
+		return
+	}
 	form := views.NewSessionForm{Environments: s.Environments, Environment: s.Environments[0]}
 	status := s.loadTests(r, &form, refresh)
+	if isHTMX(r) {
+		s.render(w, r, status, views.NewSessionContent(form))
+		return
+	}
 	if refresh && form.LoadError == "" && form.Warning == "" {
 		http.Redirect(w, r, "/sessions/new", http.StatusSeeOther)
 		return

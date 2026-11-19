@@ -116,3 +116,43 @@ func asset(name, version string) string {
 	}
 	return u
 }
+
+// LoadingOverlay ports components/loading-overlay.blade.php: the spinning
+// TestFlow check mark over a white veil covering the page, or with
+// relative only its positioned container. With an id it starts hidden as
+// an htmx indicator, shown while a request is in flight.
+func LoadingOverlay(id, label string, relative bool) g.Node {
+	class := "loading-overlay"
+	if relative {
+		class += " relative"
+	}
+	if id != "" {
+		class += " htmx-indicator"
+	}
+	return h.Div(g.If(id != "", h.ID(id)), h.Class(class),
+		h.Role("status"), g.Attr("aria-label", label),
+		g.Raw(loadingSVG),
+	)
+}
+
+// loadingSVG is the legacy spinner: three dots circling a check mark.
+// app.css spins the .loading-spin groups. Legacy used SMIL
+// (<animateTransform>), which Chromium leaves frozen when the SVG starts
+// out hidden, as in the test file dialog; a CSS animation starts whenever
+// the element is shown.
+const loadingSVG = `<svg width="75" height="75" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">` +
+	`<mask id="loading-mask"><rect width="100" height="100" fill="white"/>` +
+	`<g class="loading-spin">` + loadingDotsBlack + `</g></mask>` +
+	`<circle cx="50" cy="50" r="45" stroke="#5f9ea0" fill="none" stroke-width="5" mask="url(#loading-mask)"/>` +
+	`<g class="loading-spin">` + loadingDotsTeal + `</g>` +
+	`<path d="M 30,50 L 45,65 L 70,35" stroke="#5f9ea0" stroke-width="5" fill="none"/></svg>`
+
+// The dots, 30° apart. The black ones cut the gaps into the ring.
+const (
+	loadingDotsBlack = `<circle cx="50" cy="5" r="15" fill="black"/>` +
+		`<circle cx="50" cy="5" r="15" fill="black" transform="rotate(30 50 50)"/>` +
+		`<circle cx="50" cy="5" r="15" fill="black" transform="rotate(60 50 50)"/>`
+	loadingDotsTeal = `<circle cx="50" cy="5" r="5" fill="#5f9ea0"/>` +
+		`<circle cx="50" cy="5" r="5" fill="#5f9ea0" transform="rotate(30 50 50)"/>` +
+		`<circle cx="50" cy="5" r="5" fill="#5f9ea0" transform="rotate(60 50 50)"/>`
+)

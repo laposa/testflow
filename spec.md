@@ -274,7 +274,7 @@ the `HX-Redirect` header for htmx requests.
 | `GET /auth/callback` | finish OAuth, upsert user, create session | `AuthController::callback` |
 | `POST /auth/logout` | destroy session (legacy used GET) | `AuthController::logout` |
 | `GET /` and `GET /sessions` | session list | `SessionController::index` |
-| `GET /sessions/new` | test picker (discovery §8.1). `?refresh` discovers again, then redirects back; if that fails, the page is rendered directly (no redirect, which would start another discovery) | `SessionController::create` |
+| `GET /sessions/new` | test picker (discovery §8.1). Without fresh cached tests, a loading page whose htmx request (same URL) gets the form fragment. `?refresh` discovers again, then redirects back (htmx: the fragment); if that fails, the page is rendered directly (no redirect, which would start another discovery) | `SessionController::create` |
 | `POST /sessions` | create session | `SessionController::store` |
 | `GET /sessions/{id}` | session detail: services, runs, activity, reviews. The query may carry the run list's state (§8.5) | `SessionController::show` |
 | `GET /sessions/{id}/runs` | htmx fragment: run list (polled); the session page without htmx | `Livewire/Runs/ListRuns` |
@@ -326,6 +326,17 @@ at once), and the result is cached in memory for a short TTL (default 5 min, wit
 time; requests that arrive meanwhile wait for it and share its result. A discovery
 is not cancelled when the request that started it goes away; it is bounded by a
 45 s timeout, below the server's write timeout.
+
+**Loading** (legacy: the lazy `CreateSession` Livewire component and
+`components/loading-overlay`): clicking "New session" opens `/sessions/new`
+straight away. Unless a result younger than the TTL is cached (then the form is
+rendered directly), the page shows the "New session" heading under the legacy
+loading overlay (the spinning check mark over a white veil), and htmx
+(`hx-trigger="load"`) requests the same URL, which answers an htmx request with
+only the form block (`#new-session`), errors included, under `Vary: HX-Request`.
+The Refresh button does the same with `?refresh`, showing the overlay as its
+indicator. Without JS, a `<noscript>` "Load the tests" link and the Refresh link
+go to `?refresh`, which discovers and redirects back as before.
 
 If a discovery fails (listing the installation's repositories fails, or the
 timeout is hit), the picker falls back to the last successful result while its
@@ -480,9 +491,16 @@ of another session is a 404.
 
 **Raw test file** (`GET /sessions/{id}/runs/{run}/tests/{test}`): the file at the
 run's `commit_sha`, or the session's discovery commit before GitHub reported
-one, as `text/plain`. The test must belong to the run's service. Test names on
-the run page link to it in a new tab (legacy loaded it into a dialog with
-script). A file GitHub does not have is a 404, other GitHub errors a 502.
+one, as `text/plain`. The test must belong to the run's service. A file GitHub
+does not have is a 404, other GitHub errors a 502. Test names on the run page
+link to it; `app.js` opens it in a `<dialog>` instead (legacy: the `test-dialog`
+modal), with the test name as its title, the legacy loading spinner until it arrives and an
+error line for a 404 or 502. The file goes in as `textContent`, never as HTML,
+so the endpoint stays `text/plain` (plain `fetch` rather than htmx, which would
+need an escaped HTML variant). Escape and the close button (a `method="dialog"`
+form) close it, as does a click on the backdrop. Opening another file aborts the
+previous request. Without JS, or with Ctrl/Cmd/Shift or a middle click, the link
+opens the raw file in a new tab.
 
 ### 8.5 Background syncer
 Replaces Livewire polling (`wire:poll.30s`) and the `app:sync-github-runs` command.
@@ -500,7 +518,9 @@ Replaces Livewire polling (`wire:poll.30s`) and the `app:sync-github-runs` comma
 - Only one sync runs at a time: a "refresh now" waits for a tick in progress.
 - The session page polls the run-list fragment (`hx-trigger="every 30s"`) **only
   while** a run is syncing (the conditions above). The fragment reads the DB and
-  never calls GitHub. A run that is syncing shows "Running"; one that ended
+  never calls GitHub. A run that is syncing shows "Queued" in the duration
+  column while no runner has picked it up (`queued`, or `unknown` before GitHub
+  reported it) and "Running" once it is `in_progress`; one that ended
   without a report, or went stale, shows its status where the counts would be.
 - **Run list state.** The selected services (`services`) and the services whose
   older runs are shown (`expand`, hidden fields) are fields of the run list form.
@@ -512,7 +532,8 @@ Replaces Livewire polling (`wire:poll.30s`) and the `app:sync-github-runs` comma
 - **Refresh now** (`POST /sessions/{id}/runs/sync`) syncs that session's pending
   runs straight away, bounded by 45 s and not cancelled with the request. If it
   times out or fails, the run list says the runs keep updating in the
-  background (HTTP 200).
+  background (HTTP 200). While it runs, the legacy loading overlay (its
+  `relative` variant) covers the run list as the request's htmx indicator.
 - The same loop deletes expired `web_sessions`.
 
 ### 8.6 JUnit parsing
@@ -737,8 +758,8 @@ Legacy: `resources/views/sessions/report.blade.php`.
      (Escape, focus trap and backdrop come from the browser);
   2. htmx for anything that needs the server;
   3. a small plain-JS file (`internal/web/static/app.js`, no inline scripts, so it
-     fits the CSP in §9) for what's left: opening/closing the dialog, closing it on
-     a click outside, "select all" checkboxes in the test tree, disabling the
+     fits the CSP in §9) for what's left: opening/closing the dialogs (the manual
+     run wizard and the run page's test file, §8.4), closing them on a click outside, "select all" checkboxes in the test tree, disabling the
      submit button of a `data-submit-once` form once it is sent (§8.2), and the
      run list's button label (§8.5). A group
      checkbox (in the level's `<summary>`) checks or clears every test below it

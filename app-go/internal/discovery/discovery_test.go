@@ -349,6 +349,9 @@ func TestCacheAndSnapshots(t *testing.T) {
 	d := New(Config{GitHub: gh, TTL: 5 * time.Minute, Retention: time.Hour, Now: clock, Logger: quietLogger()})
 	ctx := t.Context()
 
+	if d.Cached() {
+		t.Error("Cached before the first discovery")
+	}
 	first, err := d.Tests(ctx, false)
 	if err != nil {
 		t.Fatal(err)
@@ -356,11 +359,17 @@ func TestCacheAndSnapshots(t *testing.T) {
 	calls := gh.calls.Load()
 
 	advance(4 * time.Minute)
+	if !d.Cached() {
+		t.Error("not Cached within the TTL")
+	}
 	if again, _ := d.Tests(ctx, false); again != first || gh.calls.Load() != calls {
 		t.Error("cached result not reused within the TTL")
 	}
 
 	advance(2 * time.Minute)
+	if d.Cached() {
+		t.Error("Cached after the TTL")
+	}
 	second, _ := d.Tests(ctx, false)
 	if second == first || second.ID == first.ID {
 		t.Error("result not refreshed after the TTL")

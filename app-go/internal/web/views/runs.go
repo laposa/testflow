@@ -17,9 +17,10 @@ import (
 // fields (selected and expanded services) every request includes, so a
 // swap keeps them. RunsErrorsID is the message area above the table.
 const (
-	RunsID       = "runs"
-	RunsFormID   = "runs-form"
-	RunsErrorsID = "runs-errors"
+	RunsID        = "runs"
+	RunsFormID    = "runs-form"
+	RunsErrorsID  = "runs-errors"
+	RunsLoadingID = "runs-loading" // overlay while "Refresh now" checks GitHub
 )
 
 // PollInterval is how often the session page polls the run list while
@@ -85,9 +86,13 @@ func RunList(v RunListView) g.Node {
 				h.Button(h.Type("submit"), h.Class("button filled"), g.Attr("data-run-button"), g.Text(runLabel(selected))),
 				h.Button(h.Type("submit"), h.Class("button"), h.FormAction(base+"/runs/sync"), h.FormNoValidate(),
 					hx.Post(base+"/runs/sync"), hx.Target("#"+RunsID), hx.Swap("outerHTML"),
+					hx.Indicator("#"+RunsLoadingID),
 					h.Title("Check GitHub for news about the runs now"), g.Text("Refresh now")),
 			),
 		),
+		// Covers the run list while "Refresh now" runs, which can take up to
+		// 45 s.
+		LoadingOverlay(RunsLoadingID, "Checking GitHub for the runs", true),
 	)
 }
 
@@ -108,11 +113,17 @@ func serviceRows(v RunListView, svc store.Service) g.Node {
 		}
 	}
 	manual := svc.Type == store.RunManual
-	box := h.Input(h.Type("checkbox"), h.Name("services"), h.Value(id(svc.ID)), h.Class("run-selector"),
-		g.Attr("aria-label", "Select "+svc.DisplayName()),
-		g.If(v.Selected[svc.ID] && !manual, h.Checked()),
+	// The same custom checkbox as the create session tree. The title sits on
+	// the label: the input is hidden, so only the label shows a tooltip.
+	box := h.Label(h.Class("checkbox"),
 		// Manual runs come in iteration 10.
-		g.If(manual, g.Group{h.Disabled(), h.Title("Manual runs are not available yet.")}),
+		g.If(manual, h.Title("Manual runs are not available yet.")),
+		h.Input(h.Type("checkbox"), h.Name("services"), h.Value(id(svc.ID)), h.Class("run-selector"),
+			g.Attr("aria-label", "Select "+svc.DisplayName()),
+			g.If(v.Selected[svc.ID] && !manual, h.Checked()),
+			g.If(manual, h.Disabled()),
+		),
+		h.Span(h.Class("checkmark")),
 	)
 	if len(runs) == 0 {
 		return h.Tr(h.Td(box), h.Td(g.Text(svc.DisplayName())),
@@ -147,6 +158,8 @@ func runCells(v RunListView, r store.Run) g.Node {
 	switch {
 	case r.FinishedAt != nil:
 		duration = g.Text(HumanDuration(r.FinishedAt.Sub(runStart(r))))
+	case r.Syncing(v.Now) && runWaiting(r):
+		duration = h.Span(h.Class("running"), g.Text("Queued"))
 	case r.Syncing(v.Now):
 		duration = h.Span(h.Class("running"), g.Text("Running"))
 	default:
@@ -168,6 +181,12 @@ func runCells(v RunListView, r store.Run) g.Node {
 		}), duration),
 		h.Td(results),
 	}
+}
+
+// runWaiting reports a run no runner has picked up yet: queued on GitHub,
+// or dispatched but not yet seen there (unknown).
+func runWaiting(r store.Run) bool {
+	return r.Status == store.RunQueued || r.Status == store.RunUnknown
 }
 
 // runStart is when a runner picked the run up, or when it was dispatched.
@@ -211,6 +230,8 @@ func RunPage(p Page, ts store.TestSession, svc store.Service, d store.RunDetail,
 	switch {
 	case d.FinishedAt != nil:
 		when = g.Text(" and ran for " + HumanDuration(d.FinishedAt.Sub(runStart(d.Run))) + ".")
+	case d.Syncing(now) && runWaiting(d.Run):
+		when = g.Text(" and is still queued …")
 	case d.Syncing(now):
 		when = g.Text(" and is still running …")
 	default:
@@ -243,6 +264,30 @@ func RunPage(p Page, ts store.TestSession, svc store.Service, d store.RunDetail,
 				h.Summary(g.Text("Detailed run log")),
 				h.Pre(g.Text(StripANSI(d.RunLog))),
 			)),
+			testDialog(),
+		),
+	)
+}
+
+// TestDialogID is the dialog that shows a test file on the run page.
+const TestDialogID = "test-dialog"
+
+// testDialog is filled and opened by app.js when a test name is clicked
+// (legacy: the test-dialog modal). The browser handles Escape and the focus
+// trap; the close button is a method=dialog form, so it needs no script.
+func testDialog() g.Node {
+	return h.Dialog(h.ID(TestDialogID), h.Class("test-dialog"), g.Attr("aria-labelledby", TestDialogID+"-title"),
+		h.Div(h.Class("test-dialog-body"),
+			h.Div(h.Class("test-dialog-header"),
+				h.H2(h.ID(TestDialogID+"-title")),
+				h.Form(h.Method("dialog"),
+					h.Button(h.Type("submit"), h.Class("close"), g.Attr("aria-label", "Close"), g.Text("×")),
+				),
+			),
+			// The spinner while the file loads (legacy: a relative loading
+			// overlay in the dialog).
+			h.Div(h.Class("loading"), LoadingOverlay("", "Loading the test file", true)),
+			h.Pre(h.Class("content"), g.Attr("hidden")),
 		),
 	)
 }
@@ -265,8 +310,9 @@ func runTest(base string, d store.RunDetail, t store.Test) g.Node {
 	}
 	return g.Group{
 		h.Li(h.Class("test-file"),
+			// app.js opens it in the dialog; without JS it opens in a new tab.
 			h.A(h.Href(base+"/runs/"+id(d.ID)+"/tests/"+id(t.ID)), h.Target("_blank"), h.Rel("noopener"),
-				h.Title("Show file contents"), g.Text(t.Name)),
+				g.Attr("data-test-file"), h.Title("Show file contents"), g.Text(t.Name)),
 			g.Text(" "), status,
 		),
 		g.If(ok && res.Comment != "", h.Div(h.Class("comment"), h.I(g.Text(res.Comment)))),

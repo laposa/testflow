@@ -33,6 +33,14 @@ func (f *fakeDiscovery) Tests(_ context.Context, refresh bool) (*discovery.Resul
 	return f.res, f.err
 }
 
+// Cached is true while the fake has a result and no error, so pages
+// render directly; otherwise GET /sessions/new shows the loading page.
+func (f *fakeDiscovery) Cached() bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.res != nil && f.err == nil
+}
+
 func (f *fakeDiscovery) Snapshot(id string) (*discovery.Result, bool) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -182,10 +190,50 @@ func TestNewSessionPage(t *testing.T) {
 	}
 }
 
+// Without fresh tests in the cache, the page shows the loading overlay
+// and htmx loads the form; that request gets only the form.
+func TestNewSessionLoading(t *testing.T) {
+	e := newEnv(t, Options{})
+	cookie := e.signIn("Ada")
+	e.discovery.err = errors.New("not cached yet")
+	rec := get(e.h, "/sessions/new", cookie)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d", rec.Code)
+	}
+	assertContains(t, rec.Body.String(),
+		"<title>New session · TestFlow</title>",
+		`<div id="new-session" hx-get="/sessions/new" hx-trigger="load" hx-swap="outerHTML"><section><h2>New session</h2></section>`,
+		`<div class="loading-overlay" role="status" aria-label="Loading tests from GitHub"><svg`,
+		`<noscript><p><a href="/sessions/new?refresh" class="button">Load the tests</a></p></noscript>`,
+	)
+	if strings.Contains(rec.Body.String(), `class="new-session"`) || rec.Header().Get("Vary") != "HX-Request" {
+		t.Errorf("loading page has a form or no Vary: %q", rec.Header().Get("Vary"))
+	}
+
+	e.discovery.err = nil
+	rec = getHTMX(e, "/sessions/new", cookie)
+	body := rec.Body.String()
+	if rec.Code != http.StatusOK || strings.Contains(body, "<html") || !strings.HasPrefix(body, `<div id="new-session">`) {
+		t.Fatalf("fragment = %d %q", rec.Code, body)
+	}
+	assertContains(t, body,
+		`<input type="hidden" name="discovery" value="snap1">`,
+		`<a href="/sessions/new?refresh" class="button" hx-get="/sessions/new?refresh" hx-target="#new-session" hx-swap="outerHTML" hx-indicator="#new-session-loading" hx-sync="this:drop">Refresh</a>`,
+		`<div id="new-session-loading" class="loading-overlay htmx-indicator" role="status"`,
+	)
+
+	// Refresh with htmx discovers again and answers with the fragment, not
+	// a redirect.
+	rec = getHTMX(e, "/sessions/new?refresh", cookie)
+	if rec.Code != http.StatusOK || !strings.HasPrefix(rec.Body.String(), `<div id="new-session">`) || e.discovery.refreshes != 1 {
+		t.Errorf("htmx refresh = %d, refreshes = %d", rec.Code, e.discovery.refreshes)
+	}
+}
+
 func TestNewSessionDiscoveryError(t *testing.T) {
 	e := newEnv(t, Options{})
 	e.discovery.res, e.discovery.err = nil, errors.New("github down")
-	rec := get(e.h, "/sessions/new", e.signIn("Ada"))
+	rec := getHTMX(e, "/sessions/new", e.signIn("Ada"))
 	if rec.Code != http.StatusBadGateway {
 		t.Errorf("status = %d, want 502", rec.Code)
 	}
@@ -201,7 +249,7 @@ func TestNewSessionDiscoveryError(t *testing.T) {
 func TestNewSessionStaleFallback(t *testing.T) {
 	e := newEnv(t, Options{})
 	e.discovery.err = errors.New("github down") // res stays: the last result
-	rec := get(e.h, "/sessions/new", e.signIn("Ada"))
+	rec := getHTMX(e, "/sessions/new", e.signIn("Ada"))
 	if rec.Code != http.StatusOK {
 		t.Errorf("status = %d, want 200", rec.Code)
 	}

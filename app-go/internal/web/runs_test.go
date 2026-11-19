@@ -163,11 +163,12 @@ func TestSessionPageRunList(t *testing.T) {
 		`<span class="pass">2 passed</span> and <span class="fail">1 failed</span>`,
 		`<td>shop/api (automated)</td><td>No runs</td>`,
 		// Manual runs come in iteration 10.
-		`value="12" class="run-selector" aria-label="Select shop/web (manual)" disabled title="Manual runs are not available yet."`,
+		`<label class="checkbox" title="Manual runs are not available yet."><input type="checkbox" name="services" value="12" class="run-selector" aria-label="Select shop/web (manual)" disabled><span class="checkmark"></span></label>`,
 		`name="toggle" value="10" formmethod="get" formaction="/sessions/3" formnovalidate hx-get="/sessions/3/runs" hx-include="#runs-form"`,
 		`aria-expanded="false"`,
 		`>Run All Tests</button>`,
-		`formaction="/sessions/3/runs/sync" formnovalidate hx-post="/sessions/3/runs/sync"`,
+		`formaction="/sessions/3/runs/sync" formnovalidate hx-post="/sessions/3/runs/sync" hx-target="#runs" hx-swap="outerHTML" hx-indicator="#runs-loading"`,
+		`<div id="runs-loading" class="loading-overlay relative htmx-indicator" role="status" aria-label="Checking GitHub for the runs"><svg`,
 	)
 	// Nothing syncs, so no polling; older runs are collapsed.
 	assertNotContains(t, body, `hx-trigger`, `/sessions/3/runs/5`)
@@ -180,7 +181,13 @@ func TestRunListPollsWhileSyncing(t *testing.T) {
 	body := get(e.h, "/sessions/3", cookie).Body.String()
 	assertContains(t, body,
 		`<div id="runs" class="runs" hx-get="/sessions/3/runs" hx-trigger="every 30s" hx-include="#runs-form" hx-swap="outerHTML">`,
-		`<span class="running">Running</span>`)
+		`<span class="running">Queued</span>`)
+
+	// Picked up by a runner: running.
+	e.runs.runs[3][0].Status = "in_progress"
+	body = get(e.h, "/sessions/3", cookie).Body.String()
+	assertContains(t, body, `<span class="running">Running</span>`)
+	assertNotContains(t, body, `>Queued<`)
 }
 
 func TestRunListFragmentKeepsState(t *testing.T) {
@@ -325,7 +332,10 @@ func TestRunPage(t *testing.T) {
 		"and ran for 2 minutes 5 seconds.",
 		`<span class="run-status run-status--failure">failure</span>`,
 		`<span class="pass">2 passed</span>, <span class="fail">1 failed</span> and <span class="skip">0 skipped</span>`,
-		`<a href="/sessions/3/runs/7/tests/31" target="_blank" rel="noopener" title="Show file contents">pay.cy.js</a>`,
+		`<a href="/sessions/3/runs/7/tests/31" target="_blank" rel="noopener" data-test-file title="Show file contents">pay.cy.js</a>`,
+		`<dialog id="test-dialog" class="test-dialog" aria-labelledby="test-dialog-title">`,
+		`<form method="dialog"><button type="submit" class="close" aria-label="Close">×</button></form>`,
+		`<div class="loading"><div class="loading-overlay relative" role="status" aria-label="Loading the test file"><svg`,
 		`<span class="test-status pass" title="Execution time 1.2s" aria-label="pass"></span>`,
 		`<span class="test-status fail" title="Execution time 3.0s" aria-label="fail"></span>`,
 		`<div class="comment"><i>see &lt;video&gt;</i></div>`,

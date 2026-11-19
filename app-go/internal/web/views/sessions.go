@@ -7,6 +7,7 @@ import (
 
 	"github.com/laposa/testflow/app-go/internal/discovery"
 	"github.com/laposa/testflow/app-go/internal/store"
+	"github.com/laposa/testflow/app-go/internal/web/views/hx"
 	g "maragu.dev/gomponents"
 	h "maragu.dev/gomponents/html"
 )
@@ -27,7 +28,32 @@ type NewSessionForm struct {
 // NewSessionPage ports resources/views/livewire/sessions/create-session.blade.php
 // and components/tests/list-interactive.blade.php.
 func NewSessionPage(p Page, f NewSessionForm) g.Node {
+	return Layout(p, NewSessionContent(f))
+}
+
+// NewSessionID is the block that NewSessionLoadingPage loads and the
+// Refresh button reloads with htmx.
+const NewSessionID = "new-session"
+
+// NewSessionLoadingPage is shown while the tests are being discovered
+// (legacy: the lazy CreateSession component's placeholder, the heading and
+// a loading overlay). Once loaded, htmx fetches the form and replaces the
+// block with it. Without JS, the link in <noscript> loads the page the
+// slow way.
+func NewSessionLoadingPage(p Page) g.Node {
 	return Layout(p,
+		h.Div(h.ID(NewSessionID), hx.Get("/sessions/new"), hx.Trigger("load"), hx.Swap("outerHTML"),
+			h.Section(h.H2(g.Text("New session"))),
+			LoadingOverlay("", "Loading tests from GitHub", false),
+			h.NoScript(h.P(h.A(h.Href("/sessions/new?refresh"), h.Class("button"), g.Text("Load the tests")))),
+		),
+	)
+}
+
+// NewSessionContent is the new session form: the page body, and the
+// fragment htmx loads into the loading page or a refresh.
+func NewSessionContent(f NewSessionForm) g.Node {
+	return h.Div(h.ID(NewSessionID),
 		g.If(len(f.Errors) > 0, ErrorList(f.Errors)),
 		// data-submit-once: app.js disables the button on submit, so a
 		// double click does not create two sessions.
@@ -50,6 +76,8 @@ func NewSessionPage(p Page, f NewSessionForm) g.Node {
 				h.Button(h.Type("submit"), h.Class("button filled"), g.If(f.Tests == nil, h.Disabled()), g.Text("Create")),
 			),
 		),
+		// Shown while Refresh discovers again.
+		LoadingOverlay(NewSessionID+"-loading", "Loading tests from GitHub", false),
 	)
 }
 
@@ -57,7 +85,10 @@ func NewSessionPage(p Page, f NewSessionForm) g.Node {
 // level is a <details> (D17); app.js keeps the "select all" checkboxes in
 // the summaries in step with the tests.
 func testPicker(f NewSessionForm) g.Node {
-	refresh := h.A(h.Href("/sessions/new?refresh"), h.Class("button"), g.Text("Refresh"))
+	// Without JS, ?refresh discovers and redirects back.
+	refresh := h.A(h.Href("/sessions/new?refresh"), h.Class("button"),
+		hx.Get("/sessions/new?refresh"), hx.Target("#"+NewSessionID), hx.Swap("outerHTML"),
+		hx.Indicator("#"+NewSessionID+"-loading"), hx.Sync("this:drop"), g.Text("Refresh"))
 	if f.Tests == nil {
 		return g.Group{
 			h.P(h.Class("alert"), h.Role("alert"), g.Text(f.LoadError)),

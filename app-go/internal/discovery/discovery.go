@@ -232,6 +232,14 @@ func (d *Discoverer) Tests(ctx context.Context, refresh bool) (*Result, error) {
 	return res, nil
 }
 
+// Cached reports whether a result younger than the TTL is cached, so
+// Tests(ctx, false) would return it without discovering.
+func (d *Discoverer) Cached() bool {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+	return d.current != nil && d.cfg.Now().Sub(d.current.FetchedAt) < d.cfg.TTL
+}
+
 // fallback returns cur if its snapshot is still retained, so a form
 // rendered from it can be submitted.
 func (d *Discoverer) fallback(cur *Result) *Result {
