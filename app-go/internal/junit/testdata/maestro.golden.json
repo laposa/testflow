@@ -1,0 +1,47 @@
+{
+  "Report": {
+    "Suites": [
+      {
+        "Name": "Test Suite",
+        "Tests": 3,
+        "Failures": 1,
+        "Errors": 0,
+        "Skipped": 1,
+        "Time": 45,
+        "Cases": [
+          {
+            "Name": "login_flow",
+            "ClassName": "login_flow",
+            "Time": 20.5,
+            "Status": "pass",
+            "FailureMessage": "",
+            "Comment": ""
+          },
+          {
+            "Name": "checkout",
+            "ClassName": "checkout",
+            "Time": 24.5,
+            "Status": "fail",
+            "FailureMessage": "Element not found: Text matching regex: Pay",
+            "Comment": ""
+          },
+          {
+            "Name": "onboarding",
+            "ClassName": "onboarding",
+            "Time": 0,
+            "Status": "skipped",
+            "FailureMessage": "",
+            "Comment": ""
+          }
+        ]
+      }
+    ]
+  },
+  "Totals": {
+    "Tests": 3,
+    "Passed": 1,
+    "Failed": 1,
+    "Skipped": 1,
+    "Duration": 45
+  }
+}

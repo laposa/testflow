@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- What legacy's ManualTestRun::transformResultLog wrote for manual runs. -->
+<testsuites><testsuite name="authentication" tests="3" failures="1" skipped="1"><testcase id="11" name="login_with_valid_credentials" classname="login_with_valid_credentials.manual.yaml" status="pass"><system-out>Works on Safari too</system-out></testcase><testcase id="12" name="login_with_wrong_password" classname="login_with_wrong_password.manual.yaml" status="fail"><failure>Test failed</failure></testcase><testcase id="13" name="reset_password" classname="reset_password.manual.yaml" status="skipped"/></testsuite></testsuites>

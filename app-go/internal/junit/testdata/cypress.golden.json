@@ -1,0 +1,56 @@
+{
+  "Report": {
+    "Suites": [
+      {
+        "Name": "Root Suite",
+        "Tests": 0,
+        "Failures": 0,
+        "Errors": 0,
+        "Skipped": 0,
+        "Time": 0,
+        "Cases": null
+      },
+      {
+        "Name": "Checkout",
+        "Tests": 3,
+        "Failures": 1,
+        "Errors": 0,
+        "Skipped": 1,
+        "Time": 9.3,
+        "Cases": [
+          {
+            "Name": "Checkout pay with card",
+            "ClassName": "pay with card",
+            "Time": 5.1,
+            "Status": "pass",
+            "FailureMessage": "",
+            "Comment": "Paid with the test card"
+          },
+          {
+            "Name": "Checkout rejects an expired card",
+            "ClassName": "rejects an expired card",
+            "Time": 4.2,
+            "Status": "fail",
+            "FailureMessage": "AssertionError: expected 'Declined' to equal 'Expired'\n    at Context.eval (webpack://shop/./cypress/e2e/checkout/expired_card.cy.js:12:8)",
+            "Comment": ""
+          },
+          {
+            "Name": "Checkout refunds",
+            "ClassName": "refunds",
+            "Time": 0,
+            "Status": "skipped",
+            "FailureMessage": "",
+            "Comment": ""
+          }
+        ]
+      }
+    ]
+  },
+  "Totals": {
+    "Tests": 3,
+    "Passed": 1,
+    "Failed": 1,
+    "Skipped": 1,
+    "Duration": 9.3
+  }
+}

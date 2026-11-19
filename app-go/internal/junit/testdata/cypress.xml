@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- mocha-junit-reporter, as Cypress writes it: the root carries the overall
+     time again, and mocha adds an empty "Root Suite". -->
+<testsuites name="Mocha Tests" time="9.300" tests="3" failures="1">
+  <testsuite name="Root Suite" timestamp="2026-11-18T10:00:00" tests="0" file="cypress/e2e/checkout/pay_with_card.cy.js" time="0.000" failures="0">
+  </testsuite>
+  <testsuite name="Checkout" timestamp="2026-11-18T10:00:00" tests="3" time="9.300" failures="1" skipped="1">
+    <testcase name="Checkout pay with card" time="5.100" classname="pay with card">
+      <system-out>Paid with the test card</system-out>
+    </testcase>
+    <testcase name="Checkout rejects an expired card" time="4.200" classname="rejects an expired card">
+      <failure message="expected 'Declined' to equal 'Expired'" type="AssertionError"><![CDATA[AssertionError: expected 'Declined' to equal 'Expired'
+    at Context.eval (webpack://shop/./cypress/e2e/checkout/expired_card.cy.js:12:8)]]></failure>
+    </testcase>
+    <testcase name="Checkout refunds" time="0.000" classname="refunds">
+      <skipped/>
+    </testcase>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Maestro: one suite per run, upper-case status attributes. -->
+<testsuites>
+  <testsuite name="Test Suite" device="emulator-5554" tests="3" failures="1" time="45">
+    <testcase id="login_flow" name="login_flow" classname="login_flow" time="20.5" status="SUCCESS"/>
+    <testcase id="checkout" name="checkout" classname="checkout" time="24.5" status="ERROR">
+      <failure>Element not found: Text matching regex: Pay</failure>
+    </testcase>
+    <testcase id="onboarding" name="onboarding" classname="onboarding" time="0" status="CANCELED"/>
+  </testsuite>
+</testsuites>

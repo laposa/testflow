@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Newman (Postman) for the api service: errors are counted separately. -->
+<testsuites name="Shop API" tests="4" time="1.2">
+  <testsuite name="Get user" id="a1" timestamp="2026-11-18T10:00:00.000Z" tests="2" failures="0" errors="0" time="0.4">
+    <testcase name="Status code is 200" time="0.4" classname="ShopAPI.Get user"/>
+    <testcase name="Has an email" time="0" classname="ShopAPI.Get user"/>
+  </testsuite>
+  <testsuite name="Create order" id="a2" timestamp="2026-11-18T10:00:00.400Z" tests="2" failures="1" errors="1" time="0.8">
+    <testcase name="Status code is 201" time="0.5" classname="ShopAPI.Create order">
+      <failure type="AssertionFailure" message="expected 500 to equal 201"><![CDATA[Failed 1 times.]]></failure>
+    </testcase>
+    <testcase name="Body is JSON" time="0.3" classname="ShopAPI.Create order">
+      <error type="JSONError" message="Unexpected token &lt; in JSON at position 0"/>
+    </testcase>
+  </testsuite>
+</testsuites>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A bare <testsuite> root without count attributes, with an <error> and
+     malformed times. -->
+<testsuite name="api smoke" time="not a number">
+  <testcase name="health" classname="api.health" time="0.25"/>
+  <testcase name="orders" classname="api.orders" time="NaN">
+    <error message="connect ECONNREFUSED 127.0.0.1:8080" type="Error"/>
+  </testcase>
+  <testcase name="legacy skip" classname="api.legacy" skipped="1"/>
+</testsuite>
