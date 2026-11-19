@@ -1,6 +1,7 @@
 // TestFlow client behaviour that native HTML and htmx don't cover (spec §10, D17).
 // Loaded as an external file so it fits the self-only Content-Security-Policy.
-// Later iterations add: opening/closing the manual run <dialog>.
+// Later iterations add: opening/closing the manual run <dialog>, which can
+// reuse the test file dialog pattern below.
 'use strict';
 
 // Test tree "select all" (legacy: resources/js/app.js selectChildElements).
@@ -70,5 +71,86 @@
                 delete b.dataset.disabledOnSubmit;
             });
         });
+    });
+})();
+
+// Run list button label (legacy: "Run Selected Tests (n)" or "Run All
+// Tests"). The server renders the right label; this keeps it in step with
+// the checkboxes. The run list is replaced by htmx, so listen on document.
+(function () {
+    document.addEventListener('change', function (e) {
+        const box = e.target;
+        if (!(box instanceof HTMLInputElement) || !box.classList.contains('run-selector') || !box.form) return;
+        const button = box.form.querySelector('[data-run-button]');
+        if (!button) return;
+        const n = box.form.querySelectorAll('.run-selector:checked').length;
+        button.textContent = n > 0 ? 'Run Selected Tests (' + n + ')' : 'Run All Tests';
+    });
+})();
+
+// Test file dialog on the run page (legacy: openModal in
+// sessions/run.blade.php). A test name links to the raw file; this loads it
+// into the <dialog> instead of a new tab. The text goes in as textContent,
+// so the file is never parsed as HTML. Escape and the focus trap come from
+// the browser; a click on the backdrop closes the dialog.
+(function () {
+    const dialog = document.getElementById('test-dialog');
+    if (!dialog) return;
+    const title = dialog.querySelector('h2');
+    const loading = dialog.querySelector('.loading');
+    const content = dialog.querySelector('.content');
+    let current = null; // the request in flight, aborted by the next one
+
+    function show(text, failed) {
+        loading.hidden = true;
+        content.hidden = false;
+        content.textContent = text;
+        content.classList.toggle('error', failed);
+    }
+
+    document.addEventListener('click', function (e) {
+        const link = e.target instanceof Element && e.target.closest('a[data-test-file]');
+        // Keep the browser's own handling for a new tab or window.
+        if (!link || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+        e.preventDefault();
+
+        if (current) current.abort();
+        const request = new AbortController();
+        current = request;
+        title.textContent = link.textContent;
+        loading.hidden = false;
+        content.hidden = true;
+        dialog.showModal();
+
+        fetch(link.href, { signal: request.signal, credentials: 'same-origin' })
+            .then(function (res) {
+                // An expired sign-in redirects to the login page: go there
+                // instead of showing its HTML as the file.
+                if (res.redirected) {
+                    window.location.assign(res.url);
+                    return;
+                }
+                const plain = (res.headers.get('Content-Type') || '').startsWith('text/plain');
+                if (res.ok && plain) return res.text().then(function (t) { show(t, false); });
+                if (res.ok) {
+                    show('Could not load the file.', true);
+                    return;
+                }
+                show(res.status === 404 ? 'The file is not in the repository at this commit.'
+                    : 'Could not load the file from GitHub.', true);
+            })
+            .catch(function (err) {
+                if (err.name !== 'AbortError') show('Could not load the file.', true);
+            });
+    });
+
+    // The dialog has no padding of its own, so a click on it is a click
+    // on the backdrop.
+    dialog.addEventListener('click', function (e) {
+        if (e.target === dialog) dialog.close();
+    });
+    dialog.addEventListener('close', function () {
+        if (current) current.abort();
+        current = null;
     });
 })();

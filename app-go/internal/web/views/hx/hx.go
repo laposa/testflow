@@ -38,5 +38,9 @@ func Confirm(message string) g.Node { return Attr("confirm", message) }
 // request is in flight.
 func Indicator(selector string) g.Node { return Attr("indicator", selector) }
 
+// Include adds the values of the elements matching selector to the
+// request, e.g. a form's fields to a GET that does not come from the form.
+func Include(selector string) g.Node { return Attr("include", selector) }
+
 // Sync coordinates requests between elements, e.g. "this:replace".
 func Sync(spec string) g.Node { return Attr("sync", spec) }

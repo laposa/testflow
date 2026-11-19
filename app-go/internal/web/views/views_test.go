@@ -146,3 +146,26 @@ func TestAgo(t *testing.T) {
 		}
 	}
 }
+
+func TestHumanDuration(t *testing.T) {
+	for d, want := range map[time.Duration]string{
+		0:                            "0 seconds",
+		900 * time.Millisecond:       "0 seconds",
+		time.Second:                  "1 second",
+		125 * time.Second:            "2 minutes 5 seconds",
+		time.Hour + 30*time.Second:   "1 hour 30 seconds",
+		26*time.Hour + 2*time.Minute: "1 day 2 hours 2 minutes",
+	} {
+		if got := HumanDuration(d); got != want {
+			t.Errorf("HumanDuration(%v) = %q, want %q", d, got, want)
+		}
+	}
+}
+
+func TestStripANSI(t *testing.T) {
+	in := "\x1b[36;1mRun tests\x1b[0m\n\x1b[2K\x1b[1Gdone \x1b]0;title\x07ok"
+	// OSC sequences other than the ESC ] introducer are left as text.
+	if got := StripANSI(in); got != "Run tests\ndone 0;title\x07ok" {
+		t.Errorf("StripANSI = %q", got)
+	}
+}

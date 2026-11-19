@@ -48,6 +48,10 @@ type testEnv struct {
 	discovery    *fakeDiscovery    // set unless Options.Discovery was given
 	testSessions *fakeTestSessions // set unless Options.TestSessions was given
 	activity     *fakeActivity     // set unless Options.Activity was given
+	runs         *fakeRuns         // set unless Options.Runs was given
+	dispatcher   *fakeDispatcher   // set unless Options.Dispatcher was given
+	syncer       *fakeSyncer       // set unless Options.Syncer was given
+	files        *fakeFiles        // set unless Options.TestFiles was given
 }
 
 func newEnv(t *testing.T, o Options) *testEnv {
@@ -79,6 +83,22 @@ func newEnv(t *testing.T, o Options) *testEnv {
 	if o.Activity == nil {
 		e.activity = &fakeActivity{sessions: e.testSessions, entries: map[int64][]store.Activity{}}
 		o.Activity = e.activity
+	}
+	if o.Runs == nil {
+		e.runs = &fakeRuns{runs: map[int64][]store.Run{}, details: map[int64]store.RunDetail{}, owner: map[int64]int64{}}
+		o.Runs = e.runs
+	}
+	if o.Dispatcher == nil {
+		e.dispatcher = &fakeDispatcher{}
+		o.Dispatcher = e.dispatcher
+	}
+	if o.Syncer == nil {
+		e.syncer = &fakeSyncer{}
+		o.Syncer = e.syncer
+	}
+	if o.TestFiles == nil {
+		e.files = &fakeFiles{}
+		o.TestFiles = e.files
 	}
 	if o.Environments == nil {
 		o.Environments = []string{"preprod", "beta", "prod"}

@@ -20,6 +20,9 @@ import (
 type TestDiscovery interface {
 	Tests(ctx context.Context, refresh bool) (*discovery.Result, error)
 	Snapshot(id string) (*discovery.Result, bool)
+	// Cached reports whether Tests would answer from the cache, without
+	// discovering.
+	Cached() bool
 }
 
 // TestSessionStore creates and reads test sessions (store.Store).
@@ -73,10 +76,25 @@ func (s *server) listSessions(w http.ResponseWriter, r *http.Request) {
 // Livewire/Sessions/CreateSession). A successful ?refresh redirects back,
 // so reloading the page does not repeat it. A failed one renders the page
 // directly: redirecting would start another discovery straight away.
+//
+// Discovery can take a while, so unless fresh tests are cached the page
+// first shows the heading and a loading overlay, and htmx loads the form
+// (legacy: the lazy CreateSession component). htmx requests, from that
+// page or its Refresh button, get the form as a fragment; a failure is
+// rendered there too.
 func (s *server) newSession(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Vary", "HX-Request")
 	refresh := r.URL.Query().Has("refresh")
+	if !isHTMX(r) && !refresh && !s.Discovery.Cached() {
+		s.render(w, r, http.StatusOK, views.NewSessionLoadingPage(s.page(r, "New session")))
+		return
+	}
 	form := views.NewSessionForm{Environments: s.Environments, Environment: s.Environments[0]}
 	status := s.loadTests(r, &form, refresh)
+	if isHTMX(r) {
+		s.render(w, r, status, views.NewSessionContent(form))
+		return
+	}
 	if refresh && form.LoadError == "" && form.Warning == "" {
 		http.Redirect(w, r, "/sessions/new", http.StatusSeeOther)
 		return
@@ -206,16 +224,6 @@ func newServices(groups []discovery.Group) []store.NewService {
 	return out
 }
 
-// showSession renders the session detail page (legacy:
-// SessionController::show). Runs and reviews are added by later iterations.
-func (s *server) showSession(w http.ResponseWriter, r *http.Request) {
-	id, ok := sessionID(w, r)
-	if !ok {
-		return
-	}
-	s.renderActivity(w, r, http.StatusOK, views.ActivityView{SessionID: id})
-}
-
 // addComment logs a comment (spec §8.9; legacy: Livewire/Comments/CreateComment).
 // An htmx request gets the activity block back; a normal one is redirected
 // to the session page (PRG). A validation error re-renders with 422.
@@ -271,7 +279,12 @@ func (s *server) renderActivity(w http.ResponseWriter, r *http.Request, status i
 		s.render(w, r, status, views.Activity(av))
 		return
 	}
-	s.render(w, r, status, views.SessionPage(s.page(r, ts.Name), ts, av))
+	rl, err := s.runList(ctx, ts, runState{})
+	if err != nil {
+		s.activityError(w, r, "load runs", err)
+		return
+	}
+	s.render(w, r, status, views.SessionPage(s.page(r, ts.Name), ts, rl, av))
 }
 
 // activityError answers a failed session page or comment request:
@@ -280,16 +293,24 @@ func (s *server) renderActivity(w http.ResponseWriter, r *http.Request, status i
 // form's error area instead of the plain error page replacing the whole
 // activity block; the typed comment stays in the form.
 func (s *server) activityError(w http.ResponseWriter, r *http.Request, what string, err error) {
+	s.fragmentError(w, r, what, err, views.CommentErrorsID, msgActivityFailed)
+}
+
+// fragmentError answers a failed request of a page block: ErrNotFound is a
+// 404 ("This session does not exist any more."), anything else a logged
+// 500 with msg500. An htmx request gets the message in the block's error
+// area targetID, since htmx 4 would otherwise swap the plain error page in.
+func (s *server) fragmentError(w http.ResponseWriter, r *http.Request, what string, err error, targetID, msg500 string) {
 	status, msg := http.StatusNotFound, msgSessionGone
 	if !errors.Is(err, store.ErrNotFound) {
-		status, msg = http.StatusInternalServerError, msgActivityFailed
+		status, msg = http.StatusInternalServerError, msg500
 		s.Logger.ErrorContext(r.Context(), what+" failed", "err", err)
 	}
 	if !isHTMX(r) {
 		http.Error(w, http.StatusText(status), status)
 		return
 	}
-	w.Header().Set("HX-Retarget", "#"+views.CommentErrorsID)
+	w.Header().Set("HX-Retarget", "#"+targetID)
 	w.Header().Set("HX-Reswap", "innerHTML")
 	s.render(w, r, status, views.ErrorText(msg))
 }

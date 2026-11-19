@@ -367,6 +367,37 @@ details > summary {
  * htmx 4 normally injects these rules at runtime. That is switched off in the
  * layout (includeIndicatorCSS:false) so the CSP can stay self-only (§9).
  */
+/* Legacy: components/loading-overlay (layout.css). An htmx indicator
+ * overlay is hidden by visibility, so it does not catch clicks. */
+.loading-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(255, 255, 255, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* The spinner's dots circle around the centre of its 100×100 view box. */
+.loading-spin {
+    transform-box: view-box;
+    transform-origin: 50% 50%;
+    animation: loading-spin 2s linear infinite;
+}
+
+@keyframes loading-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Covers only its container, which must be positioned. */
+.loading-overlay.relative {
+    position: absolute;
+    z-index: 1;
+}
+
 .htmx-indicator {
     opacity: 0;
     visibility: hidden;
@@ -645,6 +676,180 @@ header {
     }
 }
 
+/* ---- runs (legacy: components/runs/list.css, detail.css,
+ * components/sessions/detail.css) ---- */
+
+.runs {
+    position: relative;
+}
+
+.runs-list {
+    margin-bottom: 20px;
+
+    /* Keeps the hidden input inside its cell. */
+    .checkbox {
+        position: relative;
+        display: inline-flex;
+    }
+
+    .more-runs-list {
+        background-color: #f9f9f9;
+    }
+}
+
+.expand-icon {
+    display: block;
+    height: 22px;
+    padding: 0;
+    border: none;
+    background: none;
+
+    &:hover {
+        background: none;
+    }
+
+    img {
+        width: 22px;
+        height: 22px;
+    }
+}
+
+.list-runs-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1rem;
+}
+
+/* A request in flight: the form (Run) or the button (Refresh now). */
+#runs-form.htmx-request button,
+.runs button.htmx-request {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.running {
+    color: var(--gray);
+    font-style: italic;
+}
+
+.run-status {
+    color: var(--gray);
+    font-weight: 600;
+}
+
+.run-status--success {
+    color: var(--primary);
+}
+
+.run-status--failure,
+.run-status--timed_out,
+.run-status--action_required {
+    color: var(--error);
+}
+
+.run-tests {
+    .test-file a {
+        color: inherit;
+        text-decoration: none;
+        transition: 0.3s ease;
+
+        &:hover {
+            color: var(--primary);
+        }
+    }
+
+    .test-status.pass::before {
+        content: '\2714';
+    }
+
+    .test-status.fail::before,
+    .test-status.error::before {
+        content: '\2716';
+    }
+
+    .test-status.error {
+        color: var(--error);
+        font-weight: 600;
+    }
+
+    .test-status.skipped::before {
+        content: '\21B7';
+    }
+
+    .test-status.not-found::before {
+        content: '\1F6AB';
+    }
+
+    .comment {
+        color: var(--gray);
+    }
+}
+
+/* Test file dialog on the run page (legacy: components/dialog). The dialog
+ * itself has no padding, so app.js treats a click on it as a click on the
+ * backdrop. */
+.test-dialog {
+    width: min(900px, calc(100vw - 2rem));
+    max-height: calc(100vh - 4rem);
+    padding: 0;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+
+    &::backdrop {
+        background: rgba(0, 0, 0, 0.5);
+    }
+
+    .test-dialog-body {
+        padding: 1rem 1.5rem 1.5rem;
+    }
+
+    .test-dialog-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+
+        h2 {
+            margin: 0;
+            font-size: 1.1rem;
+            overflow-wrap: anywhere;
+        }
+    }
+
+    .close {
+        padding: 0 0.5rem;
+        border: none;
+        background: none;
+        font-size: 1.5rem;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    .loading {
+        position: relative;
+        height: 120px;
+    }
+
+    .content {
+        overflow-x: auto;
+        font-size: 12px;
+    }
+
+    .content.error {
+        color: var(--error);
+        white-space: normal;
+    }
+}
+
+.run-output {
+    margin-bottom: 1rem;
+
+    pre {
+        overflow-x: auto;
+        font-size: 10px;
+    }
+}
+
 /* ---- activity and comments (legacy: components/activity/activity-feed.css,
  * components/comment/create-comment.css). The feed is newest first, so the
  * comment form sits above it (spec §8.9). ---- */
@@ -797,7 +1002,9 @@ footer {
     }
 
     header .account,
-    footer {
+    footer,
+    .list-runs-actions,
+    .runs-list tr > :first-child {
         display: none;
     }
 }
