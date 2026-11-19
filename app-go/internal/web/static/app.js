@@ -124,7 +124,18 @@
 
         fetch(link.href, { signal: request.signal, credentials: 'same-origin' })
             .then(function (res) {
-                if (res.ok) return res.text().then(function (t) { show(t, false); });
+                // An expired sign-in redirects to the login page: go there
+                // instead of showing its HTML as the file.
+                if (res.redirected) {
+                    window.location.assign(res.url);
+                    return;
+                }
+                const plain = (res.headers.get('Content-Type') || '').startsWith('text/plain');
+                if (res.ok && plain) return res.text().then(function (t) { show(t, false); });
+                if (res.ok) {
+                    show('Could not load the file.', true);
+                    return;
+                }
                 show(res.status === 404 ? 'The file is not in the repository at this commit.'
                     : 'Could not load the file from GitHub.', true);
             })

@@ -442,8 +442,9 @@ for the batch: "{user} has executed: {service} with run ID {id}, …".
 matches the workflow run whose `created_at` is within **±5 s** of our row's
 `created_at`. Keep this for parity (see Q1), with two fixes: a run that has a
 `github_run_id` is found by it, and an unmatched run takes the *closest*
-workflow run in range that no other pending run has, so two dispatches of the
-same workflow a few seconds apart no longer both take the first.
+workflow run in range that no other run has (pending ones, and any run of the
+last 24 h with that `github_run_id`), so two dispatches of the same workflow a
+few seconds apart no longer both take the first.
 
 **Status** = GitHub `conclusion` if set, otherwise `status`. Values:
 `unknown`, `queued`, `in_progress`, `success`, `failure`, `neutral`, `cancelled`,
@@ -459,7 +460,9 @@ these, so other GitHub values are mapped: an unknown conclusion (e.g.
     and take the first `*.xml` in the zip; parse it (§8.6) to fill
     passed/failed/skipped/duration and `run_test_results` (one row per test of
     the service that `Find` matches; a test without a row shows "not found").
-    A report that does not parse is kept in `result_log` without counts. Without
+    A report that does not parse is kept in `result_log` without counts; the run
+    list and the run page then show the run's status instead of counts, and no
+    test is "not found". Without
     the artifact, `result_log` and the counts stay NULL;
   - `run_log`: download the run logs zip and keep the **largest** file. Logs
     GitHub no longer has (404/410) are stored as `''`, so the run stops syncing;
@@ -476,8 +479,10 @@ these, so other GitHub values are mapped: an unknown conclusion (e.g.
   for {service} has changed status from {old} to {new}", adding "with {p} passed
   and {f} failed tests" when results exist, and a final ".". `metadata.run_id`
   holds the run id; the view adds a "Show run" link (legacy linked the id inside
-  its HTML body). For `mobile`, if `run_log` contains a URL matching
-  `https://console.mobile.dev/uploads\S*`, store it in `metadata.maestro_url`. The
+  its HTML body). For `mobile`, if `run_log` contains a URL starting
+  `https://console.mobile.dev/uploads` (legacy: `\S*` after it; here it also stops
+  at control characters such as the log's ANSI colour codes, quotes and `<>`,
+  and drops trailing punctuation), store it in `metadata.maestro_url`. The
   view renders it as a "Maestro Cloud Console" link.
 
 **Run page** (`GET /sessions/{id}/runs/{run}`, legacy `sessions/run.blade.php`):
@@ -491,11 +496,14 @@ of another session is a 404.
 
 **Raw test file** (`GET /sessions/{id}/runs/{run}/tests/{test}`): the file at the
 run's `commit_sha`, or the session's discovery commit before GitHub reported
-one, as `text/plain`. The test must belong to the run's service. A file GitHub
+one, as `text/plain`, cached privately for an hour only when it is the run's own
+commit (the fallback is `no-cache`: the same URL serves the run's commit later).
+The test must belong to the run's service. A file GitHub
 does not have is a 404, other GitHub errors a 502. Test names on the run page
 link to it; `app.js` opens it in a `<dialog>` instead (legacy: the `test-dialog`
 modal), with the test name as its title, the legacy loading spinner until it arrives and an
-error line for a 404 or 502. The file goes in as `textContent`, never as HTML,
+error line for a 404 or 502. A response redirected to the login page (expired
+sign-in) navigates there, and any other non-`text/plain` answer is an error. The file goes in as `textContent`, never as HTML,
 so the endpoint stays `text/plain` (plain `fetch` rather than htmx, which would
 need an escaped HTML variant). Escape and the close button (a `method="dialog"`
 form) close it, as does a click on the backdrop. Opening another file aborts the
@@ -530,8 +538,10 @@ Replaces Livewire polling (`wire:poll.30s`) and the `app:sync-github-runs` comma
   (D17). `app.js` keeps the "Run Selected Tests (n)" / "Run All Tests" label in
   step with the checkboxes.
 - **Refresh now** (`POST /sessions/{id}/runs/sync`) syncs that session's pending
-  runs straight away, bounded by 45 s and not cancelled with the request. If it
-  times out or fails, the run list says the runs keep updating in the
+  runs straight away. Each repository/workflow/branch group holding one of them
+  is matched whole, with every session's pending runs, so the session cannot
+  take another session's GitHub run. It is bounded by 45 s and not cancelled
+  with the request. If it times out or fails, the run list says the runs keep updating in the
   background (HTTP 200). While it runs, the legacy loading overlay (its
   `relative` variant) covers the run list as the request's htmx indicator.
 - The same loop deletes expired `web_sessions`.

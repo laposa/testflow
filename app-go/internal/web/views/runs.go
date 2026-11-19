@@ -167,10 +167,11 @@ func runCells(v RunListView, r store.Run) g.Node {
 	}
 	var results g.Node
 	switch {
-	case r.HasResults && r.FinishedAt != nil:
+	case r.HasTotals && r.FinishedAt != nil:
 		results = PassedFailed(r.Passed, r.Failed, r.Skipped, false)
 	case !r.Syncing(v.Now) || r.FinishedAt != nil:
-		// Finished without a report, or given up on: say how it ended.
+		// Finished without a report or with one that did not parse, or
+		// given up on: say how it ended.
 		results = h.Span(h.Class("run-status run-status--"+r.Status), g.Text(r.Status))
 	}
 	return g.Group{
@@ -246,7 +247,7 @@ func RunPage(p Page, ts store.TestSession, svc store.Service, d store.RunDetail,
 			h.P(g.Text("Run #"+id(d.ID)+" for "+svc.DisplayName()+".")),
 			h.P(g.Text("Started at "), Timestamp(d.CreatedAt), when),
 			h.P(g.Text("Status: "), h.Span(h.Class("run-status run-status--"+d.Status), g.Text(d.Status))),
-			g.If(d.HasResults, h.P(PassedFailed(d.Passed, d.Failed, d.Skipped, true))),
+			g.If(d.HasTotals, h.P(PassedFailed(d.Passed, d.Failed, d.Skipped, true))),
 			h.Section(
 				h.Ul(h.Class("session-selected-suites run-tests"),
 					g.Map(svc.Suites, func(suite store.Suite) g.Node {
@@ -305,7 +306,7 @@ func runTest(base string, d store.RunDetail, t store.Test) g.Node {
 			title = "Error. " + title
 		}
 		status = h.Span(h.Class("test-status "+res.Status), h.Title(title), g.Attr("aria-label", res.Status))
-	case d.HasResults:
+	case d.HasTotals: // an unparsable report says nothing about single tests
 		status = h.Span(h.Class("test-status not-found"), g.Text("not found"))
 	}
 	return g.Group{

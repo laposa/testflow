@@ -28,7 +28,8 @@ type GitHub interface {
 type Store interface {
 	CreateRun(ctx context.Context, nr store.NewRun) (store.Run, error)
 	AddActivity(ctx context.Context, a store.NewActivity) error
-	PendingRuns(ctx context.Context, since time.Time, sessionID int64) ([]store.PendingRun, error)
+	PendingRuns(ctx context.Context, since time.Time) ([]store.PendingRun, error)
+	MatchedGitHubRuns(ctx context.Context, since time.Time) (map[int64]bool, error)
 	StaleRuns(ctx context.Context, before time.Time) ([]store.PendingRun, error)
 	ServiceTests(ctx context.Context, serviceID int64) ([]store.Test, error)
 	UpdateRun(ctx context.Context, u store.RunUpdate, a *store.NewActivity) error

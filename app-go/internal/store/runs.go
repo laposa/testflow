@@ -48,6 +48,7 @@ type Run struct {
 	Status      string
 	HasResults  bool // result_log is set
 	HasRunLog   bool // run_log is set
+	HasTotals   bool // the counts are set: the JUnit report parsed
 	Passed      int
 	Failed      int
 	Skipped     int
@@ -84,13 +85,13 @@ type TestResult struct {
 	Duration       float64 // seconds
 }
 
-const runColumns = `r.id, r.service_id, r.type, r.status, r.result_log IS NOT NULL, r.run_log IS NOT NULL,
+const runColumns = `r.id, r.service_id, r.type, r.status, r.result_log IS NOT NULL, r.run_log IS NOT NULL, r.passed IS NOT NULL,
 	COALESCE(r.passed, 0), COALESCE(r.failed, 0), COALESCE(r.skipped, 0), COALESCE(r.duration, 0),
 	COALESCE(r.github_run_id, 0), COALESCE(r.commit_sha, ''), r.started_at, r.finished_at, r.created_at`
 
 func scanRun(row interface{ Scan(...any) error }, extra ...any) (Run, error) {
 	var r Run
-	dest := append([]any{&r.ID, &r.ServiceID, &r.Type, &r.Status, &r.HasResults, &r.HasRunLog,
+	dest := append([]any{&r.ID, &r.ServiceID, &r.Type, &r.Status, &r.HasResults, &r.HasRunLog, &r.HasTotals,
 		&r.Passed, &r.Failed, &r.Skipped, &r.Duration, &r.GitHubRunID, &r.CommitSHA,
 		&r.StartedAt, &r.FinishedAt, &r.CreatedAt}, extra...)
 	err := row.Scan(dest...)
@@ -178,11 +179,29 @@ type PendingRun struct {
 }
 
 // PendingRuns returns the automated runs without a run log that are not
-// stale and were created at or after since, oldest first (spec §8.5). A
-// non-zero sessionID limits them to that session.
-func (s *Store) PendingRuns(ctx context.Context, since time.Time, sessionID int64) ([]PendingRun, error) {
-	return s.unsyncedRuns(ctx, `r.status <> 'stale' AND r.created_at >= $1 AND ($2::bigint = 0 OR ss.session_id = $2)`,
-		since, sessionID)
+// stale and were created at or after since, oldest first (spec §8.5).
+func (s *Store) PendingRuns(ctx context.Context, since time.Time) ([]PendingRun, error) {
+	return s.unsyncedRuns(ctx, `r.status <> 'stale' AND r.created_at >= $1`, since)
+}
+
+// MatchedGitHubRuns returns the GitHub run ids of the runs created at or
+// after since that have one, synced or not, so the syncer never gives a
+// GitHub run to a second run.
+func (s *Store) MatchedGitHubRuns(ctx context.Context, since time.Time) (map[int64]bool, error) {
+	rows, err := s.db.Query(ctx, `
+		SELECT github_run_id FROM service_runs WHERE github_run_id IS NOT NULL AND created_at >= $1`, since)
+	if err != nil {
+		return nil, fmt.Errorf("matched github runs: %w", err)
+	}
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[int64])
+	if err != nil {
+		return nil, fmt.Errorf("matched github runs: %w", err)
+	}
+	set := make(map[int64]bool, len(ids))
+	for _, id := range ids {
+		set[id] = true
+	}
+	return set, nil
 }
 
 // StaleRuns returns the automated runs without a run log that were created

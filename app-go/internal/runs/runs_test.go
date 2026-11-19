@@ -93,7 +93,8 @@ type fakeStore struct {
 	updates   []store.RunUpdate
 	updateErr error
 	since     time.Time
-	session   int64
+	taken     map[int64]bool // GitHub run ids of runs in the store
+	takenFrom time.Time
 }
 
 func (f *fakeStore) CreateRun(_ context.Context, nr store.NewRun) (store.Run, error) {
@@ -109,9 +110,14 @@ func (f *fakeStore) AddActivity(_ context.Context, a store.NewActivity) error {
 	return nil
 }
 
-func (f *fakeStore) PendingRuns(_ context.Context, since time.Time, sessionID int64) ([]store.PendingRun, error) {
-	f.since, f.session = since, sessionID
+func (f *fakeStore) PendingRuns(_ context.Context, since time.Time) ([]store.PendingRun, error) {
+	f.since = since
 	return f.pending, nil
+}
+
+func (f *fakeStore) MatchedGitHubRuns(_ context.Context, since time.Time) (map[int64]bool, error) {
+	f.takenFrom = since
+	return f.taken, nil
 }
 
 func (f *fakeStore) StaleRuns(context.Context, time.Time) ([]store.PendingRun, error) {
@@ -194,8 +200,9 @@ func TestMatch(t *testing.T) {
 		pendingRun(3, t0.Add(10*time.Second), 0),       // nothing within 5 s
 		pendingRun(4, t0.Add(-2*time.Hour), 4),         // already matched by id
 		pendingRun(5, t0.Add(-time.Hour), 0),           // 4 is claimed by run 4
+		pendingRun(6, t0.Add(29*time.Second), 0),       // 3 belongs to a finished run
 	}
-	got := Match(pending, gh)
+	got := Match(pending, gh, map[int64]bool{3: true})
 	want := map[int64]int64{1: 1, 2: 2, 4: 4}
 	if len(got) != len(want) {
 		t.Fatalf("matched %d runs, want %d: %+v", len(got), len(want), got)
@@ -450,12 +457,18 @@ func TestSyncConflictIsIgnored(t *testing.T) {
 }
 
 func TestSyncSession(t *testing.T) {
-	s, _, st := syncEnv(t, "web")
+	s, gh, st := syncEnv(t, "web") // its run belongs to session 1
 	if err := s.SyncSession(t.Context(), 42); err != nil {
 		t.Fatal(err)
 	}
-	if st.session != 42 || len(st.updates) != 1 {
-		t.Errorf("session = %d, updates = %d", st.session, len(st.updates))
+	if len(gh.filters) != 0 || len(st.updates) != 0 {
+		t.Errorf("another session's runs were synced: filters = %d, updates = %d", len(gh.filters), len(st.updates))
+	}
+	if err := s.SyncSession(t.Context(), 1); err != nil {
+		t.Fatal(err)
+	}
+	if len(st.updates) != 1 || !st.takenFrom.Equal(st.since.Add(-time.Minute)) {
+		t.Errorf("updates = %d, taken from %v", len(st.updates), st.takenFrom)
 	}
 
 	// A sync in progress blocks; the caller's deadline ends the wait.
@@ -464,6 +477,38 @@ func TestSyncSession(t *testing.T) {
 	defer cancel()
 	if err := s.SyncSession(ctx, 42); !errors.Is(err, context.DeadlineExceeded) {
 		t.Errorf("busy syncer: err = %v", err)
+	}
+}
+
+// Refreshing one session matches its group with every session's runs:
+// session 2 dispatched the same workflow 2 s after session 1, and GitHub
+// lists only session 1's run so far. Session 2's run must not take it.
+func TestSyncSessionMatchesWholeGroup(t *testing.T) {
+	s, gh, st := syncEnv(t, "web")
+	gh.runs = []github.WorkflowRun{{ID: 900, Status: "queued", CreatedAt: t0.Add(500 * time.Millisecond)}}
+	other := pendingRun(2, t0.Add(2*time.Second), 0)
+	other.Service.SessionID = 2
+	st.pending = append(st.pending, other)
+
+	if err := s.SyncSession(t.Context(), 2); err != nil {
+		t.Fatal(err)
+	}
+	if len(st.updates) != 1 || st.updates[0].ID != 1 || st.updates[0].GitHubRunID != 900 {
+		t.Errorf("updates = %+v, want only run 1 matched to 900", st.updates)
+	}
+}
+
+func TestMaestroLink(t *testing.T) {
+	for log, want := range map[string]string{
+		"see https://console.mobile.dev/uploads/abc?x=1 now":     "https://console.mobile.dev/uploads/abc?x=1",
+		"\x1b[32mhttps://console.mobile.dev/uploads/abc\x1b[0m":  "https://console.mobile.dev/uploads/abc",
+		"(https://console.mobile.dev/uploads/abc).":              "https://console.mobile.dev/uploads/abc",
+		`<a href="https://console.mobile.dev/uploads/abc">x</a>`: "https://console.mobile.dev/uploads/abc",
+		"no link here": "",
+	} {
+		if got := maestroLink(log); got != want {
+			t.Errorf("maestroLink(%q) = %q, want %q", log, got, want)
+		}
 	}
 }
 

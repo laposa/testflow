@@ -51,16 +51,13 @@ func TestRuns(t *testing.T) {
 	}
 
 	// The syncer's work lists.
-	pending, err := s.PendingRuns(ctx, time.Now().Add(-store.RunSyncWindow), 0)
+	pending, err := s.PendingRuns(ctx, time.Now().Add(-store.RunSyncWindow))
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(pending) != 1 || pending[0].ID != run.ID || pending[0].Service.RepositoryName != "laposa/shop" ||
 		pending[0].Service.WorkflowID != 55 || pending[0].Service.SessionID != sessionID || pending[0].Service.Branch != "master" {
 		t.Fatalf("pending = %+v", pending)
-	}
-	if other, err := s.PendingRuns(ctx, time.Now().Add(-store.RunSyncWindow), sessionID+1); err != nil || len(other) != 0 {
-		t.Errorf("pending of another session = %+v, %v", other, err)
 	}
 	stale, err := s.StaleRuns(ctx, time.Now().Add(-store.RunSyncWindow))
 	if err != nil || len(stale) != 1 || stale[0].ID != older.ID {
@@ -79,6 +76,12 @@ func TestRuns(t *testing.T) {
 			Metadata: map[string]any{store.MetaRunID: run.ID}})
 	if err != nil {
 		t.Fatal(err)
+	}
+	if taken, err := s.MatchedGitHubRuns(ctx, time.Now().Add(-time.Hour)); err != nil || len(taken) != 1 || !taken[900] {
+		t.Errorf("matched github runs = %v, %v", taken, err)
+	}
+	if taken, err := s.MatchedGitHubRuns(ctx, time.Now().Add(time.Hour)); err != nil || len(taken) != 0 {
+		t.Errorf("matched github runs from the future = %v, %v", taken, err)
 	}
 	err = s.UpdateRun(ctx, store.RunUpdate{ID: run.ID, OldStatus: "unknown", Status: "success"},
 		&store.NewActivity{SessionID: sessionID, Type: store.ActivityRunStatusChanged, Body: "must not be logged"})
@@ -109,7 +112,7 @@ func TestRuns(t *testing.T) {
 		t.Fatal(err)
 	}
 	if d.Status != "failure" || d.GitHubRunID != 900 || d.CommitSHA != "sha1" || !d.StartedAt.Equal(started) ||
-		!d.FinishedAt.Equal(finished) || !d.HasResults || !d.HasRunLog || d.Passed != 1 || d.Failed != 1 ||
+		!d.FinishedAt.Equal(finished) || !d.HasResults || !d.HasRunLog || !d.HasTotals || d.Passed != 1 || d.Failed != 1 ||
 		d.Skipped != 0 || d.Duration != 4.5 || d.ResultLog != report || d.RunLog != "the log" || d.Syncing(time.Now()) {
 		t.Errorf("detail = %+v", d.Run)
 	}
@@ -126,7 +129,7 @@ func TestRuns(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if d, err = s.RunDetail(ctx, sessionID, run.ID); err != nil || len(d.Results) != 0 || d.HasResults || !d.HasRunLog {
+	if d, err = s.RunDetail(ctx, sessionID, run.ID); err != nil || len(d.Results) != 0 || d.HasResults || d.HasTotals || !d.HasRunLog {
 		t.Errorf("after second completion = %+v, %v", d, err)
 	}
 

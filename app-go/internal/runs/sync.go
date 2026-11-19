@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/laposa/testflow/app-go/internal/github"
@@ -25,7 +26,15 @@ const ResultsArtifact = "test-results"
 const dispatchEvent = "workflow_dispatch"
 
 // maestroURL finds the Maestro Cloud Console link in a mobile run's log.
-var maestroURL = regexp.MustCompile(`https://console\.mobile\.dev/uploads\S*`)
+// It stops at whitespace, control characters (the log's ANSI colour codes
+// start with ESC), quotes and angle brackets; maestroLink drops trailing
+// punctuation.
+var maestroURL = regexp.MustCompile(`https://console\.mobile\.dev/uploads[^\s\x00-\x1f\x7f"'<>]*`)
+
+// maestroLink is the first Maestro Cloud Console link in log, or "".
+func maestroLink(log string) string {
+	return strings.TrimRight(maestroURL.FindString(log), ".,;:!?)]}")
+}
 
 // SessionCleaner deletes expired web sessions (auth.Sessions).
 type SessionCleaner interface {
@@ -149,15 +158,19 @@ type groupKey struct {
 	branch   string
 }
 
-// sync matches the pending runs (of sessionID, or all if 0) to GitHub's
-// workflow runs and applies what it finds. Workflow runs are fetched once
-// per repository, workflow and branch.
+// sync matches the pending runs to GitHub's workflow runs and applies what
+// it finds. Workflow runs are fetched once per repository, workflow and
+// branch. A non-zero sessionID syncs only the groups holding a run of that
+// session, but each of them whole: matching only that session's runs could
+// hand one of them another session's GitHub run.
 func (s *Syncer) sync(ctx context.Context, now time.Time, sessionID int64) error {
-	pending, err := s.store.PendingRuns(ctx, now.Add(-store.RunSyncWindow), sessionID)
+	since := now.Add(-store.RunSyncWindow)
+	pending, err := s.store.PendingRuns(ctx, since)
 	if err != nil {
 		return err
 	}
 	groups := map[groupKey][]store.PendingRun{}
+	wanted := map[groupKey]bool{}
 	var order []groupKey
 	for _, p := range pending {
 		if p.Service.WorkflowID == 0 {
@@ -168,8 +181,23 @@ func (s *Syncer) sync(ctx context.Context, now time.Time, sessionID int64) error
 			order = append(order, k)
 		}
 		groups[k] = append(groups[k], p)
+		if sessionID == 0 || p.Service.SessionID == sessionID {
+			wanted[k] = true
+		}
+	}
+	if len(wanted) == 0 {
+		return nil
+	}
+	// GitHub runs that finished runs hold are taken too. The window starts
+	// a minute earlier, like the runs filter below.
+	taken, err := s.store.MatchedGitHubRuns(ctx, since.Add(-time.Minute))
+	if err != nil {
+		return err
 	}
 	for _, k := range order {
+		if !wanted[k] {
+			continue
+		}
 		if ctx.Err() != nil {
 			return ctx.Err()
 		}
@@ -183,7 +211,7 @@ func (s *Syncer) sync(ctx context.Context, now time.Time, sessionID int64) error
 			s.logger.WarnContext(ctx, "list workflow runs failed", "repository", k.repo, "workflow.id", k.workflow, "err", err)
 			continue
 		}
-		for _, m := range Match(runs, ghRuns) {
+		for _, m := range Match(runs, ghRuns, taken) {
 			if err := s.syncRun(ctx, m.Pending, m.WorkflowRun); err != nil && ctx.Err() == nil {
 				s.logger.WarnContext(ctx, "sync run failed", "run.id", m.Pending.ID, "github.run_id", m.WorkflowRun.ID, "err", err)
 			}
@@ -202,13 +230,17 @@ type Matched struct {
 // matched keeps its github_run_id. Otherwise it takes the workflow run
 // created closest to it within ±MatchWindow that no other run has, so two
 // dispatches of the same workflow a few seconds apart get one run each
-// (legacy took the first in range for both).
-func Match(pending []store.PendingRun, ghRuns []github.WorkflowRun) []Matched {
+// (legacy took the first in range for both). taken holds GitHub run ids
+// that other runs, e.g. finished ones, already have.
+func Match(pending []store.PendingRun, ghRuns []github.WorkflowRun, taken map[int64]bool) []Matched {
 	byID := make(map[int64]github.WorkflowRun, len(ghRuns))
 	for _, wr := range ghRuns {
 		byID[wr.ID] = wr
 	}
-	claimed := map[int64]bool{}
+	claimed := make(map[int64]bool, len(taken))
+	for id := range taken {
+		claimed[id] = true
+	}
 	for _, p := range pending {
 		if p.GitHubRunID != 0 {
 			claimed[p.GitHubRunID] = true
@@ -272,7 +304,7 @@ func (s *Syncer) update(ctx context.Context, p store.PendingRun, u store.RunUpda
 		if c != nil {
 			totals = c.Totals
 			if p.Service.Name == "mobile" {
-				if url := maestroURL.FindString(c.RunLog); url != "" {
+				if url := maestroLink(c.RunLog); url != "" {
 					meta[store.MetaMaestroURL] = url
 				}
 			}

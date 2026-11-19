@@ -106,7 +106,7 @@ func runsEnv(t *testing.T) (*testEnv, *http.Cookie) {
 
 	started, finished := now.Add(-2*time.Hour), now.Add(-2*time.Hour+125*time.Second)
 	latest := store.Run{ID: 7, ServiceID: 10, Type: "automated", Status: "failure", HasResults: true, HasRunLog: true,
-		Passed: 2, Failed: 1, CommitSHA: "run-sha", CreatedAt: started.Add(-time.Minute), StartedAt: &started, FinishedAt: &finished}
+		HasTotals: true, Passed: 2, Failed: 1, CommitSHA: "run-sha", CreatedAt: started.Add(-time.Minute), StartedAt: &started, FinishedAt: &finished}
 	older := store.Run{ID: 5, ServiceID: 10, Type: "automated", Status: "cancelled", HasRunLog: true,
 		CreatedAt: now.Add(-150 * time.Minute), FinishedAt: &finished}
 	oldest := store.Run{ID: 4, ServiceID: 10, Type: "automated", Status: "stale", CreatedAt: now.Add(-48 * time.Hour)}
@@ -351,6 +351,26 @@ func TestRunPage(t *testing.T) {
 	}
 }
 
+// A report that did not parse has no counts: the list and the run page
+// show the run's status instead of "None", and no test is "not found".
+func TestUnparsableReport(t *testing.T) {
+	e, cookie := runsEnv(t)
+	latest := e.runs.runs[3][0]
+	latest.HasTotals, latest.Passed, latest.Failed = false, 0, 0
+	e.runs.runs[3][0] = latest
+	d := e.runs.details[7]
+	d.Run, d.Results = latest, nil
+	e.runs.details[7] = d
+
+	body := get(e.h, "/sessions/3", cookie).Body.String()
+	assertContains(t, body, `<td><span class="run-status run-status--failure">failure</span></td>`)
+	assertNotContains(t, body, `class="no-runs">None<`)
+
+	body = get(e.h, "/sessions/3/runs/7", cookie).Body.String()
+	assertContains(t, body, `<summary>Results in JUnit format</summary>`)
+	assertNotContains(t, body, "not found", `class="pass"`)
+}
+
 func TestTestFile(t *testing.T) {
 	e, cookie := runsEnv(t)
 	e.files.files = map[string]string{
@@ -359,16 +379,19 @@ func TestTestFile(t *testing.T) {
 	}
 	rec := get(e.h, "/sessions/3/runs/7/tests/31", cookie)
 	if rec.Code != http.StatusOK || rec.Body.String() != "describe('pay', () => {})" ||
-		rec.Header().Get("Content-Type") != "text/plain; charset=utf-8" {
-		t.Errorf("file: status = %d, type = %q, body = %q", rec.Code, rec.Header().Get("Content-Type"), rec.Body.String())
+		rec.Header().Get("Content-Type") != "text/plain; charset=utf-8" || rec.Header().Get("Cache-Control") != "private, max-age=3600" {
+		t.Errorf("file: status = %d, type = %q, cache = %q, body = %q", rec.Code, rec.Header().Get("Content-Type"),
+			rec.Header().Get("Cache-Control"), rec.Body.String())
 	}
 
 	// Before GitHub reports the run's commit, the discovery commit is used.
 	d := e.runs.details[7]
 	d.CommitSHA = ""
 	e.runs.details[7] = d
-	if body := get(e.h, "/sessions/3/runs/7/tests/31", cookie).Body.String(); body != "the discovery version" {
-		t.Errorf("fallback ref: body = %q", body)
+	// The same URL serves the run's commit later, so it is not cached.
+	if rec := get(e.h, "/sessions/3/runs/7/tests/31", cookie); rec.Body.String() != "the discovery version" ||
+		rec.Header().Get("Cache-Control") != "no-cache" {
+		t.Errorf("fallback ref: cache = %q, body = %q", rec.Header().Get("Cache-Control"), rec.Body.String())
 	}
 
 	for target, want := range map[string]int{

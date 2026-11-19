@@ -315,8 +315,14 @@ func (s *server) testFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	// The file at a commit never changes.
-	w.Header().Set("Cache-Control", "private, max-age=3600")
+	if d.CommitSHA != "" {
+		// The file at a commit never changes.
+		w.Header().Set("Cache-Control", "private, max-age=3600")
+	} else {
+		// The discovery commit stands in until GitHub reports the run's
+		// own, which the same URL then serves.
+		w.Header().Set("Cache-Control", "no-cache")
+	}
 	_, _ = w.Write(b)
 }
 
