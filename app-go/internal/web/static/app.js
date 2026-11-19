@@ -72,3 +72,17 @@
         });
     });
 })();
+
+// Run list button label (legacy: "Run Selected Tests (n)" or "Run All
+// Tests"). The server renders the right label; this keeps it in step with
+// the checkboxes. The run list is replaced by htmx, so listen on document.
+(function () {
+    document.addEventListener('change', function (e) {
+        const box = e.target;
+        if (!(box instanceof HTMLInputElement) || !box.classList.contains('run-selector') || !box.form) return;
+        const button = box.form.querySelector('[data-run-button]');
+        if (!button) return;
+        const n = box.form.querySelectorAll('.run-selector:checked').length;
+        button.textContent = n > 0 ? 'Run Selected Tests (' + n + ')' : 'Run All Tests';
+    });
+})();

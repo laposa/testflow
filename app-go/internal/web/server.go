@@ -62,6 +62,11 @@ type Options struct {
 	TestSessions TestSessionStore // test sessions (spec §8.2)
 	Environments []string         // TEST_SESSION_ENVIRONMENTS
 	Activity     ActivityStore    // activity feed and comments (spec §8.9)
+
+	Runs       RunStore      // run list and run detail (spec §8.4)
+	Dispatcher RunDispatcher // starts automated runs
+	Syncer     RunSyncer     // "refresh now" (spec §8.5)
+	TestFiles  TestFiles     // raw test files at a run's commit
 }
 
 type server struct {
@@ -70,8 +75,8 @@ type server struct {
 }
 
 // NewHandler returns the root handler with all routes and middleware.
-// Sessions, OAuth, Users, Discovery, TestSessions, Environments and
-// Activity are required.
+// Everything but Logger, Version, Development, StaticDir, DB and BaseURL
+// is required.
 func NewHandler(o Options) (http.Handler, error) {
 	if o.Logger == nil {
 		o.Logger = slog.Default()
@@ -81,6 +86,9 @@ func NewHandler(o Options) (http.Handler, error) {
 	}
 	if o.Discovery == nil || o.TestSessions == nil || len(o.Environments) == 0 || o.Activity == nil {
 		return nil, fmt.Errorf("web: Discovery, TestSessions, Environments and Activity are required")
+	}
+	if o.Runs == nil || o.Dispatcher == nil || o.Syncer == nil || o.TestFiles == nil {
+		return nil, fmt.Errorf("web: Runs, Dispatcher, Syncer and TestFiles are required")
 	}
 	s := &server{Options: o, static: static.FS}
 	if o.StaticDir != "" {
@@ -112,6 +120,11 @@ func NewHandler(o Options) (http.Handler, error) {
 	private("POST /sessions", s.createSession)
 	private("GET /sessions/{id}", s.showSession)
 	private("POST /sessions/{id}/comments", s.addComment)
+	private("GET /sessions/{id}/runs", s.showRuns)
+	private("POST /sessions/{id}/runs", s.startRuns)
+	private("POST /sessions/{id}/runs/sync", s.syncRuns)
+	private("GET /sessions/{id}/runs/{run}", s.showRun)
+	private("GET /sessions/{id}/runs/{run}/tests/{test}", s.testFile)
 
 	// Telemetry wraps the mux with handlers that keep the same *http.Request,
 	// so it can log the matched route pattern.

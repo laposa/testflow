@@ -52,6 +52,7 @@ table in the same PR.
 | `maragu.dev/gomponents` | Type-safe HTML components (D3) | none |
 | `github.com/jackc/pgx/v5` | Postgres driver and pool (D5) | `jackc/pgpassfile`, `jackc/pgservicefile`, `jackc/puddle/v2`, `golang.org/x/sync`, `golang.org/x/text` |
 | `go.yaml.in/yaml/v3` | Parse `*.manual.yaml` test cases shown in manual runs (D8, §8.8) | none |
+| `golang.org/x/text` | Decode JUnit reports that declare a non-UTF-8 encoding (`encoding/htmlindex`, §8.6); `encoding/xml` has no charset support. Already in the build as a dependency of pgx, so it adds no code | none |
 
 Static assets (not Go modules), pinned and upgraded by hand:
 
@@ -275,9 +276,10 @@ the `HX-Redirect` header for htmx requests.
 | `GET /` and `GET /sessions` | session list | `SessionController::index` |
 | `GET /sessions/new` | test picker (discovery §8.1). `?refresh` discovers again, then redirects back; if that fails, the page is rendered directly (no redirect, which would start another discovery) | `SessionController::create` |
 | `POST /sessions` | create session | `SessionController::store` |
-| `GET /sessions/{id}` | session detail: services, runs, activity, reviews | `SessionController::show` |
-| `GET /sessions/{id}/runs` | htmx fragment: run list (polled) | `Livewire/Runs/ListRuns` |
+| `GET /sessions/{id}` | session detail: services, runs, activity, reviews. The query may carry the run list's state (§8.5) | `SessionController::show` |
+| `GET /sessions/{id}/runs` | htmx fragment: run list (polled); the session page without htmx | `Livewire/Runs/ListRuns` |
 | `POST /sessions/{id}/runs` | start runs for selected services | `ListRuns::createRun` |
+| `POST /sessions/{id}/runs/sync` | "refresh now": sync the session's runs with GitHub (§8.5) | `ListRuns::refreshSessionWorkflowRuns` |
 | `GET /sessions/{id}/runs/{run}` | run detail | `SessionRunController::show` |
 | `GET /sessions/{id}/runs/{run}/manual` | htmx fragment: manual run wizard, current test | `Livewire/Runs/ManualTestRun` |
 | `POST /sessions/{id}/runs/{run}/manual/{test}` | save result for one test, return next | `ManualTestRun::updateResults` |
@@ -367,9 +369,9 @@ Legacy: `app/Actions/Session/CreateSession.php`.
 
 The session page shows the name, environment, issuer and creation time, and the
 selected tests in a `<details>` ("Selected tests (n)"), listed by service display
-name, suite and test. Below them come the comment form and the activity feed
-(§8.9, iteration 7). Runs, reviews and report links are added by their
-iterations.
+name, suite and test. The run list (§8.5) sits above them, and the comment form
+and the activity feed (§8.9) below. Manual runs, reviews and report links are
+added by their iterations.
 
 ### 8.3 Session list
 Legacy: `SessionController::index`, `Session::lastRuns`.
@@ -407,41 +409,110 @@ Legacy: `app/Actions/Github/DispatchSessionRun.php`, `FetchSessionWorkflowRuns.p
 | `api` | test name up to its first `.`, joined with `\|` |
 | other | empty (open question Q3) |
 
-Then insert a `service_runs` row with `status='unknown'` and log `run_dispatched`:
-"{user} has executed: {service} with run ID {id}, …".
+The dispatch goes to the service's `branch` (always `master`, Q6). Right after
+each successful dispatch, insert a `service_runs` row with `status='unknown'`
+(its `created_at` is what the run is matched by). Then log one `run_dispatched`
+for the batch: "{user} has executed: {service} with run ID {id}, …".
+
+- With no service selected, every service is started (legacy "Run All Tests").
+  Manual services are not started yet (iteration 10); if nothing else was
+  selected the list says "Manual runs are not available yet.", and their
+  checkboxes are disabled.
+- A service GitHub refuses (or one without a workflow) does not stop the others.
+  It is named above the run list ("Could not start {service}: GitHub answered
+  “{message}”."), with HTTP 502 if nothing started. Legacy failed the whole
+  request, leaving the services before it started but unlogged.
+- The batch is not cancelled when the request goes away: once one workflow
+  runs, the rest and the activity entry should follow.
+- Without htmx a successful start redirects to the session (PRG); with htmx the
+  run list comes back, with the selection cleared as in legacy.
 
 **Matching a GitHub run to our row:** the dispatch API returns no run id. Legacy
 matches the workflow run whose `created_at` is within **±5 s** of our row's
-`created_at`. Keep this for parity (see Q1).
+`created_at`. Keep this for parity (see Q1), with two fixes: a run that has a
+`github_run_id` is found by it, and an unmatched run takes the *closest*
+workflow run in range that no other pending run has, so two dispatches of the
+same workflow a few seconds apart no longer both take the first.
 
 **Status** = GitHub `conclusion` if set, otherwise `status`. Values:
 `unknown`, `queued`, `in_progress`, `success`, `failure`, `neutral`, `cancelled`,
-`skipped`, `timed_out`, `action_required`, `stale`.
+`skipped`, `timed_out`, `action_required`, `stale`. The column accepts only
+these, so other GitHub values are mapped: an unknown conclusion (e.g.
+`startup_failure`) is `failure`, and `waiting`/`requested`/`pending` are
+`queued`.
 
 **On each sync of a matched run:**
 - set `github_run_id`, `commit_sha` (= `head_sha`), and `started_at` = min job `started_at`;
 - once GitHub `status == completed`:
-  - `result_log`: download the artifact named `test-results` and take the first
-    `*.xml` in the zip; parse it (§8.6) to fill passed/failed/skipped/duration and
-    `run_test_results`;
-  - `run_log`: download the run logs zip and keep the **largest** file;
+  - `result_log`: download the artifact named `test-results` (unless expired)
+    and take the first `*.xml` in the zip; parse it (§8.6) to fill
+    passed/failed/skipped/duration and `run_test_results` (one row per test of
+    the service that `Find` matches; a test without a row shows "not found").
+    A report that does not parse is kept in `result_log` without counts. Without
+    the artifact, `result_log` and the counts stay NULL;
+  - `run_log`: download the run logs zip and keep the **largest** file. Logs
+    GitHub no longer has (404/410) are stored as `''`, so the run stops syncing;
   - `finished_at` = max job `completed_at`;
-- if status changed, log `run_status_changed`: "Run {id} for {service} has changed
-  status from {old} to {new}", adding "with {p} passed and {f} failed tests" when
-  results exist. For `mobile`, if `run_log` contains a URL matching
+  - if a download fails, nothing of the sync is stored and the next tick tries
+    again, so the status change is logged once, with its counts.
+- Files from the zips are read up to 64 MiB. A larger JUnit file is skipped (the
+  run has no results); a run log keeps its last 10 MiB behind a note. Both are
+  stored as valid UTF-8 without NUL bytes, which Postgres `text` rejects.
+- The update is guarded by the status the syncer read (`ErrConflict` if it
+  changed) and writes the run, its results and the activity entry in one
+  transaction.
+- if status changed, log `run_status_changed` (no user: the syncer): "Run {id}
+  for {service} has changed status from {old} to {new}", adding "with {p} passed
+  and {f} failed tests" when results exist, and a final ".". `metadata.run_id`
+  holds the run id; the view adds a "Show run" link (legacy linked the id inside
+  its HTML body). For `mobile`, if `run_log` contains a URL matching
   `https://console.mobile.dev/uploads\S*`, store it in `metadata.maestro_url`. The
   view renders it as a "Maestro Cloud Console" link.
+
+**Run page** (`GET /sessions/{id}/runs/{run}`, legacy `sessions/run.blade.php`):
+the run id and service, start time and duration ("ran for 2 minutes 5 seconds",
+from `started_at` or `created_at` to `finished_at`), the status, the counts (zeros
+shown) when there is a report, and the service's suites and tests with each
+test's result icon (title "Execution time 1.2s") and comment, or "not found".
+The JUnit report and the run log are in `<details>` blocks. ANSI escape codes
+are stripped from the log (legacy coloured it with the `ansi_up` script). A run
+of another session is a 404.
+
+**Raw test file** (`GET /sessions/{id}/runs/{run}/tests/{test}`): the file at the
+run's `commit_sha`, or the session's discovery commit before GitHub reported
+one, as `text/plain`. The test must belong to the run's service. Test names on
+the run page link to it in a new tab (legacy loaded it into a dialog with
+script). A file GitHub does not have is a 404, other GitHub errors a 502.
 
 ### 8.5 Background syncer
 Replaces Livewire polling (`wire:poll.30s`) and the `app:sync-github-runs` command.
 
-- A goroutine runs every `SYNC_INTERVAL`. It picks automated runs where
-  `run_log IS NULL` and the run is newer than 24 h (open question Q2), groups them by
-  (repository, workflow), fetches workflow runs once per group, and applies §8.4.
+- A goroutine (`runs.Syncer`) runs at startup and then every `SYNC_INTERVAL`, each
+  tick in a new trace. It picks automated runs where `run_log IS NULL`, the status
+  is not `stale` and the run is newer than 24 h (open question Q2), groups them by
+  (repository, workflow, branch), fetches workflow runs once per group (filtered
+  by `event=workflow_dispatch`, the branch and `created>=` the oldest run minus a
+  minute), and applies §8.4. A failing group or run is logged and retried on the
+  next tick.
+- **Stale (Q2):** each tick sets runs older than 24 h that are still `unknown`,
+  `queued` or `in_progress` to `stale` and logs the status change. Runs that
+  completed but whose log never downloaded keep their status.
+- Only one sync runs at a time: a "refresh now" waits for a tick in progress.
 - The session page polls the run-list fragment (`hx-trigger="every 30s"`) **only
-  while** the session has unfinished runs. The fragment reads the DB and never calls
-  GitHub.
-- A "refresh now" action triggers an immediate sync of that session.
+  while** a run is syncing (the conditions above). The fragment reads the DB and
+  never calls GitHub. A run that is syncing shows "Running"; one that ended
+  without a report, or went stale, shows its status where the counts would be.
+- **Run list state.** The selected services (`services`) and the services whose
+  older runs are shown (`expand`, hidden fields) are fields of the run list form.
+  The poll sends them (`hx-include`), and the older-runs toggle adds
+  `toggle={service}`, so a swap keeps them. Without JS the toggle is a GET to
+  `/sessions/{id}` with the same fields, and "Run"/"Refresh now" post the form
+  (D17). `app.js` keeps the "Run Selected Tests (n)" / "Run All Tests" label in
+  step with the checkboxes.
+- **Refresh now** (`POST /sessions/{id}/runs/sync`) syncs that session's pending
+  runs straight away, bounded by 45 s and not cancelled with the request. If it
+  times out or fails, the run list says the runs keep updating in the
+  background (HTTP 200).
 - The same loop deletes expired `web_sessions`.
 
 ### 8.6 JUnit parsing
@@ -603,8 +674,7 @@ Legacy: `resources/views/sessions/report.blade.php`.
     lifetime is left.
   - An unknown or expired cookie is cleared. Logout deletes the row and clears
     the cookie.
-  - Until the syncer exists (iteration 9), `serve` runs a small loop every
-    `SYNC_INTERVAL` that only deletes expired sessions. The syncer takes it over.
+  - Expired sessions are deleted by the syncer loop every `SYNC_INTERVAL` (§8.5).
 - **CSRF:** `http.CrossOriginProtection` wraps all non-GET routes. Logout is POST.
   The `BASE_URL` origin is added as a trusted origin, so the `Origin` fallback
   check still passes behind a proxy that rewrites `Host`. Rejected requests get
@@ -668,8 +738,9 @@ Legacy: `resources/views/sessions/report.blade.php`.
   2. htmx for anything that needs the server;
   3. a small plain-JS file (`internal/web/static/app.js`, no inline scripts, so it
      fits the CSP in §9) for what's left: opening/closing the dialog, closing it on
-     a click outside, "select all" checkboxes in the test tree, and disabling the
-     submit button of a `data-submit-once` form once it is sent (§8.2). A group
+     a click outside, "select all" checkboxes in the test tree, disabling the
+     submit button of a `data-submit-once` form once it is sent (§8.2), and the
+     run list's button label (§8.5). A group
      checkbox (in the level's `<summary>`) checks or clears every test below it
      and shows checked, indeterminate or clear for its tests; it needs no server.
 - Handlers check the `HX-Request` header. htmx requests get the fragment, normal
@@ -810,7 +881,7 @@ Out of scope: ...
 | ID | Question | Default until answered |
 |----|----------|------------------------|
 | Q1 | Replace the ±5 s timestamp matching by passing a correlation id as a workflow input (e.g. `testflow_run_id`, shown in `run-name`)? This needs a change to the workflows in the tested repositories. | Keep ±5 s matching |
-| Q2 | How long should the syncer keep trying runs that never match or never finish? | Give up after 24 h and set status `stale` |
+| Q2 | How long should the syncer keep trying runs that never match or never finish? | Give up after 24 h and set status `stale` (implemented, §8.5) |
 | Q3 | How should `test_filter` be built for services other than `mobile`/`web`/`api`? | Empty filter (runs all) |
 | Q4 | Should revoking a review be logged in the activity log? | No (legacy parity) |
 | Q5 | Restrict login to members of a GitHub organisation? | No (legacy parity) |

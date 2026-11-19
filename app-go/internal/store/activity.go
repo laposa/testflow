@@ -61,14 +61,28 @@ type Activity struct {
 	Type      ActivityType
 	Body      string // plain text (D13)
 	CreatedAt time.Time
+
+	// From metadata (spec §8.4): the run an entry is about, and for mobile
+	// runs the Maestro Cloud Console URL found in the run log.
+	RunID      int64
+	MaestroURL string
 }
+
+// Metadata keys of run entries.
+const (
+	MetaRunID      = "run_id"
+	MetaMaestroURL = "maestro_url"
+)
 
 // SessionActivity returns the activity of a session, newest first (spec
 // §8.9). Entries written in the same transaction share created_at, so the
 // id decides.
 func (s *Store) SessionActivity(ctx context.Context, sessionID int64) ([]Activity, error) {
 	rows, err := s.db.Query(ctx, `
-		SELECT a.id, COALESCE(u.name, ''), a.type, a.body, a.created_at
+		SELECT a.id, COALESCE(u.name, ''), a.type, a.body, a.created_at,
+		       CASE WHEN jsonb_typeof(a.metadata->'run_id') = 'number'
+		            THEN (a.metadata->>'run_id')::bigint ELSE 0 END,
+		       COALESCE(a.metadata->>'maestro_url', '')
 		FROM activity_log a
 		LEFT JOIN users u ON u.id = a.user_id
 		WHERE a.session_id = $1
@@ -78,7 +92,7 @@ func (s *Store) SessionActivity(ctx context.Context, sessionID int64) ([]Activit
 	}
 	list, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (Activity, error) {
 		var a Activity
-		err := row.Scan(&a.ID, &a.UserName, &a.Type, &a.Body, &a.CreatedAt)
+		err := row.Scan(&a.ID, &a.UserName, &a.Type, &a.Body, &a.CreatedAt, &a.RunID, &a.MaestroURL)
 		return a, err
 	})
 	if err != nil {

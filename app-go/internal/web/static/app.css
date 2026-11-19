@@ -645,6 +645,114 @@ header {
     }
 }
 
+/* ---- runs (legacy: components/runs/list.css, detail.css,
+ * components/sessions/detail.css) ---- */
+
+.runs-list {
+    margin-bottom: 20px;
+
+    .more-runs-list {
+        background-color: #f9f9f9;
+    }
+}
+
+.expand-icon {
+    display: block;
+    height: 22px;
+    padding: 0;
+    border: none;
+    background: none;
+
+    &:hover {
+        background: none;
+    }
+
+    img {
+        width: 22px;
+        height: 22px;
+    }
+}
+
+.list-runs-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1rem;
+}
+
+/* A request in flight: the form (Run) or the button (Refresh now). */
+#runs-form.htmx-request button,
+.runs button.htmx-request {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.running {
+    color: var(--gray);
+    font-style: italic;
+}
+
+.run-status {
+    color: var(--gray);
+    font-weight: 600;
+}
+
+.run-status--success {
+    color: var(--primary);
+}
+
+.run-status--failure,
+.run-status--timed_out,
+.run-status--action_required {
+    color: var(--error);
+}
+
+.run-tests {
+    .test-file a {
+        color: inherit;
+        text-decoration: none;
+        transition: 0.3s ease;
+
+        &:hover {
+            color: var(--primary);
+        }
+    }
+
+    .test-status.pass::before {
+        content: '\2714';
+    }
+
+    .test-status.fail::before,
+    .test-status.error::before {
+        content: '\2716';
+    }
+
+    .test-status.error {
+        color: var(--error);
+        font-weight: 600;
+    }
+
+    .test-status.skipped::before {
+        content: '\21B7';
+    }
+
+    .test-status.not-found::before {
+        content: '\1F6AB';
+    }
+
+    .comment {
+        color: var(--gray);
+    }
+}
+
+.run-output {
+    margin-bottom: 1rem;
+
+    pre {
+        overflow-x: auto;
+        font-size: 10px;
+    }
+}
+
 /* ---- activity and comments (legacy: components/activity/activity-feed.css,
  * components/comment/create-comment.css). The feed is newest first, so the
  * comment form sits above it (spec §8.9). ---- */
@@ -797,7 +905,9 @@ footer {
     }
 
     header .account,
-    footer {
+    footer,
+    .list-runs-actions,
+    .runs-list tr > :first-child {
         display: none;
     }
 }

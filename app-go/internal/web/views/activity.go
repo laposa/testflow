@@ -52,12 +52,12 @@ func Activity(a ActivityView) g.Node {
 			h.Button(h.Type("submit"), h.Class("button filled"), g.Text("Save")),
 		),
 		h.Div(h.Class("activity-feed"),
-			g.Map(a.Entries, func(e store.Activity) g.Node { return activityItem(e, a.Now) }),
+			g.Map(a.Entries, func(e store.Activity) g.Node { return activityItem(a.SessionID, e, a.Now) }),
 		),
 	)
 }
 
-func activityItem(e store.Activity, now time.Time) g.Node {
+func activityItem(sessionID int64, e store.Activity, now time.Time) g.Node {
 	when := RelativeTime(e.CreatedAt, now)
 	class := h.Class("activity-feed-item activity-feed--" + string(e.Type))
 	if e.Type == store.ActivityComment {
@@ -79,8 +79,29 @@ func activityItem(e store.Activity, now time.Time) g.Node {
 		h.Div(h.Class("activity-feed-body"),
 			h.Div(h.Class("activity-feed-body-timestamp"), when),
 			g.Text(e.Body),
+			runLinks(sessionID, e),
 		),
 	)
+}
+
+// runLinks are the links of a run entry (spec §8.4): to the run, and for
+// mobile runs to the Maestro Cloud Console recordings. Legacy put HTML for
+// them into the body; here they come from the entry's metadata (D13).
+func runLinks(sessionID int64, e store.Activity) g.Node {
+	if e.RunID == 0 {
+		return nil
+	}
+	return g.Group{
+		g.Text(" "),
+		h.A(h.Href("/sessions/"+strconv.FormatInt(sessionID, 10)+"/runs/"+strconv.FormatInt(e.RunID, 10)),
+			g.Text("Show run")),
+		// The syncer only stores https://console.mobile.dev/uploads… URLs.
+		g.If(e.MaestroURL != "", h.Div(
+			g.Text("See "),
+			h.A(h.Href(e.MaestroURL), h.Target("_blank"), h.Rel("noopener noreferrer"), g.Text("Maestro Cloud Console")),
+			g.Text(" recorded videos for more details."),
+		)),
+	}
 }
 
 // RelativeTime renders t as "5 minutes ago" in a <time> element, with the
