@@ -1,0 +1,65 @@
+{
+  "Report": {
+    "Suites": [
+      {
+        "Name": "Get user",
+        "Tests": 2,
+        "Failures": 0,
+        "Errors": 0,
+        "Skipped": 0,
+        "Time": 0.4,
+        "Cases": [
+          {
+            "Name": "Status code is 200",
+            "ClassName": "ShopAPI.Get user",
+            "Time": 0.4,
+            "Status": "pass",
+            "FailureMessage": "",
+            "Comment": ""
+          },
+          {
+            "Name": "Has an email",
+            "ClassName": "ShopAPI.Get user",
+            "Time": 0,
+            "Status": "pass",
+            "FailureMessage": "",
+            "Comment": ""
+          }
+        ]
+      },
+      {
+        "Name": "Create order",
+        "Tests": 2,
+        "Failures": 1,
+        "Errors": 1,
+        "Skipped": 0,
+        "Time": 0.8,
+        "Cases": [
+          {
+            "Name": "Status code is 201",
+            "ClassName": "ShopAPI.Create order",
+            "Time": 0.5,
+            "Status": "fail",
+            "FailureMessage": "Failed 1 times.",
+            "Comment": ""
+          },
+          {
+            "Name": "Body is JSON",
+            "ClassName": "ShopAPI.Create order",
+            "Time": 0.3,
+            "Status": "error",
+            "FailureMessage": "Unexpected token \u003c in JSON at position 0",
+            "Comment": ""
+          }
+        ]
+      }
+    ]
+  },
+  "Totals": {
+    "Tests": 4,
+    "Passed": 2,
+    "Failed": 2,
+    "Skipped": 0,
+    "Duration": 1.2000000000000002
+  }
+}

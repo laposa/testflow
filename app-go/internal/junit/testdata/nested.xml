@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Nested suites: the outer suite's attributes total its children, so it is
+     counted from its own cases only, and the children are flattened after it. -->
+<testsuites name="Mocha Tests" tests="5" failures="1" time="3.5">
+  <testsuite name="Checkout" tests="5" failures="1" skipped="1" time="3.5">
+    <testcase name="opens the basket" classname="checkout" time="0.5"/>
+    <testsuite name="Pay with card" tests="2" failures="1" time="2">
+      <testcase name="accepts a valid card" classname="pay with card" time="1.2"/>
+      <testcase name="rejects an expired card" classname="pay with card" time="0.8">
+        <failure message="expected error banner">AssertionError: expected error banner</failure>
+      </testcase>
+    </testsuite>
+    <testsuite name="Vouchers" time="1">
+      <testcase name="applies a voucher" classname="vouchers" time="1"/>
+      <testcase name="rejects a used voucher" classname="vouchers"><skipped/></testcase>
+    </testsuite>
+    <testsuite name="Empty"/>
+  </testsuite>
+</testsuites>

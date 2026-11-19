@@ -1,0 +1,47 @@
+{
+  "Report": {
+    "Suites": [
+      {
+        "Name": "api smoke",
+        "Tests": 3,
+        "Failures": 0,
+        "Errors": 1,
+        "Skipped": 1,
+        "Time": 0,
+        "Cases": [
+          {
+            "Name": "health",
+            "ClassName": "api.health",
+            "Time": 0.25,
+            "Status": "pass",
+            "FailureMessage": "",
+            "Comment": ""
+          },
+          {
+            "Name": "orders",
+            "ClassName": "api.orders",
+            "Time": 0,
+            "Status": "error",
+            "FailureMessage": "connect ECONNREFUSED 127.0.0.1:8080",
+            "Comment": ""
+          },
+          {
+            "Name": "legacy skip",
+            "ClassName": "api.legacy",
+            "Time": 0,
+            "Status": "skipped",
+            "FailureMessage": "",
+            "Comment": ""
+          }
+        ]
+      }
+    ]
+  },
+  "Totals": {
+    "Tests": 3,
+    "Passed": 1,
+    "Failed": 1,
+    "Skipped": 1,
+    "Duration": 0
+  }
+}

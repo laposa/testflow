@@ -1,0 +1,47 @@
+{
+  "Report": {
+    "Suites": [
+      {
+        "Name": "authentication",
+        "Tests": 3,
+        "Failures": 1,
+        "Errors": 0,
+        "Skipped": 1,
+        "Time": 0,
+        "Cases": [
+          {
+            "Name": "login_with_valid_credentials",
+            "ClassName": "login_with_valid_credentials.manual.yaml",
+            "Time": 0,
+            "Status": "pass",
+            "FailureMessage": "",
+            "Comment": "Works on Safari too"
+          },
+          {
+            "Name": "login_with_wrong_password",
+            "ClassName": "login_with_wrong_password.manual.yaml",
+            "Time": 0,
+            "Status": "fail",
+            "FailureMessage": "Test failed",
+            "Comment": ""
+          },
+          {
+            "Name": "reset_password",
+            "ClassName": "reset_password.manual.yaml",
+            "Time": 0,
+            "Status": "skipped",
+            "FailureMessage": "",
+            "Comment": ""
+          }
+        ]
+      }
+    ]
+  },
+  "Totals": {
+    "Tests": 3,
+    "Passed": 1,
+    "Failed": 1,
+    "Skipped": 1,
+    "Duration": 0
+  }
+}
