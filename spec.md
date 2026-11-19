@@ -451,9 +451,17 @@ Legacy: `app/Services/JUnitLogParser.php`. Package `internal/junit`:
 - Root `<testsuites>` with `<testsuite name tests failures errors skipped time>`
   and `<testcase name classname time status>` children. A bare `<testsuite>`
   root (some reporters) is read as a single suite; legacy found no suites in
-  it. Any other root, or XML that does not parse, is an error.
+  it. Any other root, or XML that does not parse, is an error. A declared
+  non-UTF-8 encoding (ISO-8859-1, windows-1252, …) is decoded; an unknown one
+  is an error.
+- Nested `<testsuite>`s (mocha and others; legacy dropped them) are flattened,
+  parent first, up to 64 levels. A parent's attributes usually total its
+  children, so a suite with children is counted from its own test cases only
+  (time = their sum) and left out when it has none.
 - Parsing is lenient, like legacy's PHP casts: a missing or malformed number
-  (also negative, `NaN`, `Inf`) is 0. Counts are capped at 2^30. A missing
+  (also negative, `NaN`, `Inf`) is 0. Counts are capped at 2^30 per suite and
+  the totals at 2^31 − 1 (Postgres `integer`); a total duration that overflows
+  to infinity is 0. A missing
   count attribute on a suite is counted from its test cases.
 - **Test-case status**, in rising precedence:
   1. the `status` attribute, normalised (legacy stored it as is, but
@@ -477,9 +485,10 @@ Legacy: `app/Services/JUnitLogParser.php`. Package `internal/junit`:
   reporters such as mocha put the overall total on the root.)
 - **Matching a test to a test case:** normalise both sides (lower-case, `_` → space,
   cut at the first `.` for our test name). It matches if it equals the test case's
-  `name` or `classname`. The first match wins.
+  `name` or `classname`. The first match wins. An empty test name (e.g.
+  `.gitkeep`) matches nothing, and an empty `name`/`classname` is never matched.
 - Golden tests: `internal/junit/testdata/*.xml` (Cypress/mocha, Maestro, Newman,
-  legacy manual, bare suite) with `*.golden.json`; `go test ./internal/junit
+  legacy manual, bare suite, nested suites) with `*.golden.json`; `go test ./internal/junit
   -update` rewrites them after a change has been checked by hand.
 
 ### 8.7 Manual runs

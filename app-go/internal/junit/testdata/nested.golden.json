@@ -1,0 +1,92 @@
+{
+  "Report": {
+    "Suites": [
+      {
+        "Name": "Checkout",
+        "Tests": 1,
+        "Failures": 0,
+        "Errors": 0,
+        "Skipped": 0,
+        "Time": 0.5,
+        "Cases": [
+          {
+            "Name": "opens the basket",
+            "ClassName": "checkout",
+            "Time": 0.5,
+            "Status": "pass",
+            "FailureMessage": "",
+            "Comment": ""
+          }
+        ]
+      },
+      {
+        "Name": "Pay with card",
+        "Tests": 2,
+        "Failures": 1,
+        "Errors": 0,
+        "Skipped": 0,
+        "Time": 2,
+        "Cases": [
+          {
+            "Name": "accepts a valid card",
+            "ClassName": "pay with card",
+            "Time": 1.2,
+            "Status": "pass",
+            "FailureMessage": "",
+            "Comment": ""
+          },
+          {
+            "Name": "rejects an expired card",
+            "ClassName": "pay with card",
+            "Time": 0.8,
+            "Status": "fail",
+            "FailureMessage": "AssertionError: expected error banner",
+            "Comment": ""
+          }
+        ]
+      },
+      {
+        "Name": "Vouchers",
+        "Tests": 2,
+        "Failures": 0,
+        "Errors": 0,
+        "Skipped": 1,
+        "Time": 1,
+        "Cases": [
+          {
+            "Name": "applies a voucher",
+            "ClassName": "vouchers",
+            "Time": 1,
+            "Status": "pass",
+            "FailureMessage": "",
+            "Comment": ""
+          },
+          {
+            "Name": "rejects a used voucher",
+            "ClassName": "vouchers",
+            "Time": 0,
+            "Status": "skipped",
+            "FailureMessage": "",
+            "Comment": ""
+          }
+        ]
+      },
+      {
+        "Name": "Empty",
+        "Tests": 0,
+        "Failures": 0,
+        "Errors": 0,
+        "Skipped": 0,
+        "Time": 0,
+        "Cases": null
+      }
+    ]
+  },
+  "Totals": {
+    "Tests": 5,
+    "Passed": 3,
+    "Failed": 1,
+    "Skipped": 1,
+    "Duration": 3.5
+  }
+}

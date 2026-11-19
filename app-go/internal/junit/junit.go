@@ -15,6 +15,8 @@ import (
 	"math"
 	"strconv"
 	"strings"
+
+	"golang.org/x/text/encoding/htmlindex"
 )
 
 // Status is a test case result. The values are those of
@@ -65,9 +67,11 @@ type Totals struct {
 }
 
 // Parse reads a JUnit report. The root is <testsuites>, or a single
-// <testsuite> as some reporters write it.
+// <testsuite> as some reporters write it. Nested suites are flattened.
+// A declared non-UTF-8 encoding (ISO-8859-1, windows-1252, ...) is decoded.
 func Parse(data []byte) (*Report, error) {
 	d := xml.NewDecoder(bytes.NewReader(data))
+	d.CharsetReader = charsetReader
 	for {
 		tok, err := d.Token()
 		if errors.Is(err, io.EOF) {
@@ -90,14 +94,14 @@ func Parse(data []byte) (*Report, error) {
 				return nil, fmt.Errorf("junit: %w", err)
 			}
 			for _, s := range root.Suites {
-				rep.Suites = append(rep.Suites, s.suite())
+				rep.Suites = s.appendSuites(rep.Suites, 0)
 			}
 		case "testsuite":
 			var s xmlSuite
 			if err := d.DecodeElement(&s, &start); err != nil {
 				return nil, fmt.Errorf("junit: %w", err)
 			}
-			rep.Suites = []Suite{s.suite()}
+			rep.Suites = s.appendSuites(nil, 0)
 		default:
 			return nil, fmt.Errorf("junit: root element is <%s>, want <testsuites> or <testsuite>", start.Name.Local)
 		}
@@ -108,7 +112,8 @@ func Parse(data []byte) (*Report, error) {
 // Totals adds up the suites: passed = tests − failed − skipped, never below
 // zero. Duration is the sum of the suite times; the root's time is not
 // added, because reporters put the overall total there (legacy summed the
-// suites only, too).
+// suites only, too). The counts are capped at maxTotal so they fit the
+// database's integer columns; a duration that overflows to infinity is 0.
 func (r *Report) Totals() Totals {
 	var t Totals
 	for _, s := range r.Suites {
@@ -117,7 +122,11 @@ func (r *Report) Totals() Totals {
 		t.Skipped += s.Skipped
 		t.Duration += s.Time
 	}
+	t.Tests, t.Failed, t.Skipped = min(t.Tests, maxTotal), min(t.Failed, maxTotal), min(t.Skipped, maxTotal)
 	t.Passed = max(t.Tests-t.Failed-t.Skipped, 0)
+	if math.IsInf(t.Duration, 0) {
+		t.Duration = 0
+	}
 	return t
 }
 
@@ -125,8 +134,13 @@ func (r *Report) Totals() Totals {
 // getTestCase). Both sides are lower-cased with "_" read as a space, and the
 // file name is cut at its first "."; it matches a case's name or class name.
 // So "pay_with_card.cy.js" matches a case named "Pay with card".
+// An empty name (say ".gitkeep") matches nothing, and neither does a case's
+// empty name or class name.
 func (r *Report) Find(testName string) (Case, bool) {
 	name, _, _ := strings.Cut(normalize(testName), ".")
+	if name == "" {
+		return Case{}, false
+	}
 	for _, s := range r.Suites {
 		for _, c := range s.Cases {
 			if normalize(c.Name) == name || normalize(c.ClassName) == name {
@@ -140,13 +154,14 @@ func (r *Report) Find(testName string) (Case, bool) {
 func normalize(s string) string { return strings.ToLower(strings.ReplaceAll(s, "_", " ")) }
 
 type xmlSuite struct {
-	Name     string    `xml:"name,attr"`
-	Tests    *string   `xml:"tests,attr"`
-	Failures *string   `xml:"failures,attr"`
-	Errors   *string   `xml:"errors,attr"`
-	Skipped  *string   `xml:"skipped,attr"`
-	Time     string    `xml:"time,attr"`
-	Cases    []xmlCase `xml:"testcase"`
+	Name     string     `xml:"name,attr"`
+	Tests    *string    `xml:"tests,attr"`
+	Failures *string    `xml:"failures,attr"`
+	Errors   *string    `xml:"errors,attr"`
+	Skipped  *string    `xml:"skipped,attr"`
+	Time     string     `xml:"time,attr"`
+	Cases    []xmlCase  `xml:"testcase"`
+	Suites   []xmlSuite `xml:"testsuite"` // nested suites (mocha, some others)
 }
 
 type xmlCase struct {
@@ -171,6 +186,35 @@ func (p *xmlProblem) text() string {
 		return t
 	}
 	return strings.TrimSpace(p.Message)
+}
+
+// maxDepth bounds suite nesting, so a hostile report cannot recurse deeply.
+const maxDepth = 64
+
+// appendSuites flattens x and its nested suites onto dst, parent first. A
+// parent's count and time attributes usually total its children, so a suite
+// with children is counted from its own cases only, and left out when it
+// has none.
+func (x xmlSuite) appendSuites(dst []Suite, depth int) []Suite {
+	if len(x.Suites) == 0 {
+		return append(dst, x.suite())
+	}
+	if len(x.Cases) > 0 {
+		own := x
+		own.Tests, own.Failures, own.Errors, own.Skipped, own.Time = nil, nil, nil, nil, ""
+		s := own.suite()
+		for _, c := range s.Cases {
+			s.Time += c.Time
+		}
+		dst = append(dst, s)
+	}
+	if depth >= maxDepth {
+		return dst
+	}
+	for _, c := range x.Suites {
+		dst = c.appendSuites(dst, depth+1)
+	}
+	return dst
 }
 
 func (x xmlSuite) suite() Suite {
@@ -235,9 +279,21 @@ func statusAttr(s string) Status {
 	}
 }
 
-// maxCount caps count attributes, so a bogus value cannot overflow the
-// totals or the database's integer columns.
-const maxCount = 1 << 30
+// maxCount caps count attributes, and maxTotal the summed totals, so a
+// bogus value cannot overflow the database's integer columns.
+const (
+	maxCount = 1 << 30
+	maxTotal = math.MaxInt32
+)
+
+// charsetReader decodes a declared non-UTF-8 encoding for encoding/xml.
+func charsetReader(label string, input io.Reader) (io.Reader, error) {
+	enc, err := htmlindex.Get(label)
+	if err != nil {
+		return nil, fmt.Errorf("unsupported encoding %q", label)
+	}
+	return enc.NewDecoder().Reader(input), nil
+}
 
 // count is a count attribute, or n if it is missing.
 func count(attr *string, n int) int {

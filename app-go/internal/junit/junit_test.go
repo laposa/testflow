@@ -157,3 +157,57 @@ func TestStatusAttr(t *testing.T) {
 		}
 	}
 }
+
+func TestFindEmptyName(t *testing.T) {
+	// Maestro cases have no class name; an empty or dot-only test name must
+	// not match them.
+	rep, err := Parse([]byte(`<testsuites><testsuite><testcase name="Login"/><testcase classname="x"/></testsuite></testsuites>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"", ".gitkeep", "."} {
+		if c, ok := rep.Find(name); ok {
+			t.Errorf("Find(%q) = %+v, want no match", name, c)
+		}
+	}
+}
+
+func TestTotalsCapped(t *testing.T) {
+	rep, err := Parse([]byte(`<testsuites>
+		<testsuite tests="1e12" failures="1e12" time="1e308"/>
+		<testsuite tests="1e12" failures="1e12" time="1e308"/>
+		<testsuite tests="1e12" skipped="1e12"/>
+	</testsuites>`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := rep.Totals()
+	if got.Tests != maxTotal || got.Failed != maxTotal || got.Skipped != maxCount || got.Passed != 0 || got.Duration != 0 {
+		t.Errorf("totals = %+v", got)
+	}
+}
+
+func TestLatin1(t *testing.T) {
+	in := []byte("<?xml version=\"1.0\" encoding=\"ISO-8859-1\"?><testsuites><testsuite><testcase name=\"Caf\xe9\"/></testsuite></testsuites>")
+	rep, err := Parse(in)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := rep.Suites[0].Cases[0].Name; got != "Café" {
+		t.Errorf("name = %q, want Café", got)
+	}
+	if _, err := Parse([]byte(`<?xml version="1.0" encoding="no-such"?><testsuites/>`)); err == nil {
+		t.Error("unknown encoding: want an error")
+	}
+}
+
+func TestDeeplyNested(t *testing.T) {
+	in := strings.Repeat("<testsuite>", 200) + `<testcase name="deep"/>` + strings.Repeat("</testsuite>", 200)
+	rep, err := Parse([]byte("<testsuites>" + in + "</testsuites>"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rep.Suites) != 0 {
+		t.Errorf("suites below maxDepth = %+v, want none", rep.Suites)
+	}
+}
