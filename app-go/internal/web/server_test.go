@@ -53,6 +53,8 @@ type testEnv struct {
 	syncer       *fakeSyncer       // set unless Options.Syncer was given
 	files        *fakeFiles        // set unless Options.TestFiles was given
 	manual       *fakeManual       // set unless Options.Manual was given
+	reviews      *fakeReviews      // set unless Options.Reviews was given
+	mailer       *fakeMailer       // set unless Options.Mailer was given
 }
 
 func newEnv(t *testing.T, o Options) *testEnv {
@@ -104,6 +106,14 @@ func newEnv(t *testing.T, o Options) *testEnv {
 	if o.Manual == nil {
 		e.manual = &fakeManual{runs: e.runs}
 		o.Manual = e.manual
+	}
+	if o.Reviews == nil {
+		e.reviews = &fakeReviews{users: e.store.Users, activity: e.activity}
+		o.Reviews = e.reviews
+	}
+	if o.Mailer == nil {
+		e.mailer = &fakeMailer{}
+		o.Mailer = e.mailer
 	}
 	if o.Environments == nil {
 		o.Environments = []string{"preprod", "beta", "prod"}

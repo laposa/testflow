@@ -197,7 +197,7 @@ func hasSelectable(svc discovery.Service, suites []discovery.Suite) bool {
 
 // SessionPage is the session detail (legacy: resources/views/sessions/show.blade.php).
 // Manual runs, reviews and reports come in later iterations.
-func SessionPage(p Page, ts store.TestSession, runs RunListView, activity ActivityView) g.Node {
+func SessionPage(p Page, ts store.TestSession, runs RunListView, reviews ReviewsView, activity ActivityView) g.Node {
 	return Layout(p,
 		Section(ts.Name, true,
 			h.Div(h.Class("session-environment"),
@@ -227,6 +227,7 @@ func SessionPage(p Page, ts store.TestSession, runs RunListView, activity Activi
 				),
 			),
 		),
+		Reviews(reviews),
 		Activity(activity),
 	)
 }

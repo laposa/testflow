@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/mail"
 	"net/url"
 	"strconv"
 	"strings"
@@ -104,15 +105,27 @@ func Load(getenv func(string) string) (*Config, error) {
 		p.fail("STATIC_DIR", errors.New("is only allowed with ENVIRONMENT=development"))
 	}
 
-	c.Mail.Mailer = p.str("MAIL_MAILER", "log")
+	// Outside development the mailer must be chosen explicitly, so a deploy
+	// that forgets it does not silently log review emails instead of
+	// sending them.
+	if c.IsDevelopment() {
+		c.Mail.Mailer = p.str("MAIL_MAILER", "log")
+	} else {
+		c.Mail.Mailer = p.required("MAIL_MAILER")
+	}
 	switch c.Mail.Mailer {
+	case "": // reported by required
 	case "log":
 	case "smtp":
 		c.Mail.Host = p.required("SMTP_HOST")
 		c.Mail.Port = int(p.positiveInt("SMTP_PORT"))
 		c.Mail.Username = p.required("SMTP_USERNAME")
 		c.Mail.Password = p.required("SMTP_PASSWORD")
-		c.Mail.From = p.required("MAIL_FROM")
+		if c.Mail.From = p.required("MAIL_FROM"); c.Mail.From != "" {
+			if _, err := mail.ParseAddress(c.Mail.From); err != nil {
+				p.fail("MAIL_FROM", fmt.Errorf("must be an email address such as TestFlow <testflow@example.com>: %w", err))
+			}
+		}
 	default:
 		p.fail("MAIL_MAILER", fmt.Errorf("must be \"log\" or \"smtp\", got %q", c.Mail.Mailer))
 	}

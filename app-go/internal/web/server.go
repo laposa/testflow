@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/laposa/testflow/app-go/internal/auth"
+	"github.com/laposa/testflow/app-go/internal/mail"
 	"github.com/laposa/testflow/app-go/internal/telemetry"
 	"github.com/laposa/testflow/app-go/internal/web/static"
 	"github.com/laposa/testflow/app-go/internal/web/views"
@@ -68,6 +69,8 @@ type Options struct {
 	Syncer     RunSyncer     // "refresh now" (spec §8.5)
 	TestFiles  TestFiles     // raw test files and test cases at a run's commit
 	Manual     ManualRuns    // manual run results (spec §8.7)
+	Reviews    ReviewStore   // review requests (spec §8.9)
+	Mailer     mail.Mailer   // review request emails (spec §8.10)
 }
 
 type server struct {
@@ -90,6 +93,9 @@ func NewHandler(o Options) (http.Handler, error) {
 	}
 	if o.Runs == nil || o.Dispatcher == nil || o.Syncer == nil || o.TestFiles == nil || o.Manual == nil {
 		return nil, fmt.Errorf("web: Runs, Dispatcher, Syncer, TestFiles and Manual are required")
+	}
+	if o.Reviews == nil || o.Mailer == nil {
+		return nil, fmt.Errorf("web: Reviews and Mailer are required")
 	}
 	o.TestFiles = newFileCache(o.TestFiles)
 	s := &server{Options: o, static: static.FS}
@@ -130,6 +136,10 @@ func NewHandler(o Options) (http.Handler, error) {
 	private("GET /sessions/{id}/runs/{run}/manual", s.showManual)
 	private("POST /sessions/{id}/runs/{run}/manual/{test}", s.saveManual)
 	private("POST /sessions/{id}/runs/{run}/finish", s.finishManual)
+	private("POST /sessions/{id}/reviews", s.requestReview)
+	private("POST /sessions/{id}/reviews/{review}/approve", s.approveReview)
+	private("POST /sessions/{id}/reviews/{review}/reject", s.rejectReview)
+	private("POST /sessions/{id}/reviews/{review}/revoke", s.revokeReview)
 
 	// Telemetry wraps the mux with handlers that keep the same *http.Request,
 	// so it can log the matched route pattern.

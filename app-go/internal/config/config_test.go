@@ -92,6 +92,15 @@ func TestLoadOverrides(t *testing.T) {
 	}
 }
 
+// An explicit log mailer is fine outside development.
+func TestLoadLogMailerInProduction(t *testing.T) {
+	env := validEnv()
+	env["ENVIRONMENT"], env["MAIL_MAILER"] = "production", "log"
+	if c, err := load(env); err != nil || c.Mail.Mailer != "log" {
+		t.Errorf("Mailer = %v, %v", c, err)
+	}
+}
+
 func TestLoadErrors(t *testing.T) {
 	tests := []struct {
 		name string
@@ -112,9 +121,14 @@ func TestLoadErrors(t *testing.T) {
 		{"not pem", func(e map[string]string) { e["GITHUB_PRIVATE_KEY"] = "secret" }, []string{"GITHUB_PRIVATE_KEY: is not a PEM"}},
 		{"only commas", func(e map[string]string) { e["TEST_SESSION_ENVIRONMENTS"] = " , ," }, []string{"TEST_SESSION_ENVIRONMENTS: is required"}},
 		{"bad mailer", func(e map[string]string) { e["MAIL_MAILER"] = "sendmail" }, []string{"MAIL_MAILER"}},
+		{"no mailer outside development", func(e map[string]string) { e["ENVIRONMENT"] = "production" }, []string{"MAIL_MAILER: is required"}},
 		{"static dir outside development", func(e map[string]string) {
 			e["ENVIRONMENT"], e["STATIC_DIR"] = "production", "internal/web/static"
 		}, []string{"STATIC_DIR: is only allowed with ENVIRONMENT=development"}},
+		{"bad mail from", func(e map[string]string) {
+			e["MAIL_MAILER"], e["SMTP_HOST"], e["SMTP_PORT"], e["SMTP_USERNAME"], e["SMTP_PASSWORD"] = "smtp", "h", "587", "u", "p"
+			e["MAIL_FROM"] = "TestFlow <not an address"
+		}, []string{"MAIL_FROM: must be an email address"}},
 		{"smtp incomplete", func(e map[string]string) { e["MAIL_MAILER"] = "smtp" }, []string{
 			"SMTP_HOST: is required", "SMTP_PORT: is required", "SMTP_USERNAME: is required",
 			"SMTP_PASSWORD: is required", "MAIL_FROM: is required",

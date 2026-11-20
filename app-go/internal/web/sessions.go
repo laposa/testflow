@@ -284,7 +284,12 @@ func (s *server) renderActivity(w http.ResponseWriter, r *http.Request, status i
 		s.activityError(w, r, "load runs", err)
 		return
 	}
-	s.render(w, r, status, views.SessionPage(s.page(r, ts.Name), ts, rl, av))
+	rv, err := s.reviewsView(ctx, ts.ID, nil)
+	if err != nil {
+		s.activityError(w, r, "load reviews", err)
+		return
+	}
+	s.render(w, r, status, views.SessionPage(s.page(r, ts.Name), ts, rl, rv, av))
 }
 
 // activityError answers a failed session page or comment request:

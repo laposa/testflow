@@ -23,8 +23,11 @@ type ActivityView struct {
 // ActivityID is the id of the activity block, which htmx replaces after a
 // comment is posted. CommentErrorsID is the comment form's error area,
 // always present so that a failed htmx request can put a message there.
+// ActivityFeedID is the feed inside it, which review actions replace out
+// of band so that a comment being typed is kept.
 const (
 	ActivityID      = "activity"
+	ActivityFeedID  = "activity-feed"
 	CommentErrorsID = "comment-errors"
 )
 
@@ -51,9 +54,14 @@ func Activity(a ActivityView) g.Node {
 			),
 			h.Button(h.Type("submit"), h.Class("button filled"), g.Text("Save")),
 		),
-		h.Div(h.Class("activity-feed"),
-			g.Map(a.Entries, func(e store.Activity) g.Node { return activityItem(a.SessionID, e, a.Now) }),
-		),
+		ActivityFeed(a),
+	)
+}
+
+// ActivityFeed is the list of entries.
+func ActivityFeed(a ActivityView, extra ...g.Node) g.Node {
+	return h.Div(h.ID(ActivityFeedID), h.Class("activity-feed"), g.Group(extra),
+		g.Map(a.Entries, func(e store.Activity) g.Node { return activityItem(a.SessionID, e, a.Now) }),
 	)
 }
 
