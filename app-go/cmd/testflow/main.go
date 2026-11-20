@@ -196,11 +196,11 @@ func serve(ctx context.Context, cfg *config.Config, logger *slog.Logger, migrate
 		Secure:   !cfg.IsDevelopment(),
 		Logger:   logger,
 	}
-	// The syncer also deletes expired web sessions (spec §8.5).
 	mailer, err := newMailer(cfg.Mail, logger)
 	if err != nil {
 		return err
 	}
+	// The syncer also deletes expired web sessions (spec §8.5).
 	syncer := runs.NewSyncer(runs.SyncerConfig{GitHub: gh, Store: st, Sessions: sessions, Logger: logger})
 	handler, err := web.NewHandler(web.Options{
 		Logger:      logger,

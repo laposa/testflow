@@ -230,6 +230,21 @@ func TestNewSessionLoading(t *testing.T) {
 	}
 }
 
+// A disabled workflow is explained differently from a missing one.
+func TestNewSessionDisabledWorkflow(t *testing.T) {
+	e := newEnv(t, Options{})
+	res := sampleTests()
+	for i, svc := range res.Repositories[0].Services {
+		if svc.Name == "mobile" {
+			res.Repositories[0].Services[i].WorkflowDisabled = true
+		}
+	}
+	e.discovery.res = res
+	body := get(e.h, "/sessions/new", e.signIn("Ada")).Body.String()
+	assertContains(t, body, `The run-tests-mobile.yaml workflow of this test is disabled on GitHub, so it cannot be selected.`)
+	assertNotContains(t, body, `This test has no run-tests-mobile.yaml workflow`)
+}
+
 func TestNewSessionDiscoveryError(t *testing.T) {
 	e := newEnv(t, Options{})
 	e.discovery.res, e.discovery.err = nil, errors.New("github down")

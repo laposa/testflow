@@ -311,6 +311,11 @@ Legacy: `app/Actions/Github/FetchTests.php`.
    as are services without `tests/` and empty suites.
 4. Match each service to the workflow whose file name is `run-tests-{service}.yaml`
    (`GET /repos/{repo}/actions/workflows`), fetched only for repositories with tests.
+   Only an `active` workflow counts (a missing state is taken as active). One that
+   GitHub has disabled (`disabled_manually`, `disabled_inactivity`, …) cannot be
+   dispatched, so the service gets no workflow id; the picker names it in a warning
+   above the tree and in the test's tooltip ("… workflow of this test is disabled
+   on GitHub"). Legacy matched by name only, and the run then failed on dispatch.
 5. A test is **manual** if its file name contains `manual` (in practice
    `*.manual.yaml`, case-sensitive). Otherwise it is **automated**.
 6. Result: tree grouped by repository → service → suite → test, each test carrying

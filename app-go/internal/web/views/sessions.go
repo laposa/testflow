@@ -157,11 +157,11 @@ func treeLevel(class, title string, open, selectable bool, children ...g.Node) g
 
 func testItem(svc discovery.Service, t discovery.Test, checked bool) g.Node {
 	if !svc.Selectable(t) {
-		return h.Div(h.Class("test"),
-			h.Span(h.Class("alert-icon error"),
-				h.Title("This test has no "+discovery.WorkflowFile(svc.Name)+" workflow and cannot be selected.")),
-			g.Text(t.Name),
-		)
+		why := "This test has no " + discovery.WorkflowFile(svc.Name) + " workflow and cannot be selected."
+		if svc.WorkflowDisabled {
+			why = "The " + discovery.WorkflowFile(svc.Name) + " workflow of this test is disabled on GitHub, so it cannot be selected."
+		}
+		return h.Div(h.Class("test"), h.Span(h.Class("alert-icon error"), h.Title(why)), g.Text(t.Name))
 	}
 	return h.Div(h.Class("test"),
 		h.Label(h.Class("checkbox"),
