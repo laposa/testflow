@@ -53,6 +53,7 @@ func testCert(t *testing.T) (tls.Certificate, *tls.Config) {
 // received is what the fake server saw.
 type received struct {
 	auth, from, to string
+	hello          string // the EHLO name
 	data           string
 	tls            bool
 }
@@ -86,6 +87,7 @@ func fakeServer(t *testing.T, starttls bool) (port int, client *tls.Config, got 
 			cmd, arg, _ := strings.Cut(line, " ")
 			switch strings.ToUpper(cmd) {
 			case "EHLO":
+				r.hello = arg
 				if starttls && !r.tls {
 					_ = tp.PrintfLine("250-fake\r\n250 STARTTLS")
 				} else {
@@ -139,6 +141,9 @@ func TestSMTPSend(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := <-got
+	if r.hello != helloName() || r.hello == "" {
+		t.Errorf("EHLO %q, want %q", r.hello, helloName())
+	}
 	if !r.tls || r.auth != "\x00user\x00secret" || r.from != "FROM:<testflow@example.com>" || r.to != "TO:<ada@example.com>" {
 		t.Errorf("received = %+v", r)
 	}

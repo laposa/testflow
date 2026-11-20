@@ -23,10 +23,6 @@ type ReviewStore interface {
 	RevokeReview(ctx context.Context, sessionID, reviewID, userID int64) error
 }
 
-// mailTimeout bounds sending the review request email, which happens
-// after the request is stored and never fails it (spec §8.10).
-const mailTimeout = 15 * time.Second
-
 // Review messages (spec §8.9).
 const (
 	msgSelectReviewer  = "Select a reviewer."
@@ -76,9 +72,9 @@ func (s *server) sendReviewRequest(ctx context.Context, r *http.Request, ts stor
 			"session.id", ts.ID, "review.id", req.ID)
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), mailTimeout)
-	defer cancel()
-	err := s.Mailer.Send(ctx, mail.Message{
+	// Not cancelled with the request; the mailer bounds the send
+	// (mail.DefaultTimeout).
+	err := s.Mailer.Send(context.WithoutCancel(ctx), mail.Message{
 		To:      netmail.Address{Name: req.Reviewer.Name, Address: req.Reviewer.Email},
 		Subject: "Review Request",
 		Text: "Hi " + req.Reviewer.Name + ",\n\n" +

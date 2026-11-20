@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -26,9 +25,8 @@ type ReviewRequest struct {
 	ID        int64
 	SessionID int64
 	Requester User // ID and Name
-	Reviewer  User // ID, Name and Email
+	Reviewer  User // ID and Name; Email only from RequestReview, for the notification
 	Status    string
-	CreatedAt time.Time
 }
 
 // ReviewRequestedBody is the review_requested activity text (spec §8.9).
@@ -49,7 +47,7 @@ func ReviewCompletedBody(user string, approved bool) string {
 // (legacy: SessionController::show).
 func (s *Store) PendingReviews(ctx context.Context, sessionID int64) ([]ReviewRequest, error) {
 	rows, err := s.db.Query(ctx, `
-		SELECT rr.id, rr.session_id, rq.id, rq.name, rv.id, rv.name, COALESCE(rv.email, ''), rr.status, rr.created_at
+		SELECT rr.id, rr.session_id, rq.id, rq.name, rv.id, rv.name, rr.status
 		FROM review_requests rr
 		JOIN users rq ON rq.id = rr.requester_id
 		JOIN users rv ON rv.id = rr.reviewer_id
@@ -60,8 +58,7 @@ func (s *Store) PendingReviews(ctx context.Context, sessionID int64) ([]ReviewRe
 	}
 	list, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (ReviewRequest, error) {
 		var r ReviewRequest
-		err := row.Scan(&r.ID, &r.SessionID, &r.Requester.ID, &r.Requester.Name, &r.Reviewer.ID, &r.Reviewer.Name,
-			&r.Reviewer.Email, &r.Status, &r.CreatedAt)
+		err := row.Scan(&r.ID, &r.SessionID, &r.Requester.ID, &r.Requester.Name, &r.Reviewer.ID, &r.Reviewer.Name, &r.Status)
 		return r, err
 	})
 	if err != nil {
@@ -107,7 +104,7 @@ func (s *Store) RequestReview(ctx context.Context, sessionID int64, requester Us
 		}
 		err := tx.QueryRow(ctx, `
 			INSERT INTO review_requests (session_id, requester_id, reviewer_id) VALUES ($1, $2, $3)
-			RETURNING id, created_at`, sessionID, requester.ID, reviewerID).Scan(&r.ID, &r.CreatedAt)
+			RETURNING id`, sessionID, requester.ID, reviewerID).Scan(&r.ID)
 		if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 			switch pgErr.Code {
 			case "23505": // review_requests_one_pending_idx

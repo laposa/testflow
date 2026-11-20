@@ -17,6 +17,7 @@ import (
 	"net"
 	"net/mail"
 	"net/smtp"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -57,14 +58,14 @@ type SMTP struct {
 	Username string
 	Password string
 	From     mail.Address
-	Timeout  time.Duration // per message, default 30 s
+	Timeout  time.Duration // per message, default DefaultTimeout
 	// TLSConfig is for tests (a server with its own certificate); nil
 	// verifies the server's certificate for Host.
 	TLSConfig *tls.Config
 }
 
-// DefaultTimeout bounds one SMTP conversation.
-const DefaultTimeout = 30 * time.Second
+// DefaultTimeout bounds one SMTP conversation, connecting included.
+const DefaultTimeout = 15 * time.Second
 
 // Send delivers m.
 func (s *SMTP) Send(ctx context.Context, m Message) error {
@@ -108,6 +109,10 @@ func (s *SMTP) send(ctx context.Context, to string, data []byte) error {
 		return err
 	}
 	defer c.Close()
+	// net/smtp would greet as "localhost", which strict servers reject.
+	if err := c.Hello(helloName()); err != nil {
+		return err
+	}
 	if s.Port != 465 {
 		if ok, _ := c.Extension("STARTTLS"); !ok {
 			return errors.New("the server does not offer STARTTLS")
@@ -138,6 +143,14 @@ func (s *SMTP) send(ctx context.Context, to string, data []byte) error {
 		return err
 	}
 	return c.Quit()
+}
+
+// helloName is this machine's name for EHLO, or localhost.
+func helloName() string {
+	if h, err := os.Hostname(); err == nil && h != "" && !strings.ContainsAny(h, " \r\n") {
+		return h
+	}
+	return "localhost"
 }
 
 // compose builds the message: headers (encoded, so names and subjects

@@ -92,6 +92,15 @@ func TestLoadOverrides(t *testing.T) {
 	}
 }
 
+// An explicit log mailer is fine outside development.
+func TestLoadLogMailerInProduction(t *testing.T) {
+	env := validEnv()
+	env["ENVIRONMENT"], env["MAIL_MAILER"] = "production", "log"
+	if c, err := load(env); err != nil || c.Mail.Mailer != "log" {
+		t.Errorf("Mailer = %v, %v", c, err)
+	}
+}
+
 func TestLoadErrors(t *testing.T) {
 	tests := []struct {
 		name string
@@ -112,6 +121,7 @@ func TestLoadErrors(t *testing.T) {
 		{"not pem", func(e map[string]string) { e["GITHUB_PRIVATE_KEY"] = "secret" }, []string{"GITHUB_PRIVATE_KEY: is not a PEM"}},
 		{"only commas", func(e map[string]string) { e["TEST_SESSION_ENVIRONMENTS"] = " , ," }, []string{"TEST_SESSION_ENVIRONMENTS: is required"}},
 		{"bad mailer", func(e map[string]string) { e["MAIL_MAILER"] = "sendmail" }, []string{"MAIL_MAILER"}},
+		{"no mailer outside development", func(e map[string]string) { e["ENVIRONMENT"] = "production" }, []string{"MAIL_MAILER: is required"}},
 		{"static dir outside development", func(e map[string]string) {
 			e["ENVIRONMENT"], e["STATIC_DIR"] = "production", "internal/web/static"
 		}, []string{"STATIC_DIR: is only allowed with ENVIRONMENT=development"}},

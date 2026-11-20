@@ -160,7 +160,7 @@ For local development a `.env` file is read only by `make`/compose, not by the b
 | `GITHUB_PRIVATE_KEY` | yes | | same (PEM, `\n` escapes allowed) |
 | `TEST_SESSION_ENVIRONMENTS` | yes | | same (comma-separated, e.g. `preprod,beta,prod`) |
 | `SYNC_INTERVAL` | no | `30s` | (Livewire `wire:poll.30s`) |
-| `MAIL_MAILER` | no | `log` | same (`log` or `smtp`) |
+| `MAIL_MAILER` | outside development | `log` in development | same (`log` or `smtp`). Required when `ENVIRONMENT` is not `development`, so a deploy cannot silently log review emails instead of sending them; `log` may still be chosen explicitly |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` | if `smtp` | | `MAIL_*` |
 | `MAIL_FROM` | if `smtp` | | `MAIL_FROM_ADDRESS` |
 
@@ -741,11 +741,13 @@ the session. A failed send is logged and does not fail the request.
   linked the home page). Headers are encoded (`net/mail`, `mime`), so names cannot
   inject headers.
 - SMTP: port 465 uses implicit TLS; any other port must offer STARTTLS or the send
-  fails, so the password never travels in clear text. PLAIN auth with
-  `SMTP_USERNAME`/`SMTP_PASSWORD`, at most 30 s per message. `MAIL_FROM` must parse
+  fails, so the password never travels in clear text. The greeting (EHLO) names
+  the machine's hostname, not net/smtp's default `localhost`, which strict servers
+  reject. PLAIN auth with `SMTP_USERNAME`/`SMTP_PASSWORD`, at most 15 s per
+  message, connecting included. `MAIL_FROM` must parse
   as an address (`TestFlow <testflow@example.com>`), checked at startup.
 - The email is sent after the request is stored, within the HTTP request, bounded
-  by 15 s and not cancelled with it. A reviewer without an email address (private
+  by the mailer's 15 s and not cancelled with it. A reviewer without an email address (private
   on GitHub) gets none; that is logged as a warning.
 
 ### 8.11 Reports

@@ -105,8 +105,16 @@ func Load(getenv func(string) string) (*Config, error) {
 		p.fail("STATIC_DIR", errors.New("is only allowed with ENVIRONMENT=development"))
 	}
 
-	c.Mail.Mailer = p.str("MAIL_MAILER", "log")
+	// Outside development the mailer must be chosen explicitly, so a deploy
+	// that forgets it does not silently log review emails instead of
+	// sending them.
+	if c.IsDevelopment() {
+		c.Mail.Mailer = p.str("MAIL_MAILER", "log")
+	} else {
+		c.Mail.Mailer = p.required("MAIL_MAILER")
+	}
 	switch c.Mail.Mailer {
+	case "": // reported by required
 	case "log":
 	case "smtp":
 		c.Mail.Host = p.required("SMTP_HOST")
