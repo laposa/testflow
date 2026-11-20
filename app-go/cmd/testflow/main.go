@@ -218,6 +218,7 @@ func serve(ctx context.Context, cfg *config.Config, logger *slog.Logger, migrate
 		Dispatcher:   &runs.Dispatcher{GitHub: gh, Store: st, Logger: logger},
 		Syncer:       syncer,
 		TestFiles:    gh,
+		Manual:       st,
 	})
 	if err != nil {
 		return err

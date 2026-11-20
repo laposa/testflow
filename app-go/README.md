@@ -97,7 +97,8 @@ Postgres pool and runs the migrations in `internal/db/migrations`,
 `internal/auth` the GitHub OAuth login, web sessions and auth middleware,
 `internal/github` the GitHub App REST client, `internal/discovery` the test
 discovery behind the test picker, `internal/junit` the JUnit report parser,
-`internal/runs` the dispatch of automated runs and the background syncer that
-follows them on GitHub,
+`internal/testcase` the `*.manual.yaml` test cases shown in manual runs,
+`internal/runs` the dispatch of automated runs, the start of manual runs and
+the background syncer that follows automated runs on GitHub,
 `internal/web` holds routes and handlers, `internal/web/views` the Gomponents
 components, and `internal/web/static` the embedded CSS, fonts and htmx.

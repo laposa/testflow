@@ -281,8 +281,8 @@ the `HX-Redirect` header for htmx requests.
 | `POST /sessions/{id}/runs` | start runs for selected services | `ListRuns::createRun` |
 | `POST /sessions/{id}/runs/sync` | "refresh now": sync the session's runs with GitHub (§8.5) | `ListRuns::refreshSessionWorkflowRuns` |
 | `GET /sessions/{id}/runs/{run}` | run detail | `SessionRunController::show` |
-| `GET /sessions/{id}/runs/{run}/manual` | htmx fragment: manual run wizard, current test | `Livewire/Runs/ManualTestRun` |
-| `POST /sessions/{id}/runs/{run}/manual/{test}` | save result for one test, return next | `ManualTestRun::updateResults` |
+| `GET /sessions/{id}/runs/{run}/manual` | htmx fragment: manual run wizard at `?test=N` or the first open test; the wizard page without htmx (§8.7) | `Livewire/Runs/ManualTestRun` |
+| `POST /sessions/{id}/runs/{run}/manual/{test}` | save result for one test, return next (the last one finishes the run) | `ManualTestRun::updateResults` |
 | `POST /sessions/{id}/runs/{run}/finish` | finish manual run (unanswered → skipped) | `ManualTestRun::markRunAsFinished` |
 | `GET /sessions/{id}/runs/{run}/tests/{test}` | raw test file at the run's commit, `text/plain` | `SessionRunController::showTestFile` |
 | `POST /sessions/{id}/comments` | add comment | `Livewire/Comments/CreateComment` |
@@ -426,9 +426,8 @@ each successful dispatch, insert a `service_runs` row with `status='unknown'`
 for the batch: "{user} has executed: {service} with run ID {id}, …".
 
 - With no service selected, every service is started (legacy "Run All Tests").
-  Manual services are not started yet (iteration 10); if nothing else was
-  selected the list says "Manual runs are not available yet.", and their
-  checkboxes are disabled.
+  A selected manual service gets a manual run instead (§8.7); it is not part of
+  the `run_dispatched` entry.
 - A service GitHub refuses (or one without a workflow) does not stop the others.
   It is named above the run list ("Could not start {service}: GitHub answered
   “{message}”."), with HTTP 502 if nothing started. Legacy failed the whole
@@ -596,19 +595,57 @@ Legacy: `app/Services/JUnitLogParser.php`. Package `internal/junit`:
 ### 8.7 Manual runs
 Legacy: `app/Actions/Session/CreateManualSessionRun.php`, `Livewire/Runs/*`.
 
-- Starting a manual run first finishes any `in_progress` manual run of the same
-  service (unanswered tests → `skipped`). It then creates a run with
-  `type='manual'`, `status='in_progress'`, `started_at=now()` and logs
-  `manual_run_started`: "Manual run {id} for {service} started by {user}".
-- The wizard shows one test at a time, with prev/next and a "page N / total" input.
-  It opens at the first test without a result. Each test shows the parsed
-  test case (§8.8), loaded from GitHub at the service's commit SHA. If validation
-  fails (e.g. name/file mismatch), a warning shows above it.
-- For each test the user chooses **pass** / **fail** / **skip** and may add a comment.
-  Saving upserts `run_test_results` and recomputes passed/failed/skipped on the run.
-- Saving the last test, or "finish", marks the remaining tests `skipped`, sets
-  `status='success'` and `finished_at=now()`, and logs `manual_run_finished`:
-  "Finished run {id} for {service} with {p} passed and {f} failed tests".
+- Manual services are started with "Run" like automated ones (§8.4). Starting a
+  manual run first finishes any `in_progress` manual run of the same service
+  (unanswered tests → `skipped`, logged as below). It then creates a run with
+  `type='manual'`, `status='in_progress'`, `started_at=now()`, `commit_sha` = the
+  service's commit, and logs `manual_run_started`: "Manual run {id} for {service}
+  started by {user}". All of it is one transaction, and the service row is locked
+  so two starts at once cannot both leave a run open.
+- **Run list.** The latest run of a manual service, while `in_progress`, shows
+  "In progress" as its duration and, where the counts would be, the legacy
+  buttons "Complete manual tests" and "Mark run as finished" (with a confirm).
+  Manual runs are never synced, so they do not make the list poll.
+- **Wizard** (`GET /sessions/{id}/runs/{run}/manual`, legacy `ManualTestRun` in a
+  modal). "Complete manual tests" loads it with htmx into a `<dialog>` on the
+  session page, which `app.js` opens (spinner until it arrives); without JS the
+  link opens the same wizard as a page, which the run page also links to. It
+  shows one test at a time, with ‹ › links and a "N / total" number field (a GET
+  form, `?test=N`, clamped to the range; htmx sends it on change and on Enter, so
+  Enter never leaves the session page). It opens at the first test without a
+  result (the first test if all have one). Each test shows the parsed test case
+  (§8.8), loaded from GitHub at the run's commit through a small in-memory cache
+  (a file at a commit never changes; legacy cached each case for an hour). The
+  cache holds at most 16 MiB, starting over when full, and skips files over
+  1 MiB; "Show file contents" (§8.4) uses it too:
+  "suite / name", the description, the steps table (actions, inputs with a copy
+  button on each value, expected results), and warnings such as a name/file
+  mismatch above it. A file GitHub does not have, or a GitHub error, shows a
+  message instead; the result can still be recorded. Every link and form
+  replaces `#manual-run-content` with htmx and works without JS.
+- For each test the user chooses **pass** / **fail** (radio buttons, required) or
+  **Skip** (a submit button, which wins over a chosen result) and may add a
+  comment (at most 10 000 characters). The previous result and comment are
+  preselected. Per-step pass/fail marks are aids only, never sent: `app.js` picks
+  Pass when every step is marked passed and Fail when one is marked failed
+  (legacy). Saving (`POST …/manual/{test}`) upserts `run_test_results` and
+  recomputes passed/failed/skipped on the run, then shows the next test (htmx) or
+  redirects to it. A missing choice or a long comment re-shows the test with the
+  message (HTTP 422); a run no longer in progress shows that it is finished
+  (HTTP 409). A wizard of an automated run is a 404.
+- Saving the last test (its button says "Submit and finish"), or "Mark run as
+  finished" (`POST /sessions/{id}/runs/{run}/finish`, which answers with the run
+  list), marks the remaining tests `skipped`, sets `status='success'` and
+  `finished_at=now()`, and logs `manual_run_finished`: "Finished run {id} for
+  {service} with {p} passed and {f} failed tests". Both entries carry
+  `metadata.run_id` (a "Show run" link). After the last test the wizard says the
+  run is finished and sends `HX-Trigger: manual-run-finished`; `app.js` then closes
+  the dialog. Without JS it redirects to the session.
+- Closing the dialog sends a `runs-refresh` event to `<body>`, which the run list
+  listens for (`hx-trigger="runs-refresh from:body"`, besides the 30 s poll while
+  runs sync), so the counts update.
+- The run page of a manual run says it is "still in progress" until finished and
+  never marks tests "not found".
 
 ### 8.8 Manual test-case format
 Legacy: `app/Data/ManualTest*.php`, `app/Actions/Github/FetchManualTestContent.php`,
@@ -628,7 +665,10 @@ steps:
 ```
 
 The `internal/testcase` package owns this type and its parsing, for display in the
-manual run wizard (§8.7). Like legacy, the app only checks that `name` matches the
+manual run wizard (§8.7). `input` keeps the file's order; a plain `name: value`
+instead of `{description, value}` is shown as "name: value" without a copy button
+(legacy), and a single string is accepted where a list of strings is expected.
+Golden tests: `internal/testcase/testdata/*.manual.yaml` with `*.golden.json`. Like legacy, the app only checks that `name` matches the
 file name and shows a warning if not. A file that fails to parse shows its raw
 content with the parse error instead of blocking the run. Full schema validation
 is left to `tests-validator`.
@@ -769,9 +809,11 @@ Legacy: `resources/views/sessions/report.blade.php`.
   2. htmx for anything that needs the server;
   3. a small plain-JS file (`internal/web/static/app.js`, no inline scripts, so it
      fits the CSP in §9) for what's left: opening/closing the dialogs (the manual
-     run wizard and the run page's test file, §8.4), closing them on a click outside, "select all" checkboxes in the test tree, disabling the
-     submit button of a `data-submit-once` form once it is sent (§8.2), and the
-     run list's button label (§8.5). A group
+     run wizard, §8.7, and the run page's test file, §8.4), closing them on a click
+     outside, "select all" checkboxes in the test tree, disabling the submit button
+     of a `data-submit-once` form once it is sent (§8.2), the run list's button
+     label (§8.5), and in the wizard the step marks that pick Pass/Fail and the
+     copy buttons of input values (§8.7). A group
      checkbox (in the level's `<summary>`) checks or clears every test below it
      and shows checked, indeterminate or clear for its tests; it needs no server.
 - Handlers check the `HX-Request` header. htmx requests get the fragment, normal

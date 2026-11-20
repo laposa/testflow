@@ -23,6 +23,9 @@ const (
 	RunsLoadingID = "runs-loading" // overlay while "Refresh now" checks GitHub
 )
 
+// RefreshEvent, sent to <body>, makes the run list reload.
+const RefreshEvent = "runs-refresh"
+
 // PollInterval is how often the session page polls the run list while
 // runs are syncing (spec §8.5).
 const PollInterval = "30s"
@@ -64,11 +67,14 @@ func RunList(v RunListView) g.Node {
 			selected++
 		}
 	}
+	// The block reloads itself on a runs-refresh event (app.js sends one
+	// when the manual run dialog closes) and, while runs sync, every 30 s.
+	trigger := RefreshEvent + " from:body"
+	if v.Syncing() {
+		trigger = "every " + PollInterval + ", " + trigger
+	}
 	return h.Div(h.ID(RunsID), h.Class("runs"),
-		g.If(v.Syncing(), g.Group{
-			hx.Get(base + "/runs"), hx.Trigger("every " + PollInterval), hx.Include("#" + RunsFormID),
-			hx.Swap("outerHTML"),
-		}),
+		hx.Get(base+"/runs"), hx.Trigger(trigger), hx.Include("#"+RunsFormID), hx.Swap("outerHTML"),
 		h.Form(h.ID(RunsFormID), h.Method("post"), h.Action(base+"/runs"),
 			hx.Post(base+"/runs"), hx.Target("#"+RunsID), hx.Swap("outerHTML"), hx.Sync("this:drop"),
 			h.Div(h.ID(RunsErrorsID), h.Class("field-error"), h.Role("alert"), g.Map(v.Messages, ErrorText)),
@@ -112,16 +118,11 @@ func serviceRows(v RunListView, svc store.Service) g.Node {
 			runs = append(runs, r)
 		}
 	}
-	manual := svc.Type == store.RunManual
-	// The same custom checkbox as the create session tree. The title sits on
-	// the label: the input is hidden, so only the label shows a tooltip.
+	// The same custom checkbox as the create session tree.
 	box := h.Label(h.Class("checkbox"),
-		// Manual runs come in iteration 10.
-		g.If(manual, h.Title("Manual runs are not available yet.")),
 		h.Input(h.Type("checkbox"), h.Name("services"), h.Value(id(svc.ID)), h.Class("run-selector"),
 			g.Attr("aria-label", "Select "+svc.DisplayName()),
-			g.If(v.Selected[svc.ID] && !manual, h.Checked()),
-			g.If(manual, h.Disabled()),
+			g.If(v.Selected[svc.ID], h.Checked()),
 		),
 		h.Span(h.Class("checkmark")),
 	)
@@ -143,19 +144,23 @@ func serviceRows(v RunListView, svc store.Service) g.Node {
 			h.Img(h.Src("/static/icons/"+icon), h.Alt(label), h.Class("icon")),
 		)
 	}
-	rows := g.Group{h.Tr(h.Td(box), h.Td(g.Text(svc.DisplayName())), runCells(v, runs[0]), h.Td(toggle))}
+	rows := g.Group{h.Tr(h.Td(box), h.Td(g.Text(svc.DisplayName())), runCells(v, runs[0], true), h.Td(toggle))}
 	if expanded {
 		for _, r := range runs[1:] {
-			rows = append(rows, h.Tr(h.Class("more-runs-list"), h.Td(), h.Td(), runCells(v, r), h.Td()))
+			rows = append(rows, h.Tr(h.Class("more-runs-list"), h.Td(), h.Td(), runCells(v, r, false), h.Td()))
 		}
 	}
 	return rows
 }
 
-// runCells are the run id, initiated, duration and results cells.
-func runCells(v RunListView, r store.Run) g.Node {
+// runCells are the run id, initiated, duration and results cells. The
+// latest run of a manual service in progress offers its actions.
+func runCells(v RunListView, r store.Run, latest bool) g.Node {
+	openManual := r.Type == store.RunManual && r.Status == store.RunInProgress
 	var duration g.Node
 	switch {
+	case openManual:
+		duration = h.Span(h.Class("running"), g.Text("In progress"))
 	case r.FinishedAt != nil:
 		duration = g.Text(HumanDuration(r.FinishedAt.Sub(runStart(r))))
 	case r.Syncing(v.Now) && runWaiting(r):
@@ -167,6 +172,10 @@ func runCells(v RunListView, r store.Run) g.Node {
 	}
 	var results g.Node
 	switch {
+	case openManual && latest:
+		results = manualActions(v, r)
+	case openManual:
+		results = g.Text("-")
 	case r.HasTotals && r.FinishedAt != nil:
 		results = PassedFailed(r.Passed, r.Failed, r.Skipped, false)
 	case !r.Syncing(v.Now) || r.FinishedAt != nil:
@@ -188,6 +197,23 @@ func runCells(v RunListView, r store.Run) g.Node {
 // or dispatched but not yet seen there (unknown).
 func runWaiting(r store.Run) bool {
 	return r.Status == store.RunQueued || r.Status == store.RunUnknown
+}
+
+// manualActions are the legacy "Complete manual tests" and "Mark run as
+// finished" buttons. The first loads the wizard into the dialog (app.js
+// opens it), or opens the wizard page without JS. The second posts the run
+// list form to finish the run.
+func manualActions(v RunListView, r store.Run) g.Node {
+	run := v.base() + "/runs/" + id(r.ID)
+	return h.Div(h.Class("actions"),
+		h.A(h.Href(run+"/manual"), h.Class("button filled"), g.Attr("data-manual-run"),
+			hx.Get(run+"/manual"), hx.Target("#"+ManualContentID), hx.Swap("innerHTML"),
+			g.Text("Complete manual tests")),
+		h.Button(h.Type("submit"), h.Class("button"), h.FormAction(run+"/finish"), h.FormNoValidate(),
+			hx.Post(run+"/finish"), hx.Target("#"+RunsID), hx.Swap("outerHTML"),
+			hx.Confirm("Finish run "+id(r.ID)+"? Tests without a result are marked as skipped."),
+			g.Text("Mark run as finished")),
+	)
 }
 
 // runStart is when a runner picked the run up, or when it was dispatched.
@@ -231,6 +257,8 @@ func RunPage(p Page, ts store.TestSession, svc store.Service, d store.RunDetail,
 	switch {
 	case d.FinishedAt != nil:
 		when = g.Text(" and ran for " + HumanDuration(d.FinishedAt.Sub(runStart(d.Run))) + ".")
+	case d.Type == store.RunManual && d.Status == store.RunInProgress:
+		when = g.Text(" and is still in progress.")
 	case d.Syncing(now) && runWaiting(d.Run):
 		when = g.Text(" and is still queued …")
 	case d.Syncing(now):
@@ -248,6 +276,8 @@ func RunPage(p Page, ts store.TestSession, svc store.Service, d store.RunDetail,
 			h.P(g.Text("Started at "), Timestamp(d.CreatedAt), when),
 			h.P(g.Text("Status: "), h.Span(h.Class("run-status run-status--"+d.Status), g.Text(d.Status))),
 			g.If(d.HasTotals, h.P(PassedFailed(d.Passed, d.Failed, d.Skipped, true))),
+			g.If(d.Type == store.RunManual && d.Status == store.RunInProgress,
+				h.P(h.A(h.Href(base+"/runs/"+id(d.ID)+"/manual"), h.Class("button filled"), g.Text("Complete manual tests")))),
 			h.Section(
 				h.Ul(h.Class("session-selected-suites run-tests"),
 					g.Map(svc.Suites, func(suite store.Suite) g.Node {
@@ -306,7 +336,7 @@ func runTest(base string, d store.RunDetail, t store.Test) g.Node {
 			title = "Error. " + title
 		}
 		status = h.Span(h.Class("test-status "+res.Status), h.Title(title), g.Attr("aria-label", res.Status))
-	case d.HasTotals: // an unparsable report says nothing about single tests
+	case d.HasTotals && d.Type == store.RunAutomated: // an unparsable report says nothing about single tests
 		status = h.Span(h.Class("test-status not-found"), g.Text("not found"))
 	}
 	return g.Group{

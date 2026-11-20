@@ -31,21 +31,21 @@ type Failure struct {
 
 // Result says what Dispatch did.
 type Result struct {
-	Started []Started
+	Started []Started // automated runs
+	Manual  []Started // manual runs, filled in with the wizard (spec §8.7)
 	Failed  []Failure
-	// Manual counts the selected manual services, which are not started
-	// yet (manual runs come in iteration 10).
-	Manual int
 }
 
 // ErrNoWorkflow is the failure of an automated service without a workflow.
 var ErrNoWorkflow = errors.New("the service has no workflow")
 
-// Dispatch starts a run of each selected automated service of ts, or of
-// every one if serviceIDs is empty (legacy: "Run All Tests"). Each service
+// Dispatch starts a run of each selected service of ts, or of every one if
+// serviceIDs is empty (legacy: "Run All Tests"). Each automated service
 // gets a workflow_dispatch on its branch, then a service_runs row with
 // status unknown, which the syncer matches to the GitHub run by time. One
-// run_dispatched entry lists the started runs.
+// run_dispatched entry lists the started automated runs. Each manual
+// service gets a manual run in progress, which finishes one still open
+// (store.StartManualRun).
 //
 // A service GitHub refuses is reported in Result.Failed and the others are
 // still started. The error is only for storage failures. The dispatches
@@ -62,8 +62,14 @@ func (d *Dispatcher) Dispatch(ctx context.Context, ts store.TestSession, user st
 		if len(serviceIDs) > 0 && !slices.Contains(serviceIDs, svc.ID) {
 			continue
 		}
-		if svc.Type != store.RunAutomated {
-			res.Manual++
+		if svc.Type == store.RunManual {
+			run, err := d.Store.StartManualRun(ctx, svc, user)
+			if err != nil {
+				d.logDispatched(ctx, ts.ID, user, res.Started, logger)
+				return res, fmt.Errorf("start %s: %w", svc.DisplayName(), err)
+			}
+			logger.InfoContext(ctx, "manual run started", "session.id", ts.ID, "service.id", svc.ID, "run.id", run.ID)
+			res.Manual = append(res.Manual, Started{svc, run})
 			continue
 		}
 		if svc.WorkflowID == 0 {

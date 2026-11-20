@@ -42,11 +42,10 @@ const syncTimeout = 45 * time.Second
 
 // Run list messages (spec §8.4, §8.5).
 const (
-	msgManualNotYet = "Manual runs are not available yet."
-	msgSyncSlow     = "GitHub is slow to answer. The runs keep updating in the background."
-	msgSyncFailed   = "Could not refresh the runs from GitHub. They keep updating in the background."
-	msgRunsFailed   = "Something went wrong. Please reload the page."
-	msgFileFailed   = "Could not load the file from GitHub."
+	msgSyncSlow   = "GitHub is slow to answer. The runs keep updating in the background."
+	msgSyncFailed = "Could not refresh the runs from GitHub. They keep updating in the background."
+	msgRunsFailed = "Something went wrong. Please reload the page."
+	msgFileFailed = "Could not load the file from GitHub."
 )
 
 // runState is what the run list keeps across swaps and reloads: the
@@ -113,8 +112,9 @@ func (s *server) showRunList(w http.ResponseWriter, r *http.Request, fragment bo
 	s.renderRuns(w, r, http.StatusOK, ts, parseRunState(r), nil, fragment)
 }
 
-// startRuns dispatches the selected automated services, or all of them
-// (spec §8.4; legacy: ListRuns::createRun). Services GitHub refuses are
+// startRuns dispatches the selected automated services and starts manual
+// runs of the selected manual ones, or does so for all of them (spec §8.4,
+// §8.7; legacy: ListRuns::createRun). Services GitHub refuses are
 // listed above the run list; the others are still started. A normal
 // request without problems is redirected back to the session (PRG).
 func (s *server) startRuns(w http.ResponseWriter, r *http.Request) {
@@ -149,11 +149,8 @@ func (s *server) startRuns(w http.ResponseWriter, r *http.Request) {
 	for _, f := range res.Failed {
 		msgs = append(msgs, "Could not start "+f.Service.DisplayName()+": "+dispatchReason(f)+".")
 	}
-	if res.Manual > 0 && len(res.Started) == 0 && len(res.Failed) == 0 {
-		msgs = append(msgs, msgManualNotYet)
-	}
 	status := http.StatusOK
-	if len(res.Failed) > 0 && len(res.Started) == 0 {
+	if len(res.Failed) > 0 && len(res.Started) == 0 && len(res.Manual) == 0 {
 		status = http.StatusBadGateway
 	}
 	if !isHTMX(r) && len(msgs) == 0 {

@@ -1,0 +1,7 @@
+name: bad_input
+suite: misc
+description: Input is a list.
+steps:
+  - action: [ "Do it" ]
+    input: [ "a", "b" ]
+    result: [ "Done" ]

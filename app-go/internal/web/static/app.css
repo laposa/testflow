@@ -841,6 +841,350 @@ header {
     }
 }
 
+/* ---- manual runs (legacy: components/runs/manual-test-form.css,
+ * components/modal.css, the copy-to-clipboard rules of layout.css) ---- */
+
+.runs-list .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+
+    /* "Complete manual tests" is a link (it works without JS) and "Mark run
+     * as finished" a button; both get the run list's button font, so they
+     * match each other and "Run All Tests". */
+    .button {
+        display: inline-flex;
+        font-family: inherit;
+        font-size: 13.3333px;
+        line-height: normal;
+        white-space: nowrap;
+    }
+}
+
+/* The wizard's dialog. It has no padding, so app.js treats a click on it as
+ * a click on the backdrop. */
+.manual-dialog {
+    width: min(1280px, 90vw);
+    max-height: 90vh;
+    padding: 0;
+    border: none;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+
+    &::backdrop {
+        background: rgba(0, 0, 0, 0.6);
+    }
+
+    .manual-dialog-body {
+        position: relative;
+        padding: 24px;
+    }
+
+    .manual-dialog-close {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+
+        .close {
+            padding: 0 0.5rem;
+            border: none;
+            background: none;
+            font-size: 48px;
+            line-height: 1;
+            color: var(--primary);
+            cursor: pointer;
+        }
+    }
+
+    .loading {
+        position: relative;
+        height: 160px;
+    }
+}
+
+.manual-test {
+    table > tbody > tr > td {
+        padding: 1rem 0.5rem;
+        vertical-align: top;
+    }
+
+    form {
+        margin-top: 20px;
+    }
+
+    .heading {
+        h2 {
+            margin-bottom: 0;
+        }
+
+        .description {
+            color: var(--primary-opaque);
+            margin-bottom: 2rem;
+        }
+    }
+
+    .manual-test-raw {
+        overflow-x: auto;
+        font-size: 12px;
+    }
+
+    .radio-wrapper {
+        display: flex;
+        column-gap: 5px;
+    }
+
+    .custom-radio {
+        font-size: 0;
+
+        .radio {
+            width: 30px;
+            height: 30px;
+            border: 2px solid var(--light-gray);
+            cursor: pointer;
+            transition: 0.3s ease;
+
+            &::before {
+                display: block;
+                color: var(--light-gray);
+                transition: 0.3s ease;
+            }
+
+            &.pass::before {
+                content: '';
+                position: relative;
+                top: 6px;
+                left: 8px;
+                width: 10px;
+                height: 8px;
+                border-bottom: 3px solid var(--light-gray);
+                border-left: 3px solid var(--light-gray);
+                transform: rotate(-45deg);
+            }
+
+            &.fail::before {
+                content: '×';
+                padding-left: 6px;
+                margin-top: -4px;
+                font-size: 2rem;
+                line-height: 1;
+            }
+        }
+
+        /* Hidden but focusable. */
+        input {
+            position: absolute;
+            opacity: 0;
+            width: 1px;
+            height: 1px;
+        }
+
+        input:focus-visible + .radio {
+            outline: 2px solid var(--primary-opaque);
+            outline-offset: 2px;
+        }
+
+        input:checked + .radio {
+            &::before {
+                color: inherit;
+            }
+
+            &.pass {
+                border-color: var(--primary);
+
+                &::before {
+                    border-color: var(--primary);
+                }
+            }
+
+            &.fail {
+                border-color: var(--error);
+                color: var(--error);
+            }
+        }
+    }
+
+    .test-status {
+        width: 100%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 10px;
+        justify-content: space-between;
+
+        .statuses,
+        .actions {
+            display: flex;
+            column-gap: 10px;
+        }
+
+        .statuses label {
+            position: relative;
+        }
+
+        .statuses input {
+            position: absolute;
+            opacity: 0;
+            width: 1px;
+            height: 1px;
+        }
+
+        .statuses input:focus-visible + div {
+            outline: 2px solid var(--primary-opaque);
+            outline-offset: 2px;
+        }
+
+        .pass,
+        .fail,
+        button {
+            display: flex;
+            align-items: center;
+            box-sizing: border-box;
+            height: 44px;
+            padding: 0 15px;
+            border: 2px solid var(--light-gray);
+            letter-spacing: 2px;
+            color: var(--light-gray);
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: 0.3s ease;
+            font-size: 1.1rem;
+            cursor: pointer;
+            background-color: transparent;
+        }
+
+        .pass::before {
+            content: '';
+            width: 10px;
+            height: 6px;
+            margin: -4px 15px 0 2px;
+            border-bottom: 3px solid currentColor;
+            border-left: 3px solid currentColor;
+            transform: rotate(-45deg);
+        }
+
+        .fail::before {
+            content: '×';
+            font-size: 2rem;
+            line-height: 1;
+            margin-right: 10px;
+        }
+
+        input:checked + .fail {
+            border-color: var(--error);
+            background-color: var(--error);
+            color: white;
+        }
+
+        input:checked + .pass {
+            border-color: var(--primary);
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .submit {
+            border-color: var(--primary);
+            color: var(--primary);
+            background-color: white;
+
+            &::after {
+                content: '➝';
+                font-size: 1.5rem;
+                line-height: 1;
+                margin-left: 10px;
+            }
+        }
+    }
+
+    .bullet-list {
+        margin: 0;
+
+        + .input {
+            margin-left: 20px;
+        }
+    }
+
+    .error {
+        border: 2px solid var(--error);
+        color: var(--error);
+        padding: 10px;
+        margin-top: 10px;
+
+        ul {
+            margin: 0 0 0 10px;
+            list-style: disc inside;
+        }
+    }
+}
+
+.copy-to-clipboard {
+    position: relative;
+    padding: 0;
+    border: none;
+    background: none;
+    color: var(--primary);
+    font: inherit;
+    cursor: pointer;
+
+    &.copied::after {
+        content: 'Copied to clipboard';
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        white-space: nowrap;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.8rem;
+        font-weight: bold;
+        color: var(--gray);
+        background-color: white;
+        box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+    }
+}
+
+.test-pagination {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    .pages {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    input {
+        width: 60px;
+        text-align: right;
+        font-size: 1rem;
+    }
+
+    .prev,
+    .next {
+        padding: 0 0.5rem;
+        color: inherit;
+        text-decoration: none;
+
+        &::after {
+            font-size: 2rem;
+            line-height: 1;
+        }
+    }
+
+    .prev::after {
+        content: '‹';
+    }
+
+    .next::after {
+        content: '›';
+    }
+
+    .disabled {
+        opacity: 0.3;
+    }
+}
+
 .run-output {
     margin-bottom: 1rem;
 

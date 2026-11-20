@@ -93,6 +93,7 @@ type fakeStore struct {
 	updates   []store.RunUpdate
 	updateErr error
 	since     time.Time
+	manual    []manualStart
 	taken     map[int64]bool // GitHub run ids of runs in the store
 	takenFrom time.Time
 }
@@ -114,6 +115,16 @@ func (f *fakeStore) PendingRuns(_ context.Context, since time.Time) ([]store.Pen
 	f.since = since
 	return f.pending, nil
 }
+
+func (f *fakeStore) StartManualRun(_ context.Context, svc store.Service, user store.User) (store.Run, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.nextID++
+	f.manual = append(f.manual, manualStart{svc.ID, user.ID})
+	return store.Run{ID: 100 + f.nextID, ServiceID: svc.ID, Type: store.RunManual, Status: store.RunInProgress}, nil
+}
+
+type manualStart struct{ service, user int64 }
 
 func (f *fakeStore) MatchedGitHubRuns(_ context.Context, since time.Time) (map[int64]bool, error) {
 	f.takenFrom = since
@@ -233,8 +244,13 @@ func TestDispatch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(res.Started) != 2 || len(res.Failed) != 2 || res.Manual != 1 {
+	if len(res.Started) != 2 || len(res.Failed) != 2 || len(res.Manual) != 1 {
 		t.Fatalf("result = %+v", res)
+	}
+	// The manual service gets a manual run, not a workflow, and is not in
+	// the run_dispatched entry.
+	if len(st.manual) != 1 || st.manual[0] != (manualStart{5, 7}) || res.Manual[0].Run.ID != 103 || len(gh.dispatched) != 2 {
+		t.Errorf("manual = %+v, result %+v, dispatched %d", st.manual, res.Manual, len(gh.dispatched))
 	}
 	if !errors.Is(res.Failed[1].Err, ErrNoWorkflow) {
 		t.Errorf("failure = %v, want ErrNoWorkflow", res.Failed[1].Err)

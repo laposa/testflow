@@ -1,0 +1,20 @@
+{
+  "testCase": {
+    "name": "something_else",
+    "suite": "misc",
+    "description": "Tolerates single strings.",
+    "steps": [
+      {
+        "action": [
+          "Open the app"
+        ],
+        "result": [
+          "It starts"
+        ]
+      }
+    ]
+  },
+  "warnings": [
+    "The name “something_else” does not match the file name “single_strings.manual.yaml”."
+  ]
+}

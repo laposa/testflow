@@ -66,7 +66,8 @@ type Options struct {
 	Runs       RunStore      // run list and run detail (spec §8.4)
 	Dispatcher RunDispatcher // starts automated runs
 	Syncer     RunSyncer     // "refresh now" (spec §8.5)
-	TestFiles  TestFiles     // raw test files at a run's commit
+	TestFiles  TestFiles     // raw test files and test cases at a run's commit
+	Manual     ManualRuns    // manual run results (spec §8.7)
 }
 
 type server struct {
@@ -87,9 +88,10 @@ func NewHandler(o Options) (http.Handler, error) {
 	if o.Discovery == nil || o.TestSessions == nil || len(o.Environments) == 0 || o.Activity == nil {
 		return nil, fmt.Errorf("web: Discovery, TestSessions, Environments and Activity are required")
 	}
-	if o.Runs == nil || o.Dispatcher == nil || o.Syncer == nil || o.TestFiles == nil {
-		return nil, fmt.Errorf("web: Runs, Dispatcher, Syncer and TestFiles are required")
+	if o.Runs == nil || o.Dispatcher == nil || o.Syncer == nil || o.TestFiles == nil || o.Manual == nil {
+		return nil, fmt.Errorf("web: Runs, Dispatcher, Syncer, TestFiles and Manual are required")
 	}
+	o.TestFiles = newFileCache(o.TestFiles)
 	s := &server{Options: o, static: static.FS}
 	if o.StaticDir != "" {
 		if info, err := os.Stat(o.StaticDir); err != nil || !info.IsDir() {
@@ -125,6 +127,9 @@ func NewHandler(o Options) (http.Handler, error) {
 	private("POST /sessions/{id}/runs/sync", s.syncRuns)
 	private("GET /sessions/{id}/runs/{run}", s.showRun)
 	private("GET /sessions/{id}/runs/{run}/tests/{test}", s.testFile)
+	private("GET /sessions/{id}/runs/{run}/manual", s.showManual)
+	private("POST /sessions/{id}/runs/{run}/manual/{test}", s.saveManual)
+	private("POST /sessions/{id}/runs/{run}/finish", s.finishManual)
 
 	// Telemetry wraps the mux with handlers that keep the same *http.Request,
 	// so it can log the matched route pattern.

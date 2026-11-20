@@ -209,6 +209,7 @@ func SessionPage(p Page, ts store.TestSession, runs RunListView, activity Activi
 				g.Text("."),
 			),
 			RunList(runs),
+			g.If(hasManual(ts), ManualDialog()),
 			h.Details(h.Class("session-selected-tests"),
 				h.Summary(g.Text("Selected tests ("+strconv.Itoa(countTests(ts))+")")),
 				h.Ul(h.Class("session-selected-suites"),
@@ -228,6 +229,15 @@ func SessionPage(p Page, ts store.TestSession, runs RunListView, activity Activi
 		),
 		Activity(activity),
 	)
+}
+
+func hasManual(ts store.TestSession) bool {
+	for _, svc := range ts.Services {
+		if svc.Type == store.RunManual {
+			return true
+		}
+	}
+	return false
 }
 
 func countTests(ts store.TestSession) int {
