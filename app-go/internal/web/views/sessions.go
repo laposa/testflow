@@ -226,6 +226,11 @@ func SessionPage(p Page, ts store.TestSession, runs RunListView, reviews Reviews
 					}),
 				),
 			),
+			// Legacy: the session-report-actions of sessions/show.blade.php.
+			h.Div(h.Class("session-report-actions"),
+				h.A(h.Href("/sessions/"+id(ts.ID)+"/report/executive"), h.Class("button"), g.Text("View Executive Report")),
+				h.A(h.Href("/sessions/"+id(ts.ID)+"/report/full"), h.Class("button"), g.Text("View Full Report")),
+			),
 		),
 		Reviews(reviews),
 		Activity(activity),

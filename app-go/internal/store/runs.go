@@ -172,6 +172,35 @@ func (s *Store) RunDetail(ctx context.Context, sessionID, runID int64) (RunDetai
 	return d, nil
 }
 
+// SessionResults returns the per-test results of every run of a session,
+// by run id and test id (spec §8.11, the full report).
+func (s *Store) SessionResults(ctx context.Context, sessionID int64) (map[int64]map[int64]TestResult, error) {
+	rows, err := s.db.Query(ctx, `
+		SELECT rr.run_id, rr.test_id, rr.status, COALESCE(rr.comment, ''), COALESCE(rr.failure_message, ''),
+		       COALESCE(rr.duration, 0)
+		FROM run_test_results rr
+		JOIN service_runs r ON r.id = rr.run_id
+		JOIN session_services ss ON ss.id = r.service_id
+		WHERE ss.session_id = $1`, sessionID)
+	if err != nil {
+		return nil, fmt.Errorf("session results: %w", err)
+	}
+	out := map[int64]map[int64]TestResult{}
+	var runID int64
+	var t TestResult
+	_, err = pgx.ForEachRow(rows, []any{&runID, &t.TestID, &t.Status, &t.Comment, &t.FailureMessage, &t.Duration}, func() error {
+		if out[runID] == nil {
+			out[runID] = map[int64]TestResult{}
+		}
+		out[runID][t.TestID] = t
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("session results: %w", err)
+	}
+	return out, nil
+}
+
 // PendingRun is an automated run the syncer works on, with its service.
 type PendingRun struct {
 	Run

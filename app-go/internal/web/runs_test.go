@@ -41,6 +41,18 @@ func (f *fakeRuns) RunDetail(_ context.Context, sessionID, runID int64) (store.R
 	return d, nil
 }
 
+func (f *fakeRuns) SessionResults(_ context.Context, sessionID int64) (map[int64]map[int64]store.TestResult, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	out := map[int64]map[int64]store.TestResult{}
+	for runID, d := range f.details {
+		if f.owner[runID] == sessionID && len(d.Results) > 0 {
+			out[runID] = d.Results
+		}
+	}
+	return out, f.err
+}
+
 type fakeDispatcher struct {
 	mu    sync.Mutex
 	calls [][]int64
@@ -339,7 +351,7 @@ func TestRunPage(t *testing.T) {
 		`<div class="loading"><div class="loading-overlay relative" role="status" aria-label="Loading the test file"><svg`,
 		`<span class="test-status pass" title="Execution time 1.2s" aria-label="pass"></span>`,
 		`<span class="test-status fail" title="Execution time 3.0s" aria-label="fail"></span>`,
-		`<div class="comment"><i>see &lt;video&gt;</i></div>`,
+		`<span class="test-status fail" title="Execution time 3.0s" aria-label="fail"></span><div class="comment"><i>see &lt;video&gt;</i></div></li>`,
 		`missing.cy.js</a> <span class="test-status not-found">not found</span>`,
 		`<summary>Results in JUnit format</summary><pre>&lt;testsuites&gt;`,
 		// ANSI colours are stripped and the log is escaped.

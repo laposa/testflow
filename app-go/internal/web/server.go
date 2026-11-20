@@ -136,6 +136,8 @@ func NewHandler(o Options) (http.Handler, error) {
 	private("GET /sessions/{id}/runs/{run}/manual", s.showManual)
 	private("POST /sessions/{id}/runs/{run}/manual/{test}", s.saveManual)
 	private("POST /sessions/{id}/runs/{run}/finish", s.finishManual)
+	private("GET /sessions/{id}/report/executive", s.showExecutiveReport)
+	private("GET /sessions/{id}/report/full", s.showFullReport)
 	private("POST /sessions/{id}/reviews", s.requestReview)
 	private("POST /sessions/{id}/reviews/{review}/approve", s.approveReview)
 	private("POST /sessions/{id}/reviews/{review}/reject", s.rejectReview)

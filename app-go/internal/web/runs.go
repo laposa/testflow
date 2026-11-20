@@ -19,6 +19,7 @@ import (
 type RunStore interface {
 	SessionRuns(ctx context.Context, sessionID int64) ([]store.Run, error)
 	RunDetail(ctx context.Context, sessionID, runID int64) (store.RunDetail, error)
+	SessionResults(ctx context.Context, sessionID int64) (map[int64]map[int64]store.TestResult, error)
 }
 
 // RunDispatcher starts automated runs (runs.Dispatcher).
