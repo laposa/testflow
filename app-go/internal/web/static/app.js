@@ -1,7 +1,5 @@
 // TestFlow client behaviour that native HTML and htmx don't cover (spec §10, D17).
 // Loaded as an external file so it fits the self-only Content-Security-Policy.
-// Later iterations add: opening/closing the manual run <dialog>, which can
-// reuse the test file dialog pattern below.
 'use strict';
 
 // Test tree "select all" (legacy: resources/js/app.js selectChildElements).
@@ -152,5 +150,75 @@
     dialog.addEventListener('close', function () {
         if (current) current.abort();
         current = null;
+    });
+})();
+
+// Manual run wizard (legacy: livewire/runs/manual-test-run in a modal). A
+// "Complete manual tests" link loads the wizard into the session page's
+// <dialog> with htmx; this opens the dialog with the spinner meanwhile.
+// When the run finishes (HX-Trigger manual-run-finished) the dialog closes,
+// and closing it reloads the run list for the new counts.
+(function () {
+    const dialog = document.getElementById('manual-run');
+    if (!dialog) return;
+    const content = document.getElementById('manual-run-content');
+    const spinner = content.firstElementChild && content.firstElementChild.cloneNode(true);
+
+    document.addEventListener('click', function (e) {
+        const link = e.target instanceof Element && e.target.closest('a[data-manual-run]');
+        // htmx prevents the default when it loads the link; otherwise (no
+        // htmx, or a new tab) the browser opens the wizard page.
+        if (!link || !e.defaultPrevented) return;
+        content.replaceChildren();
+        if (spinner) content.append(spinner.cloneNode(true));
+        dialog.showModal();
+    });
+
+    document.addEventListener('manual-run-finished', function () {
+        if (dialog.open) dialog.close();
+    });
+
+    // A new test starts at the top, as legacy scrolled the modal.
+    document.addEventListener('htmx:after:swap', function (e) {
+        if (dialog.open && e.target instanceof Node && dialog.contains(e.target)) dialog.scrollTop = 0;
+    });
+
+    // The dialog has no padding, so a click on it is on the backdrop.
+    dialog.addEventListener('click', function (e) {
+        if (e.target === dialog) dialog.close();
+    });
+    dialog.addEventListener('close', function () {
+        document.body.dispatchEvent(new CustomEvent('runs-refresh'));
+    });
+})();
+
+// Manual test steps: marking every step passed picks Pass, and marking one
+// failed picks Fail (legacy: list-runs.blade.php markTestAs). The step
+// marks are not sent.
+(function () {
+    document.addEventListener('change', function (e) {
+        const box = e.target;
+        if (!(box instanceof HTMLInputElement) || !box.closest('.custom-radio')) return;
+        const test = box.closest('.manual-test');
+        if (!test) return;
+        const passes = Array.from(test.querySelectorAll('.custom-radio .radio-pass'));
+        const fails = Array.from(test.querySelectorAll('.custom-radio .radio-fail'));
+        let pick = null;
+        if (fails.some(function (f) { return f.checked; })) pick = test.querySelector('.result-fail');
+        else if (passes.length > 0 && passes.every(function (p) { return p.checked; })) pick = test.querySelector('.result-pass');
+        if (pick) pick.checked = true;
+    });
+})();
+
+// Copy a test input's value (legacy: copyValueToClipboard). The button
+// says "Copied" for two seconds through a class.
+(function () {
+    document.addEventListener('click', function (e) {
+        const button = e.target instanceof Element && e.target.closest('.copy-to-clipboard');
+        if (!button || !navigator.clipboard) return;
+        navigator.clipboard.writeText(button.textContent).then(function () {
+            button.classList.add('copied');
+            setTimeout(function () { button.classList.remove('copied'); }, 2000);
+        });
     });
 })();

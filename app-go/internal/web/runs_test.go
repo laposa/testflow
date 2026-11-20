@@ -155,23 +155,23 @@ func TestSessionPageRunList(t *testing.T) {
 	}
 	body := rec.Body.String()
 	assertContains(t, body,
-		`<div id="runs" class="runs">`,
 		`<form id="runs-form" method="post" action="/sessions/3/runs" hx-post="/sessions/3/runs" hx-target="#runs" hx-swap="outerHTML" hx-sync="this:drop">`,
 		`<td>shop/web (automated)</td>`,
 		`<a href="/sessions/3/runs/7" title="Show logs">7</a>`,
 		`title="Picked by runner at `, `>2 minutes 5 seconds</td>`,
 		`<span class="pass">2 passed</span> and <span class="fail">1 failed</span>`,
 		`<td>shop/api (automated)</td><td>No runs</td>`,
-		// Manual runs come in iteration 10.
-		`<label class="checkbox" title="Manual runs are not available yet."><input type="checkbox" name="services" value="12" class="run-selector" aria-label="Select shop/web (manual)" disabled><span class="checkmark"></span></label>`,
+		`<label class="checkbox"><input type="checkbox" name="services" value="12" class="run-selector" aria-label="Select shop/web (manual)"><span class="checkmark"></span></label>`,
 		`name="toggle" value="10" formmethod="get" formaction="/sessions/3" formnovalidate hx-get="/sessions/3/runs" hx-include="#runs-form"`,
 		`aria-expanded="false"`,
 		`>Run All Tests</button>`,
 		`formaction="/sessions/3/runs/sync" formnovalidate hx-post="/sessions/3/runs/sync" hx-target="#runs" hx-swap="outerHTML" hx-indicator="#runs-loading"`,
 		`<div id="runs-loading" class="loading-overlay relative htmx-indicator" role="status" aria-label="Checking GitHub for the runs"><svg`,
 	)
-	// Nothing syncs, so no polling; older runs are collapsed.
-	assertNotContains(t, body, `hx-trigger`, `/sessions/3/runs/5`)
+	// Nothing syncs, so no polling, only the refresh event; older runs are
+	// collapsed.
+	assertContains(t, body, `<div id="runs" class="runs" hx-get="/sessions/3/runs" hx-trigger="runs-refresh from:body" hx-include="#runs-form" hx-swap="outerHTML">`)
+	assertNotContains(t, body, `every 30s`, `/sessions/3/runs/5`)
 }
 
 func TestRunListPollsWhileSyncing(t *testing.T) {
@@ -180,7 +180,7 @@ func TestRunListPollsWhileSyncing(t *testing.T) {
 		e.runs.runs[3]...)
 	body := get(e.h, "/sessions/3", cookie).Body.String()
 	assertContains(t, body,
-		`<div id="runs" class="runs" hx-get="/sessions/3/runs" hx-trigger="every 30s" hx-include="#runs-form" hx-swap="outerHTML">`,
+		`<div id="runs" class="runs" hx-get="/sessions/3/runs" hx-trigger="every 30s, runs-refresh from:body" hx-include="#runs-form" hx-swap="outerHTML">`,
 		`<span class="running">Queued</span>`)
 
 	// Picked up by a runner: running.
@@ -272,10 +272,11 @@ func TestStartRunsFailures(t *testing.T) {
 		t.Errorf("non-htmx: status = %d", rec.Code)
 	}
 
-	// Only manual services: nothing to start yet.
-	e.dispatcher.res = runs.Result{Manual: 1}
-	rec = postHTMX(e, "/sessions/3/runs", url.Values{}, cookie)
-	assertContains(t, rec.Body.String(), msgManualNotYet)
+	// A manual run started while GitHub refused the rest: no 502.
+	e.dispatcher.res.Manual = []runs.Started{{Run: store.Run{ID: 9}}}
+	if rec = postHTMX(e, "/sessions/3/runs", url.Values{}, cookie); rec.Code != http.StatusOK {
+		t.Errorf("with a manual run: status = %d", rec.Code)
+	}
 
 	// A storage failure is a 500 into the error area.
 	e.dispatcher.err = errors.New("db down")
@@ -403,8 +404,9 @@ func TestTestFile(t *testing.T) {
 			t.Errorf("%s: status = %d, want %d", target, rec.Code, want)
 		}
 	}
+	// Test 33 was not read yet: files read once are cached.
 	e.files.err = errors.New("timeout")
-	if rec := get(e.h, "/sessions/3/runs/7/tests/31", cookie); rec.Code != http.StatusBadGateway {
+	if rec := get(e.h, "/sessions/3/runs/7/tests/33", cookie); rec.Code != http.StatusBadGateway {
 		t.Errorf("GitHub error: status = %d, want 502", rec.Code)
 	}
 }

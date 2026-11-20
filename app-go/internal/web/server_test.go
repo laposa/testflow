@@ -52,6 +52,7 @@ type testEnv struct {
 	dispatcher   *fakeDispatcher   // set unless Options.Dispatcher was given
 	syncer       *fakeSyncer       // set unless Options.Syncer was given
 	files        *fakeFiles        // set unless Options.TestFiles was given
+	manual       *fakeManual       // set unless Options.Manual was given
 }
 
 func newEnv(t *testing.T, o Options) *testEnv {
@@ -99,6 +100,10 @@ func newEnv(t *testing.T, o Options) *testEnv {
 	if o.TestFiles == nil {
 		e.files = &fakeFiles{}
 		o.TestFiles = e.files
+	}
+	if o.Manual == nil {
+		e.manual = &fakeManual{runs: e.runs}
+		o.Manual = e.manual
 	}
 	if o.Environments == nil {
 		o.Environments = []string{"preprod", "beta", "prod"}

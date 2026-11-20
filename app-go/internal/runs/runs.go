@@ -1,7 +1,7 @@
 // Package runs dispatches automated runs to GitHub Actions and keeps them
 // in sync with GitHub (spec §8.4, §8.5; legacy:
 // app/Actions/Github/DispatchSessionRun.php, FetchSessionWorkflowRuns.php,
-// Console/Commands/SyncGithubRuns.php). Manual runs come in iteration 10.
+// Console/Commands/SyncGithubRuns.php), and starts manual runs (spec §8.7).
 package runs
 
 import (
@@ -33,6 +33,7 @@ type Store interface {
 	StaleRuns(ctx context.Context, before time.Time) ([]store.PendingRun, error)
 	ServiceTests(ctx context.Context, serviceID int64) ([]store.Test, error)
 	UpdateRun(ctx context.Context, u store.RunUpdate, a *store.NewActivity) error
+	StartManualRun(ctx context.Context, svc store.Service, user store.User) (store.Run, error)
 }
 
 // TestFilter is the test_filter input of a service's workflow (spec §8.4):

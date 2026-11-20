@@ -1,0 +1,8 @@
+# action and result as single strings, an empty input and a wrong name
+name: something_else
+suite: misc
+description: Tolerates single strings.
+steps:
+  - action: Open the app
+    input:
+    result: It starts
