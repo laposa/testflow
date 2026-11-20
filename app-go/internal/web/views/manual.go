@@ -131,8 +131,12 @@ func pagination(v ManualRunView) g.Node {
 	}
 	return h.Nav(h.Class("test-pagination"), g.Attr("aria-label", "Tests"),
 		link("prev", "Previous test", v.Index-1),
+		// Enter fires change and submit: htmx handles both (and cancels the
+		// normal submit, which would leave the dialog), and replace keeps
+		// only the last request.
 		h.Form(h.Method("get"), h.Action(url), h.Class("pages"),
-			hx.Get(url), hx.Target("#"+ManualContentID), hx.Swap("innerHTML"), hx.Trigger("change"),
+			hx.Get(url), hx.Target("#"+ManualContentID), hx.Swap("innerHTML"), hx.Trigger("submit, change"),
+			hx.Sync("this:replace"),
 			h.Input(h.Type("number"), h.Name("test"), h.Class("test-pagination-input"), h.Min("1"),
 				h.Max(strconv.Itoa(len(v.Tests))), h.Value(strconv.Itoa(v.Index+1)), g.Attr("aria-label", "Test number")),
 			g.Text(" / "+strconv.Itoa(len(v.Tests))),

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -37,14 +38,14 @@ func (f *fakeManual) SaveManualResult(_ context.Context, runID int64, r store.Te
 	return nil
 }
 
-func (f *fakeManual) FinishManualRun(_ context.Context, runID, _ int64) (store.RunTotals, error) {
+func (f *fakeManual) FinishManualRun(_ context.Context, runID, _ int64) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.err != nil {
-		return store.RunTotals{}, f.err
+		return f.err
 	}
 	f.finished = append(f.finished, runID)
-	return store.RunTotals{Passed: 1}, nil
+	return nil
 }
 
 const loginCase = `name: login
@@ -118,6 +119,7 @@ func TestManualWizard(t *testing.T) {
 		t.Fatalf("status = %d, body = %q", rec.Code, rec.Body.String())
 	}
 	assertContains(t, rec.Body.String(),
+		`<form method="get" action="/sessions/3/runs/20/manual" class="pages" hx-get="/sessions/3/runs/20/manual" hx-target="#manual-run-content" hx-swap="innerHTML" hx-trigger="submit, change" hx-sync="this:replace">`,
 		`<input type="number" name="test" class="test-pagination-input" min="1" max="3" value="2"`,
 		`<a class="prev" href="/sessions/3/runs/20/manual?test=1" hx-get="/sessions/3/runs/20/manual?test=1"`,
 		`<span title="suite">auth</span> / <span title="test name">logout.manual.yaml</span>`,
@@ -233,5 +235,63 @@ func TestManualFinish(t *testing.T) {
 	assertContains(t, postHTMX(e, "/sessions/3/runs/20/finish", url.Values{}, cookie).Body.String(), "Run 20 is already finished.")
 	if rec := postHTMX(e, "/sessions/3/runs/7/finish", url.Values{}, cookie); rec.Code != http.StatusNotFound {
 		t.Errorf("automated run: status = %d", rec.Code)
+	}
+}
+
+// countingFiles serves files of a given size and counts the reads.
+type countingFiles struct {
+	mu    sync.Mutex
+	reads map[string]int
+	size  int
+}
+
+func (f *countingFiles) File(_ context.Context, _, path, _ string) ([]byte, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.reads[path]++
+	if path == "missing" {
+		return nil, errors.New("not there")
+	}
+	return make([]byte, f.size), nil
+}
+
+func TestFileCache(t *testing.T) {
+	ctx := t.Context()
+	src := &countingFiles{reads: map[string]int{}, size: 1 << 10}
+	c := newFileCache(src)
+	for range 2 {
+		if b, err := c.File(ctx, "laposa/shop", "a", "sha"); err != nil || len(b) != 1<<10 {
+			t.Fatalf("File = %d bytes, %v", len(b), err)
+		}
+	}
+	if src.reads["a"] != 1 {
+		t.Errorf("cached file read %d times, want 1", src.reads["a"])
+	}
+	// Another ref is another file; errors are not cached.
+	_, _ = c.File(ctx, "laposa/shop", "a", "other")
+	_, _ = c.File(ctx, "laposa/shop", "missing", "sha")
+	_, _ = c.File(ctx, "laposa/shop", "missing", "sha")
+	if src.reads["a"] != 2 || src.reads["missing"] != 2 {
+		t.Errorf("reads = %v", src.reads)
+	}
+
+	// A file over the per-file limit is served but not kept.
+	src.size = fileCacheMaxFile + 1
+	_, _ = c.File(ctx, "laposa/shop", "big", "sha")
+	_, _ = c.File(ctx, "laposa/shop", "big", "sha")
+	if src.reads["big"] != 2 {
+		t.Errorf("big file read %d times, want 2", src.reads["big"])
+	}
+
+	// The cache never holds more than fileCacheBytes: it starts over.
+	src.size = fileCacheMaxFile
+	for i := range fileCacheBytes/fileCacheMaxFile + 1 {
+		_, _ = c.File(ctx, "laposa/shop", "f"+strconv.Itoa(i), "sha")
+		if c.size > fileCacheBytes {
+			t.Fatalf("cache holds %d bytes", c.size)
+		}
+	}
+	if n := fileCacheBytes/fileCacheMaxFile + 1; len(c.files) >= n {
+		t.Errorf("cache kept all %d files, want it to start over", len(c.files))
 	}
 }

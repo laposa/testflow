@@ -611,10 +611,13 @@ Legacy: `app/Actions/Session/CreateManualSessionRun.php`, `Livewire/Runs/*`.
   session page, which `app.js` opens (spinner until it arrives); without JS the
   link opens the same wizard as a page, which the run page also links to. It
   shows one test at a time, with ‹ › links and a "N / total" number field (a GET
-  form, `?test=N`, clamped to the range). It opens at the first test without a
+  form, `?test=N`, clamped to the range; htmx sends it on change and on Enter, so
+  Enter never leaves the session page). It opens at the first test without a
   result (the first test if all have one). Each test shows the parsed test case
   (§8.8), loaded from GitHub at the run's commit through a small in-memory cache
-  (a file at a commit never changes; legacy cached each case for an hour):
+  (a file at a commit never changes; legacy cached each case for an hour). The
+  cache holds at most 16 MiB, starting over when full, and skips files over
+  1 MiB; "Show file contents" (§8.4) uses it too:
   "suite / name", the description, the steps table (actions, inputs with a copy
   button on each value, expected results), and warnings such as a name/file
   mismatch above it. A file GitHub does not have, or a GitHub error, shows a

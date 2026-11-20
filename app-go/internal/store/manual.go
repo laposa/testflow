@@ -115,20 +115,18 @@ func (s *Store) SaveManualResult(ctx context.Context, runID int64, r TestResult)
 // ManualTestRun::markRunAsFinished): tests without a result are skipped,
 // the run is success from now, and manual_run_finished is logged by userID.
 // It is ErrConflict if the run is not a manual run in progress.
-func (s *Store) FinishManualRun(ctx context.Context, runID, userID int64) (RunTotals, error) {
-	var totals RunTotals
+func (s *Store) FinishManualRun(ctx context.Context, runID, userID int64) error {
 	err := s.inTx(ctx, func(tx pgx.Tx) error {
 		if _, err := lockManualRun(ctx, tx, runID); err != nil {
 			return err
 		}
-		var err error
-		totals, err = finishManual(ctx, tx, runID, userID)
+		_, err := finishManual(ctx, tx, runID, userID)
 		return err
 	})
 	if err != nil {
-		return RunTotals{}, fmt.Errorf("finish manual run: %w", err)
+		return fmt.Errorf("finish manual run: %w", err)
 	}
-	return totals, nil
+	return nil
 }
 
 // lockManualRun locks a manual run in progress and returns its service.

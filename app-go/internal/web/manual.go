@@ -19,7 +19,7 @@ import (
 // ManualRuns saves results of manual runs and finishes them (store.Store).
 type ManualRuns interface {
 	SaveManualResult(ctx context.Context, runID int64, r store.TestResult) error
-	FinishManualRun(ctx context.Context, runID, userID int64) (store.RunTotals, error)
+	FinishManualRun(ctx context.Context, runID, userID int64) error
 }
 
 // maxComment caps a tester's comment, in characters.
@@ -102,7 +102,7 @@ func (s *server) saveManual(w http.ResponseWriter, r *http.Request) {
 	last := v.Index == len(v.Tests)-1
 	if err == nil && last {
 		u, _ := auth.UserFrom(ctx)
-		_, err = s.Manual.FinishManualRun(ctx, d.ID, u.ID)
+		err = s.Manual.FinishManualRun(ctx, d.ID, u.ID)
 	}
 	switch {
 	case errors.Is(err, store.ErrConflict):
@@ -152,7 +152,7 @@ func (s *server) finishManual(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	u, _ := auth.UserFrom(ctx)
 	var msgs []string
-	_, err := s.Manual.FinishManualRun(ctx, d.ID, u.ID)
+	err := s.Manual.FinishManualRun(ctx, d.ID, u.ID)
 	switch {
 	case errors.Is(err, store.ErrConflict):
 		msgs = []string{"Run " + strconv.FormatInt(d.ID, 10) + " is already finished."}
@@ -237,15 +237,21 @@ func firstOpen(tests []store.Test, d store.RunDetail) int {
 }
 
 // fileCache keeps test files read from GitHub. A file at a commit never
-// changes, so entries do not expire; the cache starts over when full
-// (legacy cached each test case for an hour).
+// changes, so entries do not expire; the cache starts over when it would
+// hold more than fileCacheBytes (legacy cached each test case for an
+// hour). Files over fileCacheMaxFile are not kept: test cases are a few
+// KB, while "Show file contents" can read any test file.
 type fileCache struct {
 	TestFiles
 	mu    sync.Mutex
 	files map[string][]byte
+	size  int // bytes held
 }
 
-const fileCacheSize = 256
+const (
+	fileCacheBytes   = 16 << 20
+	fileCacheMaxFile = 1 << 20
+)
 
 func newFileCache(f TestFiles) *fileCache {
 	return &fileCache{TestFiles: f, files: map[string][]byte{}}
@@ -263,11 +269,18 @@ func (c *fileCache) File(ctx context.Context, repo, path, ref string) ([]byte, e
 	if err != nil {
 		return nil, err
 	}
-	c.mu.Lock()
-	if len(c.files) >= fileCacheSize {
-		clear(c.files)
+	if len(b) > fileCacheMaxFile {
+		return b, nil
 	}
-	c.files[key] = b
+	c.mu.Lock()
+	if _, ok := c.files[key]; !ok {
+		if c.size+len(b) > fileCacheBytes {
+			clear(c.files)
+			c.size = 0
+		}
+		c.files[key] = b
+		c.size += len(b)
+	}
 	c.mu.Unlock()
 	return b, nil
 }

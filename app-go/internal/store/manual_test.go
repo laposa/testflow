@@ -100,21 +100,24 @@ func TestManualRuns(t *testing.T) {
 	if err := s.SaveManualResult(ctx, again.ID, store.TestResult{TestID: b.ID, Status: "fail", Comment: "broken"}); err != nil {
 		t.Fatal(err)
 	}
-	totals, err := s.FinishManualRun(ctx, again.ID, ada.ID)
-	if err != nil || totals != (store.RunTotals{Passed: 0, Failed: 1, Skipped: 2}) {
-		t.Errorf("finish = %+v, %v", totals, err)
+	if err := s.FinishManualRun(ctx, again.ID, ada.ID); err != nil {
+		t.Fatal(err)
 	}
-	if _, err := s.FinishManualRun(ctx, again.ID, ada.ID); !errors.Is(err, store.ErrConflict) {
+	if d, err = s.RunDetail(ctx, sessionID, again.ID); err != nil || d.Status != "success" || d.FinishedAt == nil ||
+		d.Passed != 0 || d.Failed != 1 || d.Skipped != 2 {
+		t.Errorf("finished = %+v, %v", d.Run, err)
+	}
+	if err := s.FinishManualRun(ctx, again.ID, ada.ID); !errors.Is(err, store.ErrConflict) {
 		t.Errorf("second finish: err = %v, want ErrConflict", err)
 	}
-	if _, err := s.FinishManualRun(ctx, again.ID+100, ada.ID); !errors.Is(err, store.ErrNotFound) {
+	if err := s.FinishManualRun(ctx, again.ID+100, ada.ID); !errors.Is(err, store.ErrNotFound) {
 		t.Errorf("finish of a missing run: err = %v, want ErrNotFound", err)
 	}
 	auto, err := s.CreateRun(ctx, store.NewRun{ServiceID: web.ID, Type: store.RunAutomated, Status: store.RunInProgress})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := s.FinishManualRun(ctx, auto.ID, ada.ID); !errors.Is(err, store.ErrConflict) {
+	if err := s.FinishManualRun(ctx, auto.ID, ada.ID); !errors.Is(err, store.ErrConflict) {
 		t.Errorf("finish of an automated run: err = %v, want ErrConflict", err)
 	}
 
