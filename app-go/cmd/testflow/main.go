@@ -14,6 +14,7 @@ import (
 	netmail "net/mail"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -196,11 +197,11 @@ func serve(ctx context.Context, cfg *config.Config, logger *slog.Logger, migrate
 		Secure:   !cfg.IsDevelopment(),
 		Logger:   logger,
 	}
-	// The syncer also deletes expired web sessions (spec §8.5).
 	mailer, err := newMailer(cfg.Mail, logger)
 	if err != nil {
 		return err
 	}
+	// The syncer also deletes expired web sessions (spec §8.5).
 	syncer := runs.NewSyncer(runs.SyncerConfig{GitHub: gh, Store: st, Sessions: sessions, Logger: logger})
 	handler, err := web.NewHandler(web.Options{
 		Logger:      logger,
@@ -244,7 +245,7 @@ func serve(ctx context.Context, cfg *config.Config, logger *slog.Logger, migrate
 	if err != nil {
 		return err
 	}
-	logger.Info("server starting", "addr", ln.Addr().String(), "config", cfg)
+	logger.Info("server starting", startupAttrs(cfg, ln.Addr().String())...)
 	if ready != nil {
 		ready <- ln.Addr().String()
 	}
@@ -291,4 +292,25 @@ func newMailer(c config.MailConfig, logger *slog.Logger) (mail.Mailer, error) {
 	}
 	return &mail.SMTP{Host: c.Host, Port: c.Port, Username: c.Username, Password: c.Password, From: *from,
 		AllowPlaintext: c.AllowPlaintext}, nil
+}
+
+// startupAttrs lists the settings logged when the server starts. It is an
+// allowlist: the config holds secrets (GitHub client secret and private key,
+// database and SMTP passwords, a DATABASE_URL that may carry credentials), so
+// the config is never logged as a whole. Add only fields that are safe to log.
+func startupAttrs(cfg *config.Config, addr string) []any {
+	return []any{
+		"addr", addr,
+		slog.Group("config",
+			"base_url", cfg.BaseURL.String(),
+			"environment", cfg.Environment,
+			"log_level", cfg.LogLevel.String(),
+			"static_dir", cfg.StaticDir,
+			"session_lifetime", cfg.SessionLifetime,
+			"github_installation_id", cfg.GitHubInstallationID,
+			"test_session_environments", strings.Join(cfg.TestSessionEnvironments, ","),
+			"sync_interval", cfg.SyncInterval,
+			"mail_mailer", cfg.Mail.Mailer,
+		),
+	}
 }

@@ -37,8 +37,8 @@
 | D12 | Manual and automated per-test results are stored in one table (`run_test_results`) instead of keeping manual results as JUnit XML (the legacy approach). | **Proposed** |
 | D13 | Activity entries store plain text and structured `metadata`. HTML is produced only by Gomponents views. (Legacy stored HTML in `body`, an XSS risk.) | **Proposed** |
 | D14 | GitHub user OAuth tokens are **not** stored. Legacy saved them but never used them. All GitHub API access uses the GitHub App installation token. | **Proposed** |
-| D15 | The Go app is a separate Go module in `app-go/` (`module github.com/laposa/testflow/app-go`). Nothing outside `app-go/` changes during the rewrite except the project docs. `app/` keeps building and deploying as today until cut-over (§14, iteration 13). | Accepted |
-| D16 | No GitHub workflow changes during the rewrite. `.github/workflows/` stays as it is, and `app-go` is built, tested and checked **manually** with `make` (§12). The workflows are switched to the Go app at cut-over (iteration 13). | Accepted |
+| D15 | The Go app is a separate Go module in `app-go/` (`module github.com/laposa/testflow/app-go`). Nothing outside `app-go/` changes during the rewrite except the project docs. `app/` keeps building and deploying as today until cut-over (§14, iteration 13). Since cut-over `app/` is no longer deployed but its image is still built, by the same workflow as the Go image (§12); it stays as a read-only reference until a separate decision removes it. | Accepted |
+| D16 | No GitHub workflow changes during the rewrite. `.github/workflows/` stays as it is, and `app-go` is built, tested and checked **manually** with `make` (§12). The workflows are switched to the Go app at cut-over (iteration 13). **Done at cut-over:** `ci.yaml`, and `build-image.yaml`, which builds both apps' images, replace `build-app.yaml` (§12). | Superseded |
 | D17 | **No Alpine.js** (or any other client-side framework). Client behaviour uses native HTML first (`<details>/<summary>` for show/hide, `<dialog>` + `showModal()` for modals), then htmx for anything that needs the server, then a few lines of plain JS. Reasons: (1) In legacy, Alpine came bundled with Livewire 3 and did three things, all covered natively or by htmx: show/hide toggles (`app/resources/views/sessions/show.blade.php`, `run.blade.php`), the modal (`components/dialog.blade.php`), and sending events between Livewire components (`livewire/runs/list-runs.blade.php`), which htmx makes unnecessary. (2) Alpine's standard build turns expressions into code at runtime (`new Function`), which needs CSP `'unsafe-eval'` and conflicts with §9. Its CSP build gives up inline expressions, the main reason to use it. (3) The run list is replaced by htmx polling every 30 s, which resets Alpine state unless a morph extension is added: two libraries managing the same DOM. (4) Another vendored asset to pin and upgrade by hand (§12), against the minimal-dependency goal. (5) Logic in `x-data` strings is untyped and not covered by `go test`, while htmx keeps behaviour in handlers the §13 tests cover. **Revisit** if the app gains substantial in-browser state that plain JS can't handle cleanly, such as live search or nested "select all" with counts in the test picker. | Accepted |
 
 ## 2. Dependency policy
@@ -97,11 +97,11 @@ and embedding (`embed`).
 Repository root (only `app-go/` is touched by the rewrite):
 
 ```
-app/                     legacy Laravel app (read-only reference, still deployed)
+app/                     legacy Laravel app (read-only reference, image still built, not deployed)
 app-go/                  the Go rewrite (see below)
 generate-yaml/           Node.js tool, out of scope, unchanged
 tests-validator/         Node.js tool, out of scope, unchanged
-.github/workflows/       build-app.yaml (legacy, unchanged until cut-over, D16)
+.github/workflows/       ci.yaml (checks), build-image.yaml (both images on master), §12
 intent.md, spec.md, README.md
 ```
 
@@ -130,7 +130,8 @@ internal/web/            handlers, routes, middleware
 internal/web/views/      Gomponents layouts, components, pages
 internal/web/views/hx/   htmx attribute helpers (D3)
 internal/web/static/     css, fonts, icons, app.js, htmx-x.y.z.min.js (embedded)
-deploy/                  Dockerfile, docker-compose.yaml, otel-collector.yaml
+deploy/                  Dockerfile, docker-compose.yaml, otel-collector.yaml,
+                         README.md (deployment and cut-over guide)
 ```
 
 Rules:
@@ -276,6 +277,7 @@ the `HX-Redirect` header for htmx requests.
 | `POST /auth/logout` | destroy session (legacy used GET) | `AuthController::logout` |
 | `GET /` and `GET /sessions` | session list | `SessionController::index` |
 | `GET /sessions/new` | test picker (discovery §8.1). Without fresh cached tests, a loading page whose htmx request (same URL) gets the form fragment. `?refresh` discovers again, then redirects back (htmx: the fragment); if that fails, the page is rendered directly (no redirect, which would start another discovery) | `SessionController::create` |
+| `GET /sessions/create` | 301 to `/sessions/new`, for bookmarks of the legacy picker URL. Other legacy URLs (`/sessions/{id}/run/{run}`, `/sessions/{id}/executive`, `/full`) are not kept: session ids start afresh (Q7) | `SessionController::create` |
 | `POST /sessions` | create session | `SessionController::store` |
 | `GET /sessions/{id}` | session detail: services, runs, activity, reviews. The query may carry the run list's state (§8.5) | `SessionController::show` |
 | `GET /sessions/{id}/runs` | htmx fragment: run list (polled); the session page without htmx | `Livewire/Runs/ListRuns` |
@@ -311,6 +313,11 @@ Legacy: `app/Actions/Github/FetchTests.php`.
    as are services without `tests/` and empty suites.
 4. Match each service to the workflow whose file name is `run-tests-{service}.yaml`
    (`GET /repos/{repo}/actions/workflows`), fetched only for repositories with tests.
+   Only an `active` workflow counts (a missing state is taken as active). One that
+   GitHub has disabled (`disabled_manually`, `disabled_inactivity`, …) cannot be
+   dispatched, so the service gets no workflow id; the picker names it in a warning
+   above the tree and in the test's tooltip ("… workflow of this test is disabled
+   on GitHub"). Legacy matched by name only, and the run then failed on dispatch.
 5. A test is **manual** if its file name contains `manual` (in practice
    `*.manual.yaml`, case-sensitive). Otherwise it is **automated**.
 6. Result: tree grouped by repository → service → suite → test, each test carrying
@@ -900,11 +907,11 @@ Legacy: `resources/views/sessions/report.blade.php`.
   `docker-up`/`docker-down` (compose stack), `update-htmx`. `GO` and `GOFMT` can
   be overridden. Without a local `go`, the Makefile runs the toolchain in the same
   hardened image as the Dockerfile build stage (`GO_IMAGE`).
-- **Manual checks and builds during the rewrite (D16).** No workflow runs for
-  `app-go`. `make check` runs everything a CI job would, in order: `gofmt -l`
+- **Checks.** `make check` runs everything CI does, in order: `gofmt -l`
   (fails on output), `go vet ./...`, `go test ./...`, and `test-integration`
-  against the compose Postgres. It must pass locally before a PR is opened. The
-  PR description says that it did.
+  against the compose Postgres. Run it locally before opening a PR. (During the
+  rewrite no workflow ran for `app-go` and the PR description had to say that
+  `make check` passed, D16.)
 - **Upgrading htmx is a manual, deliberate change.** Run
   `make update-htmx HTMX_VERSION=x.y.z`. It downloads `dist/htmx.min.js` for that
   exact version from the npm registry tarball, saves it as `htmx-x.y.z.min.js`,
@@ -922,15 +929,29 @@ Legacy: `resources/views/sessions/report.blade.php`.
   with `CGO_ENABLED=0`, `-trimpath`, and version ldflags. The final image is
   `gcr.io/distroless/static` and runs as a non-root user.
 - `make build` produces `bin/testflow`. `make docker` builds the image locally
-  as `laposa/testflow-go:<version>`. Pushing it anywhere is a manual decision. The
-  separate name keeps it from clashing with `laposa/testflow`, which the legacy
-  `build-app.yaml` keeps publishing from `app/`.
-- **At cut-over (iteration 13)** the GitHub workflows are replaced:
-  - CI on every push and PR (`working-directory: app-go`) runs the same steps as
-    `make check`, with a Postgres service container;
-  - the image build on push to `master` publishes `laposa/testflow:latest` and
-    `laposa/testflow:master-YYMMDD.<sha>` from `app-go/` (same tag scheme as the
-    legacy `build-app.yaml`, which is retired).
+  as `laposa/testflow-go:<version>`; publishing is left to CI. The separate name
+  keeps it apart from the legacy `laposa/testflow`, which is still built.
+- **GitHub workflows (since cut-over, iteration 13)**, replacing the legacy
+  `build-app.yaml`:
+  - `ci.yaml` on every PR and every push except to `master`
+    (`working-directory: app-go`): Go 1.27.x via `actions/setup-go`, `make lint`,
+    `make test`, the tests again with `TEST_DATABASE_URL` against a
+    `postgres:17-alpine` service container (the `test-integration` step of
+    `make check`, without compose), and `make build`;
+  - `build-image.yaml` on push to `master` (and by hand) builds both apps in one
+    run, with one tag `master-YYMMDD.<sha>` (the legacy scheme) plus `latest`:
+    - `build-legacy`: `app/` → `laposa/testflow`, as `build-app.yaml` did;
+    - `build-go`: after `ci.yaml` passes (called from this workflow, so the
+      checks run once per `master` commit and a failing commit publishes no Go
+      image), `deploy/Dockerfile` from `app-go/` with `VERSION` set to the tag →
+      `laposa/testflow-go`, a separate image. It also logs in to `dhi.io` (the
+      Go build image).
+
+    Both use the `Dev` environment's `DOCKERHUB_USERNAME`/`DOCKERHUB_TOKEN`.
+    Dropping the legacy build is a separate change, together with removing
+    `app/`.
+- Deployment, the GitHub App's permissions and the cut-over steps are in
+  `deploy/README.md`.
 
 ## 13. Testing
 
@@ -946,7 +967,7 @@ Legacy: `resources/views/sessions/report.blade.php`.
   code that opens its own pool.
 - Handler tests use `httptest` and check status codes plus key HTML fragments.
 - Every iteration's issue lists its acceptance tests. An issue is closed only when
-  `make check` passes (run locally until cut-over, D16).
+  `make check` passes (locally until cut-over, D16; since then CI runs it).
 
 ## 14. Iterations
 
@@ -987,7 +1008,7 @@ Implements spec.md §X.Y (and §…). Any change to the spec is part of this PR.
 - app/app/...        (repo-relative path)
 
 ## Where the code goes
-All new code goes in app-go/. Nothing outside app-go/ changes (no workflow changes, D16).
+All new code goes in app-go/. Changes outside app-go/ (docs, workflows) are named here.
 
 ## Scope
 - [ ] ...
@@ -996,7 +1017,7 @@ Out of scope: ...
 ## Acceptance criteria
 - [ ] <observable behaviour>
 - [ ] Tests: <unit / integration / handler tests that prove it>
-- [ ] `make check` passes locally (stated in the PR)
+- [ ] `make check` passes locally and CI is green
 - [ ] No new dependency (or §2 updated with justification)
 ```
 

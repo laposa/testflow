@@ -208,6 +208,43 @@ func TestDiscover(t *testing.T) {
 	}
 }
 
+// A disabled workflow cannot be dispatched: its service gets no workflow id,
+// is marked disabled, and the picker is told why.
+func TestDiscoverDisabledWorkflow(t *testing.T) {
+	gh := shopFake()
+	gh.workflows["laposa/shop-tests"][1].State = "disabled_manually"
+	gh.workflows["laposa/shop-tests"][0].State = "active"
+	res, err := New(Config{GitHub: gh, Logger: quietLogger()}).Tests(t.Context(), false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	web := res.Repositories[0].Services[1]
+	if web.Name != "web" || web.WorkflowID != 0 || !web.WorkflowDisabled {
+		t.Errorf("web service = %+v", web)
+	}
+	if mobile := res.Repositories[0].Services[0]; mobile.WorkflowDisabled {
+		t.Errorf("mobile (no workflow at all) marked disabled: %+v", mobile)
+	}
+	want := []Problem{{Repository: "laposa/shop-tests",
+		Message: "the run-tests-web.yaml workflow is disabled on GitHub, so the automated tests of web cannot be selected"}}
+	if !slices.Equal(res.Problems, want) {
+		t.Errorf("problems = %+v", res.Problems)
+	}
+	// Manual tests of the service stay selectable; automated ones do not.
+	for _, tc := range web.Suites[1].Tests {
+		if got, want := web.Selectable(tc), tc.Type() == TypeManual; got != want {
+			t.Errorf("%s selectable = %v, want %v", tc.Name, got, want)
+		}
+	}
+
+	// "active" is usable, like a missing state.
+	gh.workflows["laposa/shop-tests"][1].State = "active"
+	if res, err = New(Config{GitHub: gh, Logger: quietLogger()}).Tests(t.Context(), false); err != nil ||
+		res.Repositories[0].Services[1].WorkflowID != 11 {
+		t.Errorf("active workflow: %+v, %v", res, err)
+	}
+}
+
 func TestDiscoverProblems(t *testing.T) {
 	gh := shopFake()
 	gh.repos = append(gh.repos,

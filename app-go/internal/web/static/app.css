@@ -566,6 +566,20 @@ header {
             position: relative;
         }
 
+        /* Every second service and suite gets a full-width tint (legacy).
+         * The title is child 1, so the 2nd, 4th, … sibling level is odd. */
+        .list:nth-child(2n + 1)::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            margin-left: 50%;
+            left: -50vw;
+            height: 100%;
+            width: 100vw;
+            pointer-events: none;
+            background-color: rgba(95, 158, 160, 0.051);
+        }
+
         > .list {
             padding-left: 45px;
         }
