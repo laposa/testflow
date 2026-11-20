@@ -184,6 +184,30 @@ func TestSMTPRequiresStartTLS(t *testing.T) {
 	}
 }
 
+// With AllowPlaintext a local server without STARTTLS gets the message,
+// login included (net/smtp allows PLAIN auth in clear only to localhost).
+func TestSMTPAllowPlaintext(t *testing.T) {
+	port, client, got := fakeServer(t, false)
+	s := &SMTP{Host: "127.0.0.1", Port: port, Username: "dev", Password: "dev",
+		From: mail.Address{Address: "testflow@example.com"}, TLSConfig: client, Timeout: 5 * time.Second, AllowPlaintext: true}
+	if err := s.Send(t.Context(), Message{To: mail.Address{Address: "ada@example.com"}, Subject: "x", Text: "y"}); err != nil {
+		t.Fatal(err)
+	}
+	if r := <-got; r.tls || r.auth != "\x00dev\x00dev" || r.to != "TO:<ada@example.com>" || r.data == "" {
+		t.Errorf("received = %+v", r)
+	}
+
+	// A server that offers STARTTLS still gets it.
+	port, client, got = fakeServer(t, true)
+	s.Port, s.TLSConfig = port, client
+	if err := s.Send(t.Context(), Message{To: mail.Address{Address: "ada@example.com"}, Subject: "x", Text: "y"}); err != nil {
+		t.Fatal(err)
+	}
+	if r := <-got; !r.tls {
+		t.Error("STARTTLS was offered but not used")
+	}
+}
+
 func TestSMTPNoServer(t *testing.T) {
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {

@@ -88,6 +88,43 @@ reload. Go code and views still need a restart.
 `make run` needs a Postgres: `docker compose -f deploy/docker-compose.yaml up -d
 postgres` starts the one `.env.example` points to.
 
+### Testing email locally with Mailpit
+
+By default (`MAIL_MAILER=log`) emails such as review requests are only written to
+the log. To see them as real messages, run [Mailpit](https://mailpit.axllent.org/),
+a local SMTP server with a web inbox:
+
+```sh
+docker run -d --name mailpit --restart unless-stopped \
+  -p 127.0.0.1:1025:1025 -p 127.0.0.1:8025:8025 \
+  -e MP_SMTP_AUTH_ACCEPT_ANY=1 -e MP_SMTP_AUTH_ALLOW_INSECURE=1 \
+  axllent/mailpit
+```
+
+Then point the app at it in `.env` and restart `make run`:
+
+```sh
+MAIL_MAILER=smtp
+SMTP_HOST=localhost
+SMTP_PORT=1025
+SMTP_USERNAME=dev
+SMTP_PASSWORD=dev
+MAIL_FROM=testflow@example.com
+SMTP_ALLOW_PLAINTEXT=true
+```
+
+Request a review on a session and open <http://localhost:8025> to read the email.
+
+- Mailpit accepts any username and password; the app still needs both set.
+- `SMTP_ALLOW_PLAINTEXT=true` lets the app send without STARTTLS, which Mailpit does
+  not offer by default. The app refuses to start with it unless
+  `ENVIRONMENT=development` and `SMTP_HOST` is `localhost`, `127.0.0.1` or `::1`;
+  everywhere else STARTTLS is required.
+- The ports are bound to `127.0.0.1` only, so the inbox is not reachable from the
+  network. Stop it with `docker rm -f mailpit`.
+- Inside the compose app container (`make docker-up`), `localhost` is the container
+  itself; use `make run` for this setup.
+
 ## Layout
 
 See spec §4. In short: `cmd/testflow` is the entry point, `internal/config`

@@ -58,6 +58,9 @@ type MailConfig struct {
 	Username string
 	Password string
 	From     string
+	// AllowPlaintext lets the SMTP mailer send without STARTTLS, for a local
+	// test server such as Mailpit. Development and a loopback host only.
+	AllowPlaintext bool
 }
 
 // IsDevelopment reports whether ENVIRONMENT is "development".
@@ -126,6 +129,14 @@ func Load(getenv func(string) string) (*Config, error) {
 				p.fail("MAIL_FROM", fmt.Errorf("must be an email address such as TestFlow <testflow@example.com>: %w", err))
 			}
 		}
+		c.Mail.AllowPlaintext = p.boolean("SMTP_ALLOW_PLAINTEXT")
+		switch {
+		case !c.Mail.AllowPlaintext:
+		case !c.IsDevelopment():
+			p.fail("SMTP_ALLOW_PLAINTEXT", errors.New("is only allowed with ENVIRONMENT=development"))
+		case !isLoopback(c.Mail.Host):
+			p.fail("SMTP_ALLOW_PLAINTEXT", fmt.Errorf("is only allowed with a local SMTP_HOST (localhost, 127.0.0.1 or ::1), got %q", c.Mail.Host))
+		}
 	default:
 		p.fail("MAIL_MAILER", fmt.Errorf("must be \"log\" or \"smtp\", got %q", c.Mail.Mailer))
 	}
@@ -172,6 +183,25 @@ func (p *parser) str(name, def string) string {
 		return v
 	}
 	return def
+}
+
+// boolean parses an optional true/false value (default false).
+func (p *parser) boolean(name string) bool {
+	v := strings.TrimSpace(p.getenv(name))
+	if v == "" {
+		return false
+	}
+	b, err := strconv.ParseBool(v)
+	if err != nil {
+		p.fail(name, fmt.Errorf("must be true or false, got %q", v))
+	}
+	return b
+}
+
+// isLoopback reports whether host is this machine: the names net/smtp
+// lets authenticate without TLS.
+func isLoopback(host string) bool {
+	return host == "localhost" || host == "127.0.0.1" || host == "::1"
 }
 
 func (p *parser) required(name string) string {
