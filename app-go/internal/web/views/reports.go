@@ -1,6 +1,7 @@
 package views
 
 import (
+	"cmp"
 	"slices"
 	"time"
 
@@ -64,7 +65,7 @@ func reportRunList(v ReportView) g.Node {
 // $session->runs), each on its own printed page.
 func fullRuns(v ReportView) []g.Node {
 	runs := slices.Clone(v.Runs)
-	slices.SortFunc(runs, func(a, b store.Run) int { return int(a.ID - b.ID) })
+	slices.SortFunc(runs, func(a, b store.Run) int { return cmp.Compare(a.ID, b.ID) })
 	var out []g.Node
 	for _, r := range runs {
 		i := slices.IndexFunc(v.Session.Services, func(s store.Service) bool { return s.ID == r.ServiceID })
@@ -94,9 +95,8 @@ func fullRuns(v ReportView) []g.Node {
 // time.
 func reportTest(r store.Run, results map[int64]store.TestResult, t store.Test) g.Node {
 	res, ok := results[t.ID]
-	return g.Group{
-		h.Li(h.Class("test-file"), g.Text(t.Name+" "), testStatus(r, res, ok),
-			g.If(ok && r.Type == store.RunAutomated, h.Span(h.Class("test-time"), g.Text(" "+seconds(res.Duration))))),
-		g.If(ok && res.Comment != "", h.Div(h.Class("comment"), h.I(g.Text(res.Comment)))),
-	}
+	return h.Li(h.Class("test-file"), g.Text(t.Name+" "), testStatus(r, res, ok),
+		g.If(ok && r.Type == store.RunAutomated, h.Span(h.Class("test-time"), g.Text(" "+seconds(res.Duration)))),
+		testComment(res, ok),
+	)
 }

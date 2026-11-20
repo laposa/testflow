@@ -48,7 +48,7 @@ func TestFullReport(t *testing.T) {
 		"and ran for 2 minutes 5 seconds.",
 		`<span class="pass">2 passed</span>, <span class="fail">1 failed</span> and <span class="skip">0 skipped</span>`,
 		`<li class="test-file">pay.cy.js <span class="test-status pass" title="Execution time 1.2s" aria-label="pass"></span><span class="test-time"> 1.2s</span></li>`,
-		`<div class="comment"><i>see &lt;video&gt;</i></div>`,
+		`<span class="test-time"> 3.0s</span><div class="comment"><i>see &lt;video&gt;</i></div></li>`,
 		`<li class="test-file">missing.cy.js <span class="test-status not-found">not found</span></li>`,
 		// A run without counts shows its status; a stale one never reported.
 		`<h3>Run #4 for shop/web (automated)</h3>`, " and never reported back.",
@@ -56,9 +56,14 @@ func TestFullReport(t *testing.T) {
 		// The manual run in progress: answered test with its comment, the
 		// others without a mark.
 		`<h3>Run #20 for shop/web (manual)</h3>`, " and is still in progress.",
-		`<li class="test-file">login.manual.yaml <span class="test-status pass" aria-label="pass"></span></li><div class="comment"><i>fine</i></div>`,
+		`<li class="test-file">login.manual.yaml <span class="test-status pass" aria-label="pass"></span><div class="comment"><i>fine</i></div></li>`,
 		`<li class="test-file">logout.manual.yaml </li>`,
 	)
+	// The open manual run shows its counts so far in the summary table.
+	assertContains(t, body, `<span class="running">In progress</span></td><td><span class="pass">1 passed</span></td>`)
+	// Comments sit inside their test's list item, never directly in a list.
+	assertNotContains(t, body, `</li><div class="comment">`)
+
 	// Oldest run first.
 	if i4, i7, i20 := strings.Index(body, "Run #4 for"), strings.Index(body, "Run #7 for"), strings.Index(body, "Run #20 for"); !(i4 < i7 && i7 < i20) {
 		t.Errorf("run order: #4 at %d, #7 at %d, #20 at %d", i4, i7, i20)

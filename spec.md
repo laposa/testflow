@@ -757,7 +757,7 @@ Legacy: `resources/views/sessions/report.blade.php`.
   run list with counts, and a "Print" button (`window.print()`, print stylesheet).
   The run list is read-only: each service's latest run (legacy printed the live
   list with older runs collapsed) or "No runs", without checkboxes, buttons or
-  polling.
+  polling. A manual run still in progress shows its counts so far.
 - **Full** (`…/report/full`): executive content, then for each run, oldest first
   and each on its own printed page (`break-before: page`): id, service, start time,
   how it ended (the run page's "ran for …", "still running …", "still in

@@ -174,6 +174,9 @@ func runCells(v RunListView, r store.Run, latest bool) g.Node {
 	switch {
 	case openManual && latest:
 		results = manualActions(v, r)
+	case openManual && r.HasTotals:
+		// The counts so far (older rows, reports).
+		results = PassedFailed(r.Passed, r.Failed, r.Skipped, false)
 	case openManual:
 		results = g.Text("-")
 	case r.HasTotals && r.FinishedAt != nil:
@@ -315,16 +318,19 @@ func testDialog() g.Node {
 // not mention it.
 func runTest(base string, d store.RunDetail, t store.Test) g.Node {
 	res, ok := d.Results[t.ID]
-	status := testStatus(d.Run, res, ok)
-	return g.Group{
-		h.Li(h.Class("test-file"),
-			// app.js opens it in the dialog; without JS it opens in a new tab.
-			h.A(h.Href(base+"/runs/"+id(d.ID)+"/tests/"+id(t.ID)), h.Target("_blank"), h.Rel("noopener"),
-				g.Attr("data-test-file"), h.Title("Show file contents"), g.Text(t.Name)),
-			g.Text(" "), status,
-		),
-		g.If(ok && res.Comment != "", h.Div(h.Class("comment"), h.I(g.Text(res.Comment)))),
-	}
+	return h.Li(h.Class("test-file"),
+		// app.js opens it in the dialog; without JS it opens in a new tab.
+		h.A(h.Href(base+"/runs/"+id(d.ID)+"/tests/"+id(t.ID)), h.Target("_blank"), h.Rel("noopener"),
+			g.Attr("data-test-file"), h.Title("Show file contents"), g.Text(t.Name)),
+		g.Text(" "), testStatus(d.Run, res, ok),
+		testComment(res, ok),
+	)
+}
+
+// testComment is a test's comment, inside its list item so that the two
+// stay together (legacy: <br/><i class="comment">).
+func testComment(res store.TestResult, ok bool) g.Node {
+	return g.If(ok && res.Comment != "", h.Div(h.Class("comment"), h.I(g.Text(res.Comment))))
 }
 
 // runWhen ends "Started at {time}": how long the run took, or why it has
