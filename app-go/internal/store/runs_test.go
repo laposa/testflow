@@ -119,6 +119,13 @@ func TestRuns(t *testing.T) {
 	if r := d.Results[tests[1].ID]; r != (store.TestResult{TestID: tests[1].ID, Status: "fail", Comment: "see video", FailureMessage: "boom", Duration: 3}) {
 		t.Errorf("result = %+v", r)
 	}
+	results, err := s.SessionResults(ctx, sessionID)
+	if err != nil || len(results) != 1 || len(results[run.ID]) != 2 || results[run.ID][tests[1].ID] != d.Results[tests[1].ID] {
+		t.Errorf("session results = %+v, %v", results, err)
+	}
+	if other, err := s.SessionResults(ctx, sessionID+1); err != nil || len(other) != 0 {
+		t.Errorf("results of another session = %+v, %v", other, err)
+	}
 	if _, err := s.RunDetail(ctx, sessionID+1, run.ID); !errors.Is(err, store.ErrNotFound) {
 		t.Errorf("run of another session: err = %v, want ErrNotFound", err)
 	}
@@ -131,6 +138,11 @@ func TestRuns(t *testing.T) {
 	}
 	if d, err = s.RunDetail(ctx, sessionID, run.ID); err != nil || len(d.Results) != 0 || d.HasResults || d.HasTotals || !d.HasRunLog {
 		t.Errorf("after second completion = %+v, %v", d, err)
+	}
+
+	results, err = s.SessionResults(ctx, sessionID)
+	if err != nil || len(results) != 0 {
+		t.Errorf("session results after the results were replaced = %+v, %v", results, err)
 	}
 
 	list, err := s.SessionRuns(ctx, sessionID)

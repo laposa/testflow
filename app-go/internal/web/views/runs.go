@@ -253,19 +253,6 @@ func HumanDuration(d time.Duration) string {
 // test's result, the JUnit report and the run log.
 func RunPage(p Page, ts store.TestSession, svc store.Service, d store.RunDetail, now time.Time) g.Node {
 	base := "/sessions/" + id(ts.ID)
-	var when g.Node
-	switch {
-	case d.FinishedAt != nil:
-		when = g.Text(" and ran for " + HumanDuration(d.FinishedAt.Sub(runStart(d.Run))) + ".")
-	case d.Type == store.RunManual && d.Status == store.RunInProgress:
-		when = g.Text(" and is still in progress.")
-	case d.Syncing(now) && runWaiting(d.Run):
-		when = g.Text(" and is still queued …")
-	case d.Syncing(now):
-		when = g.Text(" and is still running …")
-	default:
-		when = g.Text(" and never reported back.")
-	}
 	return Layout(p,
 		Section(ts.Name, true,
 			h.Div(h.Class("session-environment"),
@@ -273,7 +260,7 @@ func RunPage(p Page, ts store.TestSession, svc store.Service, d store.RunDetail,
 			),
 			h.P(h.A(h.Href(base), g.Text("← Back to the session"))),
 			h.P(g.Text("Run #"+id(d.ID)+" for "+svc.DisplayName()+".")),
-			h.P(g.Text("Started at "), Timestamp(d.CreatedAt), when),
+			h.P(g.Text("Started at "), Timestamp(d.CreatedAt), g.Text(runWhen(d.Run, now))),
 			h.P(g.Text("Status: "), h.Span(h.Class("run-status run-status--"+d.Status), g.Text(d.Status))),
 			g.If(d.HasTotals, h.P(PassedFailed(d.Passed, d.Failed, d.Skipped, true))),
 			g.If(d.Type == store.RunManual && d.Status == store.RunInProgress,
@@ -328,17 +315,7 @@ func testDialog() g.Node {
 // not mention it.
 func runTest(base string, d store.RunDetail, t store.Test) g.Node {
 	res, ok := d.Results[t.ID]
-	var status g.Node
-	switch {
-	case ok:
-		title := "Execution time " + strconv.FormatFloat(res.Duration, 'f', 1, 64) + "s"
-		if res.Status == "error" {
-			title = "Error. " + title
-		}
-		status = h.Span(h.Class("test-status "+res.Status), h.Title(title), g.Attr("aria-label", res.Status))
-	case d.HasTotals && d.Type == store.RunAutomated: // an unparsable report says nothing about single tests
-		status = h.Span(h.Class("test-status not-found"), g.Text("not found"))
-	}
+	status := testStatus(d.Run, res, ok)
 	return g.Group{
 		h.Li(h.Class("test-file"),
 			// app.js opens it in the dialog; without JS it opens in a new tab.
@@ -349,6 +326,45 @@ func runTest(base string, d store.RunDetail, t store.Test) g.Node {
 		g.If(ok && res.Comment != "", h.Div(h.Class("comment"), h.I(g.Text(res.Comment)))),
 	}
 }
+
+// runWhen ends "Started at {time}": how long the run took, or why it has
+// not finished.
+func runWhen(r store.Run, now time.Time) string {
+	switch {
+	case r.FinishedAt != nil:
+		return " and ran for " + HumanDuration(r.FinishedAt.Sub(runStart(r))) + "."
+	case r.Type == store.RunManual && r.Status == store.RunInProgress:
+		return " and is still in progress."
+	case r.Syncing(now) && runWaiting(r):
+		return " and is still queued …"
+	case r.Syncing(now):
+		return " and is still running …"
+	}
+	return " and never reported back."
+}
+
+// testStatus is a test's result icon (title "Execution time 1.2s" for
+// automated runs; manual tests have no time), "not found" when the run's
+// report does not mention it, or nil.
+func testStatus(r store.Run, res store.TestResult, ok bool) g.Node {
+	switch {
+	case ok:
+		var title string
+		if r.Type == store.RunAutomated {
+			title = "Execution time " + seconds(res.Duration)
+			if res.Status == "error" {
+				title = "Error. " + title
+			}
+		}
+		return h.Span(h.Class("test-status "+res.Status), g.If(title != "", h.Title(title)), g.Attr("aria-label", res.Status))
+	case r.HasTotals && r.Type == store.RunAutomated: // an unparsable report says nothing about single tests
+		return h.Span(h.Class("test-status not-found"), g.Text("not found"))
+	}
+	return nil
+}
+
+// seconds is a test's time with one decimal: "1.2s".
+func seconds(d float64) string { return strconv.FormatFloat(d, 'f', 1, 64) + "s" }
 
 // ansiEscape matches ANSI escape sequences (colours, cursor moves) in logs.
 var ansiEscape = regexp.MustCompile(`\x1b\[[0-?]*[ -/]*[@-~]|\x1b[@-Z\\-_]`)

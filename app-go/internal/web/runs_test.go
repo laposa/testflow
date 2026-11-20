@@ -41,6 +41,18 @@ func (f *fakeRuns) RunDetail(_ context.Context, sessionID, runID int64) (store.R
 	return d, nil
 }
 
+func (f *fakeRuns) SessionResults(_ context.Context, sessionID int64) (map[int64]map[int64]store.TestResult, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	out := map[int64]map[int64]store.TestResult{}
+	for runID, d := range f.details {
+		if f.owner[runID] == sessionID && len(d.Results) > 0 {
+			out[runID] = d.Results
+		}
+	}
+	return out, f.err
+}
+
 type fakeDispatcher struct {
 	mu    sync.Mutex
 	calls [][]int64

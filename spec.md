@@ -380,9 +380,9 @@ Legacy: `app/Actions/Session/CreateSession.php`.
 
 The session page shows the name, environment, issuer and creation time, and the
 selected tests in a `<details>` ("Selected tests (n)"), listed by service display
-name, suite and test. The run list (§8.5) sits above them, and the comment form
-and the activity feed (§8.9) below. Manual runs, reviews and report links are
-added by their iterations.
+name, suite and test. The run list (§8.5) and the manual run dialog (§8.7) sit
+above them, and the report links (§8.11) below. Then come the reviews block and
+the comment form with the activity feed (§8.9).
 
 ### 8.3 Session list
 Legacy: `SessionController::index`, `Session::lastRuns`.
@@ -753,11 +753,21 @@ the session. A failed send is logged and does not fail the request.
 ### 8.11 Reports
 Legacy: `resources/views/sessions/report.blade.php`.
 
-- **Executive:** session name, environment, run list with counts, and a "Print"
-  button (`window.print()`, print stylesheet).
-- **Full:** executive content, then a page break, then for each run: id, service,
-  start time, duration (or "still running"), counts, and for each suite and test its
-  status, time (1 decimal) and comment.
+- **Executive** (`GET /sessions/{id}/report/executive`): session name, environment,
+  run list with counts, and a "Print" button (`window.print()`, print stylesheet).
+  The run list is read-only: each service's latest run (legacy printed the live
+  list with older runs collapsed) or "No runs", without checkboxes, buttons or
+  polling.
+- **Full** (`…/report/full`): executive content, then for each run, oldest first
+  and each on its own printed page (`break-before: page`): id, service, start time,
+  how it ended (the run page's "ran for …", "still running …", "still in
+  progress", "never reported back"), counts (zeros shown) or else its status, and
+  for each suite and test its status icon (or "not found", as on the run page),
+  time (1 decimal, written out because print has no tooltips; automated runs
+  only) and comment.
+- The session page links to both ("View Executive Report", "View Full Report").
+  The Print button is shown by `app.js` (legacy used an inline `onclick`, which the
+  CSP forbids) and hidden in print, with the back link. A missing session is a 404.
 
 ## 9. Authentication and security
 
@@ -850,7 +860,7 @@ Legacy: `resources/views/sessions/report.blade.php`.
      outside, "select all" checkboxes in the test tree, disabling the submit button
      of a `data-submit-once` form once it is sent (§8.2), the run list's button
      label (§8.5), and in the wizard the step marks that pick Pass/Fail and the
-     copy buttons of input values (§8.7). A group
+     copy buttons of input values (§8.7), and the reports' Print button (§8.11). A group
      checkbox (in the level's `<summary>`) checks or clears every test below it
      and shows checked, indeterminate or clear for its tests; it needs no server.
 - Handlers check the `HX-Request` header. htmx requests get the fragment, normal

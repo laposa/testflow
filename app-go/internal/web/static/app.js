@@ -222,3 +222,12 @@
         });
     });
 })();
+
+// Report "Print" button (legacy: onclick="window.print()", an inline script
+// the CSP forbids). It starts hidden, since it does nothing without JS.
+(function () {
+    document.querySelectorAll('[data-print]').forEach(function (b) { b.hidden = false; });
+    document.addEventListener('click', function (e) {
+        if (e.target instanceof Element && e.target.closest('[data-print]')) window.print();
+    });
+})();
