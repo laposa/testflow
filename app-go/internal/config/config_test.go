@@ -24,6 +24,12 @@ func validEnv() map[string]string {
 	}
 }
 
+// smtpEnv sets a complete SMTP configuration for host.
+func smtpEnv(e map[string]string, host string) {
+	e["MAIL_MAILER"], e["SMTP_HOST"], e["SMTP_PORT"] = "smtp", host, "1025"
+	e["SMTP_USERNAME"], e["SMTP_PASSWORD"], e["MAIL_FROM"] = "dev", "dev", "testflow@example.com"
+}
+
 func load(env map[string]string) (*Config, error) {
 	return Load(func(k string) string { return env[k] })
 }
@@ -101,6 +107,17 @@ func TestLoadLogMailerInProduction(t *testing.T) {
 	}
 }
 
+// Mailpit in development: plain SMTP to localhost.
+func TestLoadPlaintextSMTP(t *testing.T) {
+	env := validEnv()
+	env["MAIL_MAILER"], env["SMTP_HOST"], env["SMTP_PORT"] = "smtp", "localhost", "1025"
+	env["SMTP_USERNAME"], env["SMTP_PASSWORD"], env["MAIL_FROM"] = "dev", "dev", "testflow@example.com"
+	env["SMTP_ALLOW_PLAINTEXT"] = "true"
+	if c, err := load(env); err != nil || !c.Mail.AllowPlaintext {
+		t.Errorf("AllowPlaintext = %v, %v", c, err)
+	}
+}
+
 func TestLoadErrors(t *testing.T) {
 	tests := []struct {
 		name string
@@ -129,6 +146,18 @@ func TestLoadErrors(t *testing.T) {
 			e["MAIL_MAILER"], e["SMTP_HOST"], e["SMTP_PORT"], e["SMTP_USERNAME"], e["SMTP_PASSWORD"] = "smtp", "h", "587", "u", "p"
 			e["MAIL_FROM"] = "TestFlow <not an address"
 		}, []string{"MAIL_FROM: must be an email address"}},
+		{"plaintext smtp outside development", func(e map[string]string) {
+			smtpEnv(e, "localhost")
+			e["ENVIRONMENT"], e["SMTP_ALLOW_PLAINTEXT"] = "production", "true"
+		}, []string{"SMTP_ALLOW_PLAINTEXT: is only allowed with ENVIRONMENT=development"}},
+		{"plaintext smtp to a remote host", func(e map[string]string) {
+			smtpEnv(e, "smtp.example.com")
+			e["SMTP_ALLOW_PLAINTEXT"] = "true"
+		}, []string{`SMTP_ALLOW_PLAINTEXT: is only allowed with a local SMTP_HOST (localhost, 127.0.0.1 or ::1), got "smtp.example.com"`}},
+		{"bad plaintext flag", func(e map[string]string) {
+			smtpEnv(e, "localhost")
+			e["SMTP_ALLOW_PLAINTEXT"] = "yes please"
+		}, []string{"SMTP_ALLOW_PLAINTEXT: must be true or false"}},
 		{"smtp incomplete", func(e map[string]string) { e["MAIL_MAILER"] = "smtp" }, []string{
 			"SMTP_HOST: is required", "SMTP_PORT: is required", "SMTP_USERNAME: is required",
 			"SMTP_PASSWORD: is required", "MAIL_FROM: is required",

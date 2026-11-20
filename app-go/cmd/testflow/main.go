@@ -289,5 +289,6 @@ func newMailer(c config.MailConfig, logger *slog.Logger) (mail.Mailer, error) {
 	if err != nil {
 		return nil, fmt.Errorf("MAIL_FROM: %w", err)
 	}
-	return &mail.SMTP{Host: c.Host, Port: c.Port, Username: c.Username, Password: c.Password, From: *from}, nil
+	return &mail.SMTP{Host: c.Host, Port: c.Port, Username: c.Username, Password: c.Password, From: *from,
+		AllowPlaintext: c.AllowPlaintext}, nil
 }

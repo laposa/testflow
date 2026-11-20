@@ -163,6 +163,7 @@ For local development a `.env` file is read only by `make`/compose, not by the b
 | `MAIL_MAILER` | outside development | `log` in development | same (`log` or `smtp`). Required when `ENVIRONMENT` is not `development`, so a deploy cannot silently log review emails instead of sending them; `log` may still be chosen explicitly |
 | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` | if `smtp` | | `MAIL_*` |
 | `MAIL_FROM` | if `smtp` | | `MAIL_FROM_ADDRESS` |
+| `SMTP_ALLOW_PLAINTEXT` | no | `false` | new. Development only, with `SMTP_HOST` `localhost`/`127.0.0.1`/`::1` (rejected otherwise): send without STARTTLS when the server offers none, for a local Mailpit (README) |
 
 Secrets are injected by the environment (1Password `op://` references in the
 legacy template). The binary never reads secret stores directly.
@@ -741,7 +742,10 @@ the session. A failed send is logged and does not fail the request.
   linked the home page). Headers are encoded (`net/mail`, `mime`), so names cannot
   inject headers.
 - SMTP: port 465 uses implicit TLS; any other port must offer STARTTLS or the send
-  fails, so the password never travels in clear text. The greeting (EHLO) names
+  fails, so the password never travels in clear text. The one exception is
+  `SMTP_ALLOW_PLAINTEXT` (§5), for a local Mailpit in development: the host must be
+  this machine, so nothing crosses the network, and STARTTLS is still used when
+  offered. The greeting (EHLO) names
   the machine's hostname, not net/smtp's default `localhost`, which strict servers
   reject. PLAIN auth with `SMTP_USERNAME`/`SMTP_PASSWORD`, at most 15 s per
   message, connecting included. `MAIL_FROM` must parse

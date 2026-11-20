@@ -62,6 +62,11 @@ type SMTP struct {
 	// TLSConfig is for tests (a server with its own certificate); nil
 	// verifies the server's certificate for Host.
 	TLSConfig *tls.Config
+	// AllowPlaintext sends without TLS when the server offers no STARTTLS,
+	// for a local test server such as Mailpit (config allows it only in
+	// development with a loopback host; net/smtp also refuses PLAIN auth
+	// without TLS to any other host).
+	AllowPlaintext bool
 }
 
 // DefaultTimeout bounds one SMTP conversation, connecting included.
@@ -114,11 +119,13 @@ func (s *SMTP) send(ctx context.Context, to string, data []byte) error {
 		return err
 	}
 	if s.Port != 465 {
-		if ok, _ := c.Extension("STARTTLS"); !ok {
+		switch ok, _ := c.Extension("STARTTLS"); {
+		case ok:
+			if err := c.StartTLS(tlsConfig); err != nil {
+				return err
+			}
+		case !s.AllowPlaintext:
 			return errors.New("the server does not offer STARTTLS")
-		}
-		if err := c.StartTLS(tlsConfig); err != nil {
-			return err
 		}
 	}
 	if s.Username != "" {
