@@ -125,6 +125,10 @@ func NewHandler(o Options) (http.Handler, error) {
 	private("GET /{$}", s.listSessions)
 	private("GET /sessions", s.listSessions)
 	private("GET /sessions/new", s.newSession)
+	// The legacy picker URL, kept for bookmarks (spec §7).
+	private("GET /sessions/create", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/sessions/new", http.StatusMovedPermanently)
+	})
 	private("POST /sessions", s.createSession)
 	private("GET /sessions/{id}", s.showSession)
 	private("POST /sessions/{id}/comments", s.addComment)

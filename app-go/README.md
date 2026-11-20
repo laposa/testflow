@@ -1,8 +1,10 @@
 # TestFlow (Go)
 
-The Go rewrite of TestFlow. Read [../intent.md](../intent.md) for why and
-[../spec.md](../spec.md) for how. The legacy Laravel app in [../app](../app/)
-stays the deployed version until cut-over (spec §14, iteration 13).
+The TestFlow web app. Read [../intent.md](../intent.md) for why and
+[../spec.md](../spec.md) for how. It replaced the legacy Laravel app in
+[../app](../app/), which is still built as a separate image (`laposa/testflow`)
+until it is removed. Deploying is described
+in [deploy/README.md](deploy/README.md).
 
 ## Requirements
 
@@ -65,9 +67,9 @@ All commands run from `app-go/`.
 | `cp .env.example .env` | local settings (git-ignored; see spec §5) |
 | `make run` | run the server on `:8080` with `.env`, applying migrations first |
 | `make test` | unit and handler tests |
-| `make check` | `gofmt`, `go vet`, tests, integration tests: run before every PR (D16) |
+| `make check` | `gofmt`, `go vet`, tests, integration tests: what CI runs, also run before every PR |
 | `make build` | static binary in `bin/testflow` |
-| `make docker` | image `laposa/testflow-go:<version>` (pushing is manual) |
+| `make docker` | image `laposa/testflow-go:<version>`, local only (CI publishes from `master`) |
 | `make docker-up` | Postgres + app + OTel Collector (debug exporter) |
 | `make update-htmx HTMX_VERSION=x.y.z` | vendor a new htmx (spec §12) |
 

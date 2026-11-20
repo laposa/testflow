@@ -160,6 +160,15 @@ func TestSessionRoutesNeedLogin(t *testing.T) {
 	}
 }
 
+// The legacy picker URL still works for bookmarks.
+func TestLegacyNewSessionURL(t *testing.T) {
+	e := newEnv(t, Options{})
+	rec := get(e.h, "/sessions/create", e.signIn("Ada"))
+	if rec.Code != http.StatusMovedPermanently || rec.Header().Get("Location") != "/sessions/new" {
+		t.Errorf("GET /sessions/create = %d %q, want 301 to /sessions/new", rec.Code, rec.Header().Get("Location"))
+	}
+}
+
 func TestNewSessionPage(t *testing.T) {
 	e := newEnv(t, Options{})
 	rec := get(e.h, "/sessions/new", e.signIn("Ada"))
