@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/mail"
 	"net/url"
 	"strconv"
 	"strings"
@@ -112,7 +113,11 @@ func Load(getenv func(string) string) (*Config, error) {
 		c.Mail.Port = int(p.positiveInt("SMTP_PORT"))
 		c.Mail.Username = p.required("SMTP_USERNAME")
 		c.Mail.Password = p.required("SMTP_PASSWORD")
-		c.Mail.From = p.required("MAIL_FROM")
+		if c.Mail.From = p.required("MAIL_FROM"); c.Mail.From != "" {
+			if _, err := mail.ParseAddress(c.Mail.From); err != nil {
+				p.fail("MAIL_FROM", fmt.Errorf("must be an email address such as TestFlow <testflow@example.com>: %w", err))
+			}
+		}
 	default:
 		p.fail("MAIL_MAILER", fmt.Errorf("must be \"log\" or \"smtp\", got %q", c.Mail.Mailer))
 	}

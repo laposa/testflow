@@ -226,7 +226,12 @@ func (s *server) renderRuns(w http.ResponseWriter, r *http.Request, status int, 
 		s.runsError(w, r, "load session activity", err)
 		return
 	}
-	s.render(w, r, status, views.SessionPage(s.page(r, ts.Name), ts, rl, av))
+	rv, err := s.reviewsView(ctx, ts.ID, nil)
+	if err != nil {
+		s.runsError(w, r, "load reviews", err)
+		return
+	}
+	s.render(w, r, status, views.SessionPage(s.page(r, ts.Name), ts, rl, rv, av))
 }
 
 // runsError is activityError for the run list: htmx requests get the

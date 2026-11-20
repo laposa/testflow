@@ -696,14 +696,37 @@ is left to `tests-validator`.
   activity block; the typed comment stays in the form. Responses that depend
   on `HX-Request` send `Vary: HX-Request`. Legacy's
   "Comment created" flash message was never displayed and is not ported.
-- **Request review:** the reviewer is chosen from users who have no pending request
-  on this session. Creates `review_requests` (pending), emails the reviewer (§8.10),
-  and logs `review_requested`: "{requester} requested a review from {reviewer}".
-- **Approve/Reject** (pending requests only): sets status and `completed_at`, then logs
-  `review_approved` / `review_rejected`: "{user} approved/rejected the review".
-- **Revoke:** deletes a pending request. No activity entry, as in legacy (Q4).
-- Forms are normal POST forms enhanced with `hx-post`. Without JS they redirect back
-  (PRG pattern).
+- **Reviews block** (`#reviews`, between the session section and the activity
+  block; legacy put it below the feed). Each pending request, oldest first, shows
+  "Review Required / {requester} requested a review" with Approve and Reject to its
+  reviewer, and "Review pending for {reviewer}" to everyone else, with Revoke for
+  its requester. Below them the request form: a reviewer select ("Select a
+  reviewer", required) and "Request".
+- **Request review** (`POST /sessions/{id}/reviews`, `reviewer_id`): the reviewer is
+  chosen from users who have no pending request on this session (anyone else,
+  including the requester, as in legacy; a partial unique index enforces one
+  pending request per reviewer and session). Creates `review_requests` (pending)
+  and logs `review_requested`: "{requester} requested a review from {reviewer}",
+  in one transaction, then emails the reviewer (§8.10). A missing or unknown
+  reviewer is "Select a reviewer." and one with a pending request "This user
+  already has a pending review request on this session." (HTTP 422).
+- **Approve/Reject** (`…/reviews/{review}/approve`, `/reject`; pending requests only):
+  sets status and `completed_at`, then logs `review_approved` / `review_rejected`:
+  "{user} approved/rejected the review". Only the reviewer may (legacy only showed
+  the buttons to them): anyone else gets "Only the reviewer can approve or reject
+  this review." (HTTP 403).
+- **Revoke** (`…/reviews/{review}/revoke`): deletes a pending request. Only its
+  requester may ("Only the user who requested this review can revoke it.", HTTP
+  403). No activity entry, as in legacy (Q4).
+- A request of another session or one that is gone is "This review request does
+  not exist any more." (HTTP 404), one no longer pending "This review request is no
+  longer pending." (HTTP 409); the message shows in the block's error area
+  (`#review-errors`), and a missing session or a failure there as for comments.
+- Forms are normal POST forms enhanced with `hx-post` (`hx-sync="this:drop"`).
+  Without JS they redirect back to `/sessions/{id}#reviews` (PRG), and errors
+  render the session page with the message. With htmx the answer is the reviews
+  block plus the activity feed (`#activity-feed`) with `hx-swap-oob="true"`, so the
+  new entry shows while a comment being typed is kept.
 
 ### 8.10 Email
 Legacy: `app/Notifications/ReviewRequestNotification.php`.
@@ -712,6 +735,18 @@ Legacy: `app/Notifications/ReviewRequestNotification.php`.
 STARTTLS) and `log` (writes the message to slog, the default for development). The
 review request email says "{requester} has requested a review from you." and links to
 the session. A failed send is logged and does not fail the request.
+
+- The message is plain text, UTF-8, quoted-printable, subject "Review Request":
+  "Hi {reviewer},", the line above, and "Review: {BASE_URL}/sessions/{id}" (legacy
+  linked the home page). Headers are encoded (`net/mail`, `mime`), so names cannot
+  inject headers.
+- SMTP: port 465 uses implicit TLS; any other port must offer STARTTLS or the send
+  fails, so the password never travels in clear text. PLAIN auth with
+  `SMTP_USERNAME`/`SMTP_PASSWORD`, at most 30 s per message. `MAIL_FROM` must parse
+  as an address (`TestFlow <testflow@example.com>`), checked at startup.
+- The email is sent after the request is stored, within the HTTP request, bounded
+  by 15 s and not cancelled with it. A reviewer without an email address (private
+  on GitHub) gets none; that is logged as a warning.
 
 ### 8.11 Reports
 Legacy: `resources/views/sessions/report.blade.php`.

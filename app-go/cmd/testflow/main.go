@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	netmail "net/mail"
 	"os"
 	"os/signal"
 	"sync"
@@ -23,6 +24,7 @@ import (
 	"github.com/laposa/testflow/app-go/internal/db"
 	"github.com/laposa/testflow/app-go/internal/discovery"
 	"github.com/laposa/testflow/app-go/internal/github"
+	"github.com/laposa/testflow/app-go/internal/mail"
 	"github.com/laposa/testflow/app-go/internal/runs"
 	"github.com/laposa/testflow/app-go/internal/store"
 	"github.com/laposa/testflow/app-go/internal/telemetry"
@@ -195,6 +197,10 @@ func serve(ctx context.Context, cfg *config.Config, logger *slog.Logger, migrate
 		Logger:   logger,
 	}
 	// The syncer also deletes expired web sessions (spec §8.5).
+	mailer, err := newMailer(cfg.Mail, logger)
+	if err != nil {
+		return err
+	}
 	syncer := runs.NewSyncer(runs.SyncerConfig{GitHub: gh, Store: st, Sessions: sessions, Logger: logger})
 	handler, err := web.NewHandler(web.Options{
 		Logger:      logger,
@@ -219,6 +225,8 @@ func serve(ctx context.Context, cfg *config.Config, logger *slog.Logger, migrate
 		Syncer:       syncer,
 		TestFiles:    gh,
 		Manual:       st,
+		Reviews:      st,
+		Mailer:       mailer,
 	})
 	if err != nil {
 		return err
@@ -270,4 +278,16 @@ func newGitHubClient(cfg *config.Config, logger *slog.Logger) (*github.Client, e
 		PrivateKey:     cfg.GitHubPrivateKey,
 		Logger:         logger,
 	})
+}
+
+// newMailer returns the mailer MAIL_MAILER selects (spec §8.10).
+func newMailer(c config.MailConfig, logger *slog.Logger) (mail.Mailer, error) {
+	if c.Mailer != "smtp" {
+		return mail.Log{Logger: logger}, nil
+	}
+	from, err := netmail.ParseAddress(c.From)
+	if err != nil {
+		return nil, fmt.Errorf("MAIL_FROM: %w", err)
+	}
+	return &mail.SMTP{Host: c.Host, Port: c.Port, Username: c.Username, Password: c.Password, From: *from}, nil
 }

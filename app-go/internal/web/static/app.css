@@ -841,6 +841,62 @@ header {
     }
 }
 
+/* ---- reviews (legacy: components/reviews/request-review.css,
+ * review-form.css) ---- */
+
+.reviews {
+    margin: 24px 0;
+
+    .review-form + .review-form {
+        margin-top: 12px;
+    }
+}
+
+.review-form {
+    border: 1px solid var(--light-gray);
+    padding: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+
+    .review-form-icon {
+        width: 32px;
+        height: 32px;
+        flex: none;
+        background: var(--danger);
+        border-radius: 32px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+
+        svg {
+            color: #fff;
+            width: 20px;
+            height: 20px;
+        }
+    }
+
+    h3,
+    p,
+    form {
+        margin: 0;
+    }
+
+    .review-form-actions {
+        display: flex;
+        gap: 12px;
+        margin-left: auto;
+    }
+}
+
+.request-review {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 24px 0 0;
+}
+
 /* ---- manual runs (legacy: components/runs/manual-test-form.css,
  * components/modal.css, the copy-to-clipboard rules of layout.css) ---- */
 

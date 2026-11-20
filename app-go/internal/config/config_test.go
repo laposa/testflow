@@ -115,6 +115,10 @@ func TestLoadErrors(t *testing.T) {
 		{"static dir outside development", func(e map[string]string) {
 			e["ENVIRONMENT"], e["STATIC_DIR"] = "production", "internal/web/static"
 		}, []string{"STATIC_DIR: is only allowed with ENVIRONMENT=development"}},
+		{"bad mail from", func(e map[string]string) {
+			e["MAIL_MAILER"], e["SMTP_HOST"], e["SMTP_PORT"], e["SMTP_USERNAME"], e["SMTP_PASSWORD"] = "smtp", "h", "587", "u", "p"
+			e["MAIL_FROM"] = "TestFlow <not an address"
+		}, []string{"MAIL_FROM: must be an email address"}},
 		{"smtp incomplete", func(e map[string]string) { e["MAIL_MAILER"] = "smtp" }, []string{
 			"SMTP_HOST: is required", "SMTP_PORT: is required", "SMTP_USERNAME: is required",
 			"SMTP_PASSWORD: is required", "MAIL_FROM: is required",
