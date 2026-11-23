@@ -206,9 +206,6 @@ func TestLoadDatabaseCredentials(t *testing.T) {
 	if c.Database != want {
 		t.Errorf("Database = %+v, want %+v (user trimmed, password kept as is)", c.Database, want)
 	}
-	if strings.Contains(c.LogValue().String(), "p@ss") {
-		t.Error("LogValue leaks the database password")
-	}
 
 	m, err := loadMigrateEnv(env)
 	if err != nil || m.Database != want {
@@ -253,19 +250,6 @@ func TestLoadDatabaseHost(t *testing.T) {
 
 func loadMigrateEnv(env map[string]string) (*MigrateConfig, error) {
 	return LoadMigrate(func(k string) string { return env[k] })
-}
-
-func TestLogValueHasNoSecrets(t *testing.T) {
-	c, err := load(validEnv())
-	if err != nil {
-		t.Fatal(err)
-	}
-	got := c.LogValue().String()
-	for _, secret := range []string{"secret", "ZmFrZQ", "u:p@"} {
-		if strings.Contains(got, secret) {
-			t.Errorf("LogValue leaks %q: %s", secret, got)
-		}
-	}
 }
 
 func TestLoadStaticDir(t *testing.T) {

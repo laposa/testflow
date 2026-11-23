@@ -66,22 +66,6 @@ type MailConfig struct {
 // IsDevelopment reports whether ENVIRONMENT is "development".
 func (c *Config) IsDevelopment() bool { return c.Environment == "development" }
 
-// LogValue implements slog.LogValuer. Secrets are never included.
-func (c *Config) LogValue() slog.Value {
-	return slog.GroupValue(
-		slog.String("addr", c.Addr),
-		slog.String("base_url", c.BaseURL.String()),
-		slog.String("environment", c.Environment),
-		slog.String("log_level", c.LogLevel.String()),
-		slog.String("static_dir", c.StaticDir),
-		slog.Duration("session_lifetime", c.SessionLifetime),
-		slog.Int64("github_installation_id", c.GitHubInstallationID),
-		slog.String("test_session_environments", strings.Join(c.TestSessionEnvironments, ",")),
-		slog.Duration("sync_interval", c.SyncInterval),
-		slog.String("mail_mailer", c.Mail.Mailer),
-	)
-}
-
 // Load builds a Config from getenv (normally os.Getenv). All problems are
 // collected and returned together so a misconfigured deployment can be fixed
 // in one go.

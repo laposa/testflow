@@ -160,6 +160,15 @@ func TestSessionRoutesNeedLogin(t *testing.T) {
 	}
 }
 
+// The legacy picker URL still works for bookmarks.
+func TestLegacyNewSessionURL(t *testing.T) {
+	e := newEnv(t, Options{})
+	rec := get(e.h, "/sessions/create", e.signIn("Ada"))
+	if rec.Code != http.StatusMovedPermanently || rec.Header().Get("Location") != "/sessions/new" {
+		t.Errorf("GET /sessions/create = %d %q, want 301 to /sessions/new", rec.Code, rec.Header().Get("Location"))
+	}
+}
+
 func TestNewSessionPage(t *testing.T) {
 	e := newEnv(t, Options{})
 	rec := get(e.h, "/sessions/new", e.signIn("Ada"))
@@ -228,6 +237,21 @@ func TestNewSessionLoading(t *testing.T) {
 	if rec.Code != http.StatusOK || !strings.HasPrefix(rec.Body.String(), `<div id="new-session">`) || e.discovery.refreshes != 1 {
 		t.Errorf("htmx refresh = %d, refreshes = %d", rec.Code, e.discovery.refreshes)
 	}
+}
+
+// A disabled workflow is explained differently from a missing one.
+func TestNewSessionDisabledWorkflow(t *testing.T) {
+	e := newEnv(t, Options{})
+	res := sampleTests()
+	for i, svc := range res.Repositories[0].Services {
+		if svc.Name == "mobile" {
+			res.Repositories[0].Services[i].WorkflowDisabled = true
+		}
+	}
+	e.discovery.res = res
+	body := get(e.h, "/sessions/new", e.signIn("Ada")).Body.String()
+	assertContains(t, body, `The run-tests-mobile.yaml workflow of this test is disabled on GitHub, so it cannot be selected.`)
+	assertNotContains(t, body, `This test has no run-tests-mobile.yaml workflow`)
 }
 
 func TestNewSessionDiscoveryError(t *testing.T) {

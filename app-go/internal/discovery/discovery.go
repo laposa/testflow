@@ -80,8 +80,11 @@ type Repository struct {
 type Service struct {
 	Name       string
 	Path       string // tests/{service}
-	WorkflowID int64  // 0 if no run-tests-{service}.yaml workflow exists
-	Suites     []Suite
+	WorkflowID int64  // 0 if no active run-tests-{service}.yaml workflow exists
+	// WorkflowDisabled is set when the workflow exists but GitHub has it
+	// disabled, so it cannot be dispatched (WorkflowID is then 0).
+	WorkflowDisabled bool
+	Suites           []Suite
 }
 
 // Suite is tests/{service}/tests/{suite}.
@@ -366,7 +369,17 @@ func (d *Discoverer) repository(ctx context.Context, r github.Repository) (*Repo
 		problems = append(problems, Problem{Repository: name, Message: "could not read workflows, so its automated tests cannot be selected"})
 	}
 	for i := range repo.Services {
-		repo.Services[i].WorkflowID = matchWorkflow(workflows, repo.Services[i].Name)
+		svc := &repo.Services[i]
+		w, ok := matchWorkflow(workflows, svc.Name)
+		switch {
+		case !ok:
+		case active(w):
+			svc.WorkflowID = w.ID
+		default:
+			svc.WorkflowDisabled = true
+			problems = append(problems, Problem{Repository: name,
+				Message: "the " + WorkflowFile(svc.Name) + " workflow is disabled on GitHub, so the automated tests of " + svc.Name + " cannot be selected"})
+		}
 	}
 	return repo, problems
 }
@@ -389,17 +402,22 @@ func (d *Discoverer) dirs(ctx context.Context, repo, path, ref string) ([]github
 // hidden reports entries to skip, such as _utils (legacy parity).
 func hidden(name string) bool { return name == "" || name[0] == '_' }
 
-// matchWorkflow returns the id of the workflow whose path ends with
-// run-tests-{service}.yaml, or 0 (spec §8.1 step 4).
-func matchWorkflow(workflows []github.Workflow, service string) int64 {
+// matchWorkflow returns the workflow whose path ends with
+// run-tests-{service}.yaml (spec §8.1 step 4).
+func matchWorkflow(workflows []github.Workflow, service string) (github.Workflow, bool) {
 	file := WorkflowFile(service)
 	for _, w := range workflows {
 		if strings.HasSuffix(w.Path, "/"+file) || w.Path == file {
-			return w.ID
+			return w, true
 		}
 	}
-	return 0
+	return github.Workflow{}, false
 }
+
+// active reports a workflow GitHub can run. Only "active" can be
+// dispatched; the others are disabled_manually, disabled_inactivity,
+// disabled_fork and deleted. A missing state is taken as active.
+func active(w github.Workflow) bool { return w.State == "" || w.State == "active" }
 
 // skippable reports errors that mean "no tests here": a missing branch
 // (404) or an empty repository (409).

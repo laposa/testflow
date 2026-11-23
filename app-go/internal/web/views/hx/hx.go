@@ -25,12 +25,6 @@ func Swap(strategy string) g.Node { return Attr("swap", strategy) }
 // Trigger sets the event that issues the request, e.g. "every 30s".
 func Trigger(spec string) g.Node { return Attr("trigger", spec) }
 
-// Select picks part of the response to swap in.
-func Select(selector string) g.Node { return Attr("select", selector) }
-
-// PushURL pushes a URL into the browser history ("true", "false" or a URL).
-func PushURL(v string) g.Node { return Attr("push-url", v) }
-
 // Confirm asks the user to confirm before the request is sent.
 func Confirm(message string) g.Node { return Attr("confirm", message) }
 

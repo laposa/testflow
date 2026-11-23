@@ -155,6 +155,44 @@ func TestServeGracefulShutdown(t *testing.T) {
 	}
 }
 
+// The startup log line carries only allowlisted settings, never a secret.
+func TestStartupLogHasNoSecrets(t *testing.T) {
+	env := testEnv("postgres://dbuser:db-url-pass@db.example.com/testflow")
+	secrets := map[string]string{
+		"GITHUB_CLIENT_SECRET": "gh-client-secret",
+		"DATABASE_PASSWORD":    "db-password",
+		"SMTP_PASSWORD":        "smtp-password",
+	}
+	for k, v := range secrets {
+		env[k] = v
+	}
+	env["ENVIRONMENT"] = "production"
+	env["MAIL_MAILER"], env["SMTP_HOST"], env["SMTP_PORT"] = "smtp", "smtp.example.com", "587"
+	env["SMTP_USERNAME"], env["MAIL_FROM"] = "smtp-user", "testflow@example.com"
+	cfg, err := config.Load(func(k string) string { return env[k] })
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var logs bytes.Buffer
+	newLogger(&logs, cfg.LogLevel, cfg.Environment).Info("server starting", startupAttrs(cfg, "127.0.0.1:8080")...)
+	out := logs.String()
+	for _, want := range []string{`"addr":"127.0.0.1:8080"`, `"config":{`, `"environment":"production"`, `"mail_mailer":"smtp"`} {
+		if !strings.Contains(out, want) {
+			t.Errorf("startup log missing %s: %s", want, out)
+		}
+	}
+	leaks := []string{"db-url-pass", "dbuser", "PRIVATE KEY", "smtp-user"}
+	for _, v := range secrets {
+		leaks = append(leaks, v)
+	}
+	for _, leak := range leaks {
+		if strings.Contains(out, leak) {
+			t.Errorf("startup log leaks %q: %s", leak, out)
+		}
+	}
+}
+
 func loadConfig(t *testing.T, databaseURL string) *config.Config {
 	t.Helper()
 	env := testEnv(databaseURL)

@@ -97,9 +97,9 @@ func TestRepositoriesPaginates(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []Repository{
-		{ID: 1296269, Name: "shop-tests", FullName: "laposa/shop-tests", DefaultBranch: "master"},
-		{ID: 1296270, Name: "app-tests", FullName: "laposa/app-tests", DefaultBranch: "main"},
-		{ID: 1296271, Name: "old-tests", FullName: "laposa/old-tests", DefaultBranch: "master", Archived: true},
+		{ID: 1296269, Name: "shop-tests", FullName: "laposa/shop-tests"},
+		{ID: 1296270, Name: "app-tests", FullName: "laposa/app-tests"},
+		{ID: 1296271, Name: "old-tests", FullName: "laposa/old-tests"},
 	}
 	if !reflect.DeepEqual(repos, want) {
 		t.Errorf("repos = %+v", repos)
@@ -151,8 +151,8 @@ func TestDir(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []ContentEntry{
-		{Type: "dir", Name: "web", Path: "tests/web", SHA: "a84d88e7554fc1fa21bcbc4efae3c782a70d2b9d"},
-		{Type: "file", Name: "README.md", Path: "tests/README.md", SHA: "3d21ec53a331a6f037a91c368710b99387d012c1", Size: 625},
+		{Type: "dir", Name: "web", Path: "tests/web"},
+		{Type: "file", Name: "README.md", Path: "tests/README.md"},
 	}
 	if !reflect.DeepEqual(entries, want) {
 		t.Errorf("entries = %+v", entries)
@@ -260,7 +260,7 @@ func TestWorkflowRuns(t *testing.T) {
 		!r0.CreatedAt.Equal(time.Date(2026, 11, 18, 10, 15, 3, 0, time.UTC)) {
 		t.Errorf("run 0 = %+v", r0)
 	}
-	if r1.Status != "completed" || r1.Conclusion != "failure" || r1.RunAttempt != 2 || r1.Event != "workflow_dispatch" {
+	if r1.Status != "completed" || r1.Conclusion != "failure" || r1.Event != "workflow_dispatch" {
 		t.Errorf("run 1 = %+v", r1)
 	}
 }
@@ -292,8 +292,8 @@ func TestRunArtifacts(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []Artifact{
-		{ID: 11, Name: "test-results", SizeInBytes: 556},
-		{ID: 13, Name: "screenshots", SizeInBytes: 453012, Expired: true},
+		{ID: 11, Name: "test-results"},
+		{ID: 13, Name: "screenshots", Expired: true},
 	}
 	if !reflect.DeepEqual(arts, want) {
 		t.Errorf("artifacts = %+v", arts)

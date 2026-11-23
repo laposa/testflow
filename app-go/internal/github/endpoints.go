@@ -13,11 +13,9 @@ import (
 
 // Repository is an entry of GET /installation/repositories.
 type Repository struct {
-	ID            int64  `json:"id"`
-	Name          string `json:"name"`
-	FullName      string `json:"full_name"` // owner/repo
-	DefaultBranch string `json:"default_branch"`
-	Archived      bool   `json:"archived"`
+	ID       int64  `json:"id"`
+	Name     string `json:"name"`
+	FullName string `json:"full_name"` // owner/repo
 }
 
 // ContentEntry is an entry of a directory listing from the contents API.
@@ -25,16 +23,14 @@ type ContentEntry struct {
 	Type string `json:"type"` // file, dir, symlink or submodule
 	Name string `json:"name"`
 	Path string `json:"path"`
-	SHA  string `json:"sha"`
-	Size int64  `json:"size"`
 }
 
 // Workflow is an entry of GET /repos/{repo}/actions/workflows.
 type Workflow struct {
 	ID    int64  `json:"id"`
 	Name  string `json:"name"`
-	Path  string `json:"path"` // e.g. .github/workflows/run-tests-web.yaml
-	State string `json:"state"`
+	Path  string `json:"path"`  // e.g. .github/workflows/run-tests-web.yaml
+	State string `json:"state"` // active, or disabled_manually, disabled_inactivity, ...
 }
 
 // WorkflowRun is an entry of GET /repos/{repo}/actions/workflows/{id}/runs.
@@ -44,11 +40,7 @@ type WorkflowRun struct {
 	Event      string    `json:"event"`
 	Status     string    `json:"status"`     // queued, in_progress, completed, ...
 	Conclusion string    `json:"conclusion"` // empty until completed
-	HeadBranch string    `json:"head_branch"`
 	HeadSHA    string    `json:"head_sha"`
-	RunNumber  int64     `json:"run_number"`
-	RunAttempt int       `json:"run_attempt"`
-	HTMLURL    string    `json:"html_url"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
 }
@@ -65,10 +57,9 @@ type Job struct {
 
 // Artifact is an entry of GET /repos/{repo}/actions/runs/{id}/artifacts.
 type Artifact struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	SizeInBytes int64  `json:"size_in_bytes"`
-	Expired     bool   `json:"expired"`
+	ID      int64  `json:"id"`
+	Name    string `json:"name"`
+	Expired bool   `json:"expired"`
 }
 
 // RunsFilter narrows WorkflowRuns. Zero fields are not sent.
