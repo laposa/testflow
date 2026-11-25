@@ -1,9 +1,0 @@
-.error-list {
-    background-color: var(--danger);
-    color: white;
-    padding: 8px 12px;
-
-    ul {
-        margin: 0;
-    }
-}

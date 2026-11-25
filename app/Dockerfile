@@ -1,63 +1,26 @@
-FROM debian:trixie
+# TestFlow image (spec §12). Build context is app-go/:
+#   docker build -f deploy/Dockerfile --build-arg VERSION=$(git describe --always) .
+# or simply `make docker`.
+#
+# The Go toolchain comes from a Docker Hardened Image (needs `docker login dhi.io`).
+# It is pinned by digest; to upgrade, change the tag and digest here and GO_IMAGE
+# in the Makefile together (`docker buildx imagetools inspect <image:tag>`).
 
-ENV DEBIAN_FRONTEND noninteractive
+FROM dhi.io/golang:1.27.4-debian13-dev@sha256:28720f1bd4ab3b1963137f78285af22a050c382ef7e5b901397ec84798a3a359 AS build
+WORKDIR /src
 
-RUN apt-get update \
-  && apt-get -y upgrade \
-  && apt-get install -y apache2 php php-zip php-sqlite3 php-xml php-curl php-pgsql php-mbstring nodejs npm vim curl
-RUN a2enmod rewrite headers
+COPY go.mod go.sum ./
+RUN go mod download
 
-# customise Apache configuration
-RUN sed -i 's/Listen 80/Listen 8080/' /etc/apache2/ports.conf \
-  && sed -i 's/:80/:8080/' /etc/apache2/sites-available/000-default.conf \
-  && sed -i 's/AllowOverride None/AllowOverride All/' /etc/apache2/apache2.conf \
-  && sed -i 's/ServerTokens OS/ServerTokens Prod/' /etc/apache2/conf-available/security.conf
+COPY . .
+ARG VERSION=dev
+RUN CGO_ENABLED=0 go build -trimpath \
+    -ldflags "-s -w -X main.version=${VERSION}" \
+    -o /out/testflow ./cmd/testflow
 
-# Configure Apache DocumentRoot to point to Laravel's public directory
-# and update Apache configuration files
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
-RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
-
-# PHP configuration
-RUN sed -i 's/memory_limit = 128M/memory_limit = 1024M/' /etc/php/8.4/apache2/php.ini
-
-# logs should go to stdout / stderr
-RUN ln -sfT /dev/stderr /var/log/apache2/error.log \
-  && ln -sfT /dev/stdout /var/log/apache2/access.log \
-  && ln -sfT /dev/stdout /var/log/apache2/other_vhosts_access.log
-
-# add files and switch working directory
-COPY . /var/www/html/
-WORKDIR /var/www/html/
-
-# install composer
-RUN cd /tmp && \
-  curl -sS https://getcomposer.org/installer | php && \
-  mv composer.phar /usr/local/bin/composer && \
-  mkdir /var/www/.composer && \
-  chown -R www-data:www-data /var/www/.composer
-
-RUN composer install --no-interaction
-
-RUN npm ci && npm run build
-
-# fix permissions
-RUN adduser www-data tty \
-  && chown -R www-data /var/log/ \
-  && chown -R www-data /var/run/ \
-  && chown -R www-data /var/www/html/storage /var/www/html/bootstrap/cache
-
-ENV DEBIAN_FRONTEND teletype
-ENV LC_ALL=C
-
-# allow writable directories for AppD installation
-RUN chown -R www-data /etc/apache2/conf-available \
-  && chown -R www-data /etc/apache2/conf-enabled
-
-EXPOSE 8080/tcp
-
-# switch to non-root
-USER www-data
-
-CMD ["/usr/sbin/apache2ctl", "-DFOREGROUND"]
+FROM gcr.io/distroless/static:nonroot
+COPY --from=build /out/testflow /testflow
+USER nonroot:nonroot
+EXPOSE 8080
+ENTRYPOINT ["/testflow"]
+CMD ["serve"]

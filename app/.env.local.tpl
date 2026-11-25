@@ -1,75 +1,50 @@
-APP_NAME=Laravel
-APP_ENV=local
-APP_KEY="op://laposa-secrets-dev/testflow/APP_KEY"
-APP_DEBUG=true
-APP_TIMEZONE=UTC
-APP_URL=http://localhost
+# Local development settings for `make run` and `make docker-up` (spec §5).
+# Copy to .env (git-ignored). The binary itself never reads this file.
+# Real secrets come from 1Password; never commit them.
 
-APP_LOCALE=en
-APP_FALLBACK_LOCALE=en
-APP_FAKER_LOCALE=en_US
-
-APP_MAINTENANCE_DRIVER=file
-APP_MAINTENANCE_STORE=database
-
-BCRYPT_ROUNDS=12
-
-LOG_CHANNEL=stack
-LOG_STACK=single
-LOG_DEPRECATIONS_CHANNEL=null
+ADDR=:8080
+BASE_URL=http://localhost:8080
+ENVIRONMENT=development
 LOG_LEVEL=debug
+# Development only: serve /static/ from the source tree instead of the files
+# embedded in the binary, so CSS and JS edits show on reload without a restart.
+STATIC_DIR=internal/web/static
+DATABASE_URL=postgres://testflow:testflow@localhost:5432/testflow?sslmode=disable
+# Optional: credentials kept out of the URL (they override any in DATABASE_URL).
+# Handy when the password has characters like @ : / that would need URL-encoding.
+#   DATABASE_URL=postgres://db.example.com:5432/testflow?sslmode=require
+#   DATABASE_USER=testflow
+#   DATABASE_PASSWORD=
+# Or, instead of DATABASE_URL, give the host (port defaults to 5432, name to testflow):
+#   DATABASE_HOST=localhost
+#   DATABASE_PORT=5432
+#   DATABASE_NAME=testflow
+#   DATABASE_USER=testflow
+#   DATABASE_PASSWORD=
+SESSION_LIFETIME=120m
 
-DB_CONNECTION=sqlite
-# DB_HOST=127.0.0.1
-# DB_PORT=3306
-# DB_DATABASE=laravel
-# DB_USERNAME=root
-# DB_PASSWORD=
-
-SESSION_DRIVER=database
-SESSION_LIFETIME=120
-SESSION_ENCRYPT=false
-SESSION_PATH=/
-SESSION_DOMAIN=null
-
-BROADCAST_CONNECTION=log
-FILESYSTEM_DISK=local
-QUEUE_CONNECTION=database
-
-CACHE_STORE=database
-CACHE_PREFIX=
-
-MEMCACHED_HOST=127.0.0.1
-
-REDIS_CLIENT=phpredis
-REDIS_HOST=127.0.0.1
-REDIS_PASSWORD=null
-REDIS_PORT=6379
-
-MAIL_MAILER=log
-MAIL_HOST=127.0.0.1
-MAIL_PORT=2525
-MAIL_USERNAME=null
-MAIL_PASSWORD=null
-MAIL_ENCRYPTION=null
-MAIL_FROM_ADDRESS="hello@example.com"
-MAIL_FROM_NAME="${APP_NAME}"
-
-AWS_ACCESS_KEY_ID=
-AWS_SECRET_ACCESS_KEY=
-AWS_DEFAULT_REGION=us-east-1
-AWS_BUCKET=
-AWS_USE_PATH_STYLE_ENDPOINT=false
-
-VITE_APP_NAME="${APP_NAME}"
-
+# GitHub App "laposa-test-portal-dev" (org settings → GitHub Apps)
+# Its "Callback URL" list must contain BASE_URL + /auth/callback
+# (here http://localhost:8080/auth/callback) for the login to work.
 GITHUB_CLIENT_ID=Iv23liaHFw1JSb9s2tC6 #  https://github.com/organizations/laposa/settings/apps/laposa-test-portal-dev
 GITHUB_CLIENT_SECRET="op://laposa-secrets-dev/testflow/GITHUB_CLIENT_SECRET"
-
-GITHUB_CALLBACK=/auth/callback
-GITHUB_APP_INSTALATION_ID=51847197
+GITHUB_APP_INSTALLATION_ID=51847197
+# PEM private key as ONE line in double quotes, line breaks written as \n:
+#   GITHUB_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\nMIIE...\n-----END RSA PRIVATE KEY-----\n"
+# Convert a downloaded key with:
+#   printf 'GITHUB_PRIVATE_KEY="%s"\n' "$(awk '{printf "%s\\n", $0}' key.pem)"
 GITHUB_PRIVATE_KEY="op://laposa-secrets-dev/testflow/GITHUB_PRIVATE_KEY"
 
-SUPPORT_EMAIL=support@laposa.ie
-
 TEST_SESSION_ENVIRONMENTS=preprod,beta,prod
+SYNC_INTERVAL=30s
+
+MAIL_MAILER=log
+# Only when MAIL_MAILER=smtp:
+# SMTP_HOST=
+# SMTP_PORT=587
+# SMTP_USERNAME=
+# SMTP_PASSWORD=
+# MAIL_FROM=testflow@example.com
+# Development only, with SMTP_HOST=localhost: send without STARTTLS, e.g. to
+# Mailpit (see README, "Testing email locally with Mailpit").
+# SMTP_ALLOW_PLAINTEXT=false
