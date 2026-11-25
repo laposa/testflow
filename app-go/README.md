@@ -16,6 +16,12 @@ in [deploy/README.md](deploy/README.md).
   image comes from `dhi.io`; Postgres, the Collector and the runtime base
   image don't
 
+## Create .env using 1Password cli
+
+```bash
+op inject -i .env.local.tpl -o .env
+```
+
 ### Installing Go
 
 Install the latest Go 1.27.x (check the current patch release on
@@ -62,16 +68,16 @@ at any other toolchain.
 
 All commands run from `app-go/`.
 
-| Command | What it does |
-|---------|--------------|
-| `cp .env.example .env` | local settings (git-ignored; see spec §5) |
-| `make run` | run the server on `:8080` with `.env`, applying migrations first |
-| `make test` | unit and handler tests |
-| `make check` | `gofmt`, `go vet`, tests, integration tests: what CI runs, also run before every PR |
-| `make build` | static binary in `bin/testflow` |
-| `make docker` | image `laposa/testflow-go:<version>`, local only (CI publishes from `master`) |
-| `make docker-up` | Postgres + app + OTel Collector (debug exporter) |
-| `make update-htmx HTMX_VERSION=x.y.z` | vendor a new htmx (spec §12) |
+| Command                               | What it does                                                                        |
+| ------------------------------------- | ----------------------------------------------------------------------------------- |
+| `cp .env.example .env`                | local settings (git-ignored; see spec §5)                                           |
+| `make run`                            | run the server on `:8080` with `.env`, applying migrations first                    |
+| `make test`                           | unit and handler tests                                                              |
+| `make check`                          | `gofmt`, `go vet`, tests, integration tests: what CI runs, also run before every PR |
+| `make build`                          | static binary in `bin/testflow`                                                     |
+| `make docker`                         | image `laposa/testflow-go:<version>`, local only (CI publishes from `master`)       |
+| `make docker-up`                      | Postgres + app + OTel Collector (debug exporter)                                    |
+| `make update-htmx HTMX_VERSION=x.y.z` | vendor a new htmx (spec §12)                                                        |
 
 The binary has subcommands:
 

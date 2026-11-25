@@ -26,14 +26,14 @@ SESSION_LIFETIME=120m
 # GitHub App "laposa-test-portal-dev" (org settings → GitHub Apps)
 # Its "Callback URL" list must contain BASE_URL + /auth/callback
 # (here http://localhost:8080/auth/callback) for the login to work.
-GITHUB_CLIENT_ID=
-GITHUB_CLIENT_SECRET=
-GITHUB_APP_INSTALLATION_ID=
+GITHUB_CLIENT_ID=Iv23liaHFw1JSb9s2tC6 #  https://github.com/organizations/laposa/settings/apps/laposa-test-portal-dev
+GITHUB_CLIENT_SECRET="op://laposa-secrets-dev/testflow/GITHUB_CLIENT_SECRET"
+GITHUB_APP_INSTALLATION_ID=51847197
 # PEM private key as ONE line in double quotes, line breaks written as \n:
 #   GITHUB_PRIVATE_KEY="-----BEGIN RSA PRIVATE KEY-----\nMIIE...\n-----END RSA PRIVATE KEY-----\n"
 # Convert a downloaded key with:
 #   printf 'GITHUB_PRIVATE_KEY="%s"\n' "$(awk '{printf "%s\\n", $0}' key.pem)"
-GITHUB_PRIVATE_KEY=
+GITHUB_PRIVATE_KEY="op://laposa-secrets-dev/testflow/GITHUB_PRIVATE_KEY"
 
 TEST_SESSION_ENVIRONMENTS=preprod,beta,prod
 SYNC_INTERVAL=30s
